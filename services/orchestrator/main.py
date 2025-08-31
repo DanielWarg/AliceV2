@@ -11,9 +11,11 @@ import structlog
 import httpx
 from typing import AsyncGenerator
 
-from src.routers import chat, orchestrator
+from src.routers import chat, orchestrator, status
 from src.middleware.logging import setup_logging, LoggingMiddleware
 from src.services.guardian_client import GuardianClient
+from src.mw_metrics import MetricsMiddleware
+from src.status_router import router as fix_status_router
 
 # Setup structured logging
 setup_logging()
@@ -61,6 +63,9 @@ app.add_middleware(
 # Add logging middleware
 app.add_middleware(LoggingMiddleware)
 
+# Add metrics middleware for real latency/status tracking
+app.add_middleware(MetricsMiddleware)
+
 # Health check endpoint
 @app.get("/health")
 async def health():
@@ -84,6 +89,10 @@ async def health():
 # Include API routers
 app.include_router(chat.router, prefix="/api", tags=["chat"])
 app.include_router(orchestrator.router, prefix="/api/orchestrator", tags=["orchestrator"])
+app.include_router(status.router, prefix="/api/status", tags=["status"])
+
+# Include Fix Pack v1 status router with real metrics
+app.include_router(fix_status_router)
 
 # Root endpoint
 @app.get("/")

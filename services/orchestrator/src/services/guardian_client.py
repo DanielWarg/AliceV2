@@ -61,7 +61,7 @@ class GuardianClient:
             if not self._client:
                 await self.initialize()
                 
-            response = await self._client.get("/guardian/health")
+            response = await self._client.get("/health")
             response.raise_for_status()
             
             health_data = response.json()

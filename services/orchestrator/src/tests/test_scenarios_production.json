@@ -1,0 +1,578 @@
+{
+  "alice_v2_production_test_scenarios": {
+    "metadata": {
+      "version": "1.0",
+      "created": "2025-08-31",
+      "description": "20 realistic test scenarios for nightly validation and Alice training data",
+      "based_on": "ALICE_SYSTEM_BLUEPRINT.md user patterns",
+      "language": "swedish",
+      "slo_targets": {
+        "response_time_p95_ms": 2000,
+        "success_rate_minimum": 0.80,
+        "conversation_completion_rate": 0.75,
+        "guardian_compliance": 1.0
+      }
+    },
+
+    "scenarios": [
+      {
+        "id": "greeting_basic",
+        "name": "Basic Swedish Greeting",
+        "category": "greeting",
+        "priority": "HIGH",
+        "expected_intent": "GREETING.HELLO",
+        "expected_route": "micro",
+        "conversation": [
+          {
+            "turn": 1,
+            "user": "Hej Alice!",
+            "expected_response_type": "greeting_acknowledgment",
+            "expected_tools": [],
+            "max_response_time_ms": 500
+          }
+        ],
+        "success_criteria": {
+          "response_time_ms": 500,
+          "intent_confidence": 0.85,
+          "conversation_completion": true
+        }
+      },
+
+      {
+        "id": "time_current",
+        "name": "Current Time Query",
+        "category": "time",
+        "priority": "HIGH", 
+        "expected_intent": "TIME.CURRENT",
+        "expected_route": "micro",
+        "conversation": [
+          {
+            "turn": 1,
+            "user": "Vad är klockan?",
+            "expected_response_type": "time_information",
+            "expected_tools": [],
+            "max_response_time_ms": 300
+          }
+        ],
+        "success_criteria": {
+          "response_time_ms": 300,
+          "intent_confidence": 0.90,
+          "conversation_completion": true
+        }
+      },
+
+      {
+        "id": "calendar_booking_simple",
+        "name": "Simple Calendar Booking",
+        "category": "calendar",
+        "priority": "CRITICAL",
+        "expected_intent": "TIME.BOOK",
+        "expected_route": "planner",
+        "conversation": [
+          {
+            "turn": 1,
+            "user": "Boka möte med Anna imorgon kl 14",
+            "expected_response_type": "calendar_booking_confirmation",
+            "expected_tools": ["calendar.create"],
+            "max_response_time_ms": 1500
+          }
+        ],
+        "success_criteria": {
+          "response_time_ms": 1500,
+          "intent_confidence": 0.80,
+          "tool_success_rate": 0.90,
+          "conversation_completion": true
+        }
+      },
+
+      {
+        "id": "weather_current",
+        "name": "Current Weather Query",
+        "category": "weather",
+        "priority": "HIGH",
+        "expected_intent": "WEATHER.CURRENT",
+        "expected_route": "planner",
+        "conversation": [
+          {
+            "turn": 1,
+            "user": "Vad är det för väder idag?",
+            "expected_response_type": "weather_information",
+            "expected_tools": ["weather.current"],
+            "max_response_time_ms": 1000
+          }
+        ],
+        "success_criteria": {
+          "response_time_ms": 1000,
+          "intent_confidence": 0.85,
+          "tool_success_rate": 0.85,
+          "conversation_completion": true
+        }
+      },
+
+      {
+        "id": "email_check",
+        "name": "Email Status Check",
+        "category": "email",
+        "priority": "MEDIUM",
+        "expected_intent": "EMAIL.CHECK",
+        "expected_route": "planner",
+        "conversation": [
+          {
+            "turn": 1,
+            "user": "Har jag fått några nya mejl?",
+            "expected_response_type": "email_summary",
+            "expected_tools": ["email.check"],
+            "max_response_time_ms": 1200
+          }
+        ],
+        "success_criteria": {
+          "response_time_ms": 1200,
+          "intent_confidence": 0.80,
+          "tool_success_rate": 0.75,
+          "conversation_completion": true
+        }
+      },
+
+      {
+        "id": "multi_turn_planning",
+        "name": "Multi-turn Meeting Planning",
+        "category": "conversation",
+        "priority": "CRITICAL",
+        "expected_intent": "TIME.BOOK",
+        "expected_route": "planner",
+        "conversation": [
+          {
+            "turn": 1,
+            "user": "Jag behöver boka ett möte",
+            "expected_response_type": "clarification_request",
+            "expected_tools": [],
+            "max_response_time_ms": 800
+          },
+          {
+            "turn": 2,
+            "user": "Med Anna imorgon",
+            "expected_response_type": "time_clarification",
+            "expected_tools": [],
+            "max_response_time_ms": 800
+          },
+          {
+            "turn": 3,
+            "user": "Klockan 14",
+            "expected_response_type": "booking_confirmation",
+            "expected_tools": ["calendar.create"],
+            "max_response_time_ms": 1500
+          }
+        ],
+        "success_criteria": {
+          "response_time_ms": 1500,
+          "intent_confidence": 0.75,
+          "tool_success_rate": 0.85,
+          "conversation_completion": true
+        }
+      },
+
+      {
+        "id": "home_lights_control",
+        "name": "Home Assistant Light Control",
+        "category": "home_automation",
+        "priority": "MEDIUM",
+        "expected_intent": "HOME.LIGHT.CONTROL",
+        "expected_route": "planner",
+        "conversation": [
+          {
+            "turn": 1,
+            "user": "Tänd lamporna i vardagsrummet",
+            "expected_response_type": "home_control_confirmation",
+            "expected_tools": ["home_assistant.light_control"],
+            "max_response_time_ms": 1000
+          }
+        ],
+        "success_criteria": {
+          "response_time_ms": 1000,
+          "intent_confidence": 0.85,
+          "tool_success_rate": 0.80,
+          "conversation_completion": true
+        }
+      },
+
+      {
+        "id": "document_summarization",
+        "name": "Document Summarization Task",
+        "category": "analysis",
+        "priority": "MEDIUM",
+        "expected_intent": "DOCUMENT.SUMMARIZE",
+        "expected_route": "deep",
+        "conversation": [
+          {
+            "turn": 1,
+            "user": "Kan du sammanfatta det här dokumentet åt mig? Det handlar om kvartalets försäljningssiffror och innehåller mycket detaljerad information om olika produktkategorier.",
+            "expected_response_type": "analysis_request_confirmation",
+            "expected_tools": ["document.analyze", "rag.search"],
+            "max_response_time_ms": 3000
+          }
+        ],
+        "success_criteria": {
+          "response_time_ms": 3000,
+          "intent_confidence": 0.75,
+          "tool_success_rate": 0.70,
+          "conversation_completion": true
+        }
+      },
+
+      {
+        "id": "mixed_language_handling",
+        "name": "Mixed Swedish-English Input",
+        "category": "edge_case",
+        "priority": "LOW",
+        "expected_intent": "GREETING.HELLO",
+        "expected_route": "micro",
+        "conversation": [
+          {
+            "turn": 1,
+            "user": "Hej Alice, can you help me idag?",
+            "expected_response_type": "mixed_language_response",
+            "expected_tools": [],
+            "max_response_time_ms": 1000
+          }
+        ],
+        "success_criteria": {
+          "response_time_ms": 1000,
+          "intent_confidence": 0.60,
+          "conversation_completion": true
+        }
+      },
+
+      {
+        "id": "long_complex_request",
+        "name": "Long Complex Multi-task Request",
+        "category": "edge_case",
+        "priority": "MEDIUM",
+        "expected_intent": "COMPOUND.MULTI_TASK",
+        "expected_route": "planner",
+        "conversation": [
+          {
+            "turn": 1,
+            "user": "Hej Alice, kan du först kolla vädret för imorgon, sedan boka ett möte med min kollega Maria klockan 15, och slutligen kolla om jag har fått några viktiga mejl sedan igår kväll?",
+            "expected_response_type": "multi_task_breakdown",
+            "expected_tools": ["weather.forecast", "calendar.create", "email.check"],
+            "max_response_time_ms": 2500
+          }
+        ],
+        "success_criteria": {
+          "response_time_ms": 2500,
+          "intent_confidence": 0.70,
+          "tool_success_rate": 0.60,
+          "conversation_completion": true
+        }
+      },
+
+      {
+        "id": "error_recovery_test",
+        "name": "Error Recovery and Graceful Handling",
+        "category": "resilience",
+        "priority": "HIGH",
+        "expected_intent": "ERROR.INVALID_INPUT",
+        "expected_route": "micro",
+        "conversation": [
+          {
+            "turn": 1,
+            "user": "asdjkl;asd 123 !@#$%",
+            "expected_response_type": "error_clarification",
+            "expected_tools": [],
+            "max_response_time_ms": 500
+          },
+          {
+            "turn": 2,
+            "user": "Ursäkta, jag menade: vad är klockan?",
+            "expected_response_type": "recovery_success",
+            "expected_tools": [],
+            "max_response_time_ms": 500
+          }
+        ],
+        "success_criteria": {
+          "response_time_ms": 500,
+          "intent_confidence": 0.85,
+          "conversation_completion": true
+        }
+      },
+
+      {
+        "id": "regional_dialect_test",
+        "name": "Regional Swedish Dialect",
+        "category": "edge_case",
+        "priority": "LOW",
+        "expected_intent": "TIME.CURRENT",
+        "expected_route": "micro",
+        "conversation": [
+          {
+            "turn": 1,
+            "user": "Vad är klocka nu då?",
+            "expected_response_type": "time_information",
+            "expected_tools": [],
+            "max_response_time_ms": 800
+          }
+        ],
+        "success_criteria": {
+          "response_time_ms": 800,
+          "intent_confidence": 0.70,
+          "conversation_completion": true
+        }
+      },
+
+      {
+        "id": "calendar_conflict_handling",
+        "name": "Calendar Conflict Resolution",
+        "category": "calendar",
+        "priority": "HIGH",
+        "expected_intent": "TIME.BOOK",
+        "expected_route": "planner",
+        "conversation": [
+          {
+            "turn": 1,
+            "user": "Boka möte med Erik imorgon kl 14",
+            "expected_response_type": "conflict_detection",
+            "expected_tools": ["calendar.check", "calendar.create"],
+            "max_response_time_ms": 1800
+          },
+          {
+            "turn": 2,
+            "user": "Flytta det till 15 istället",
+            "expected_response_type": "rescheduling_confirmation",
+            "expected_tools": ["calendar.create"],
+            "max_response_time_ms": 1500
+          }
+        ],
+        "success_criteria": {
+          "response_time_ms": 1800,
+          "intent_confidence": 0.80,
+          "tool_success_rate": 0.85,
+          "conversation_completion": true
+        }
+      },
+
+      {
+        "id": "memory_context_test",
+        "name": "Memory and Context Retention",
+        "category": "memory",
+        "priority": "MEDIUM",
+        "expected_intent": "MEMORY.RECALL",
+        "expected_route": "planner",
+        "conversation": [
+          {
+            "turn": 1,
+            "user": "Kom ihåg att jag gillar kaffe utan mjölk",
+            "expected_response_type": "memory_storage_confirmation",
+            "expected_tools": ["memory.store"],
+            "max_response_time_ms": 1000
+          },
+          {
+            "turn": 2,
+            "user": "Vad gillar jag för kaffe?",
+            "expected_response_type": "memory_recall_success",
+            "expected_tools": ["memory.recall"],
+            "max_response_time_ms": 800
+          }
+        ],
+        "success_criteria": {
+          "response_time_ms": 1000,
+          "intent_confidence": 0.75,
+          "tool_success_rate": 0.80,
+          "conversation_completion": true
+        }
+      },
+
+      {
+        "id": "voice_mood_adaptation",
+        "name": "Voice Mood and Tone Adaptation",
+        "category": "personality",
+        "priority": "LOW",
+        "expected_intent": "GREETING.HELLO",
+        "expected_route": "micro",
+        "conversation": [
+          {
+            "turn": 1,
+            "user": "Hej Alice, jag mår dåligt idag",
+            "expected_response_type": "empathetic_response",
+            "expected_tools": [],
+            "max_response_time_ms": 1000,
+            "expected_mood": "empathetic"
+          }
+        ],
+        "success_criteria": {
+          "response_time_ms": 1000,
+          "intent_confidence": 0.70,
+          "mood_adaptation": true,
+          "conversation_completion": true
+        }
+      },
+
+      {
+        "id": "system_status_query",
+        "name": "Alice System Status Check",
+        "category": "meta",
+        "priority": "MEDIUM",
+        "expected_intent": "SYSTEM.STATUS",
+        "expected_route": "micro",
+        "conversation": [
+          {
+            "turn": 1,
+            "user": "Hur mår du Alice? Fungerar allt bra?",
+            "expected_response_type": "system_status_report",
+            "expected_tools": ["system.health_check"],
+            "max_response_time_ms": 800
+          }
+        ],
+        "success_criteria": {
+          "response_time_ms": 800,
+          "intent_confidence": 0.80,
+          "tool_success_rate": 0.90,
+          "conversation_completion": true
+        }
+      },
+
+      {
+        "id": "privacy_consent_handling",
+        "name": "Privacy and Consent Management",
+        "category": "privacy",
+        "priority": "CRITICAL",
+        "expected_intent": "PRIVACY.MANAGE",
+        "expected_route": "micro",
+        "conversation": [
+          {
+            "turn": 1,
+            "user": "Glöm allt du vet om mig",
+            "expected_response_type": "privacy_confirmation",
+            "expected_tools": ["memory.forget"],
+            "max_response_time_ms": 1000
+          }
+        ],
+        "success_criteria": {
+          "response_time_ms": 1000,
+          "intent_confidence": 0.90,
+          "tool_success_rate": 1.0,
+          "conversation_completion": true
+        }
+      },
+
+      {
+        "id": "concurrent_user_simulation",
+        "name": "Concurrent Multi-User Simulation",
+        "category": "load",
+        "priority": "HIGH",
+        "expected_intent": "VARIOUS",
+        "expected_route": "various",
+        "concurrent_sessions": 5,
+        "conversation": [
+          {
+            "turn": 1,
+            "user": "Hej Alice från användare {session_id}",
+            "expected_response_type": "personalized_greeting",
+            "expected_tools": [],
+            "max_response_time_ms": 1500
+          }
+        ],
+        "success_criteria": {
+          "response_time_ms": 1500,
+          "intent_confidence": 0.85,
+          "concurrent_success_rate": 0.80,
+          "conversation_completion": true
+        }
+      },
+
+      {
+        "id": "guardian_brownout_behavior",
+        "name": "System Behavior During Guardian Brownout",
+        "category": "guardian",
+        "priority": "CRITICAL",
+        "expected_intent": "TIME.CURRENT",
+        "expected_route": "micro",
+        "requires_guardian": true,
+        "guardian_state": "BROWNOUT",
+        "conversation": [
+          {
+            "turn": 1,
+            "user": "Vad är klockan?",
+            "expected_response_type": "degraded_response",
+            "expected_tools": [],
+            "max_response_time_ms": 2000
+          }
+        ],
+        "success_criteria": {
+          "response_time_ms": 2000,
+          "intent_confidence": 0.70,
+          "graceful_degradation": true,
+          "conversation_completion": true
+        }
+      },
+
+      {
+        "id": "long_conversation_context",
+        "name": "Extended Conversation with Context",
+        "category": "conversation",
+        "priority": "MEDIUM",
+        "expected_intent": "CONVERSATION.EXTENDED",
+        "expected_route": "planner",
+        "conversation": [
+          {
+            "turn": 1,
+            "user": "Hej Alice, jag planerar en resa till Stockholm",
+            "expected_response_type": "travel_interest",
+            "expected_tools": [],
+            "max_response_time_ms": 800
+          },
+          {
+            "turn": 2,  
+            "user": "Vilken är den bästa tiden att åka?",
+            "expected_response_type": "travel_advice",
+            "expected_tools": ["weather.forecast"],
+            "max_response_time_ms": 1200
+          },
+          {
+            "turn": 3,
+            "user": "Boka tåg dit för nästa vecka",
+            "expected_response_type": "booking_attempt",
+            "expected_tools": ["travel.booking"],
+            "max_response_time_ms": 2000
+          },
+          {
+            "turn": 4,
+            "user": "Och kom ihåg att jag vill ha fönsterplats",
+            "expected_response_type": "preference_noted",
+            "expected_tools": ["memory.store"],
+            "max_response_time_ms": 1000
+          },
+          {
+            "turn": 5,
+            "user": "Tack för hjälpen!",
+            "expected_response_type": "conversation_closure",
+            "expected_tools": [],
+            "max_response_time_ms": 500
+          }
+        ],
+        "success_criteria": {
+          "response_time_ms": 2000,
+          "intent_confidence": 0.70,
+          "context_retention": 0.80,
+          "conversation_completion": true
+        }
+      }
+    ],
+
+    "test_execution_config": {
+      "max_concurrent_scenarios": 3,
+      "timeout_per_scenario_minutes": 5,
+      "retry_failed_scenarios": 1,
+      "guardian_health_check": true,
+      "log_all_interactions": true,
+      "generate_training_data": true
+    },
+
+    "success_thresholds": {
+      "overall_success_rate": 0.75,
+      "critical_scenarios_success_rate": 0.85,
+      "high_priority_success_rate": 0.80,
+      "response_time_p95_compliance": 0.90,
+      "guardian_compliance": 1.0
+    }
+  }
+}

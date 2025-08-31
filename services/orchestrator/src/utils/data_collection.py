@@ -19,9 +19,22 @@ _log_lock = Lock()
 _log_file = None
 _log_dir = None
 
-def initialize_logging(base_dir: str = "/data/telemetry"):
+def initialize_logging(base_dir: str = None):
     """Initialize thread-safe logging infrastructure"""
     global _log_file, _log_dir
+    
+    # Default to test-results directory in development
+    if base_dir is None:
+        # Find project root by looking for git directory
+        current_dir = pathlib.Path(__file__).parent
+        while current_dir.parent != current_dir:
+            if (current_dir / ".git").exists():
+                base_dir = str(current_dir / "test-results" / "telemetry")
+                break
+            current_dir = current_dir.parent
+        else:
+            # Fallback to relative path
+            base_dir = str(pathlib.Path(__file__).parent.parent.parent.parent / "test-results" / "telemetry")
     
     _log_dir = pathlib.Path(os.getenv("LOG_DIR", base_dir)) / time.strftime("%Y-%m-%d")
     _log_dir.mkdir(parents=True, exist_ok=True)

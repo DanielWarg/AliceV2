@@ -3,7 +3,7 @@ Orchestrator API Router
 Handles LLM routing and ingestion requests
 """
 
-from fastapi import APIRouter, HTTPException, Request, Depends
+from fastapi import APIRouter, HTTPException, Request, Response, Depends
 import structlog
 import time
 from typing import Dict, Any
@@ -95,6 +95,7 @@ def calculate_priority(request: IngestRequest, guardian_health: Dict[str, Any]) 
 @router.post("/ingest", response_model=IngestResponse)
 async def orchestrator_ingest(
     request: Request,
+    response: Response,
     ingest_request: IngestRequest,
     guardian: GuardianClient = Depends(get_guardian_client)
 ) -> IngestResponse:
@@ -182,7 +183,17 @@ async def orchestrator_ingest(
             "success": True
         })
         
-        return IngestResponse(
+        # Set route header for metrics middleware
+        route_name = {
+            ModelType.MICRO: "micro",
+            ModelType.PLANNER: "planner", 
+            ModelType.DEEP: "deep"
+        }.get(routed_model, "other")
+        
+        response.headers["X-Route"] = route_name
+        
+        # Build response
+        response_data = IngestResponse(
             session_id=ingest_request.session_id,
             accepted=True,
             model=routed_model,
@@ -191,6 +202,8 @@ async def orchestrator_ingest(
             reason=routing_reason,
             trace_id=getattr(request.state, "trace_id", None)
         )
+        
+        return response_data
         
     except HTTPException:
         raise

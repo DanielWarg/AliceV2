@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  guardian:
+    build:
+      context: ./services/guardian
+      dockerfile: Dockerfile
+    container_name: alice-guardian
+    ports:
+      - "8787:8787"
+    environment:
+      - GUARD_RAM_SOFT=0.80
+      - GUARD_RAM_HARD=0.92
+      - GUARD_RECOVER_RAM=0.70
+      - GUARD_CPU_SOFT=0.80
+      - GUARD_TEMP_C_HARD=85
+      - GUARD_BATTERY_PCT_HARD=25
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8787/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  orchestrator:
+    build:
+      context: ./services/orchestrator
+      dockerfile: Dockerfile
+    container_name: alice-orchestrator
+    ports:
+      - "8000:8000"
+    depends_on:
+      guardian:
+        condition: service_healthy
+    environment:
+      - API_BASE=http://orchestrator:8000
+      - GUARDIAN_HEALTH_URL=http://guardian:8787/health
+      - LOG_DIR=/data/telemetry
+    volumes:
+      - ./data/telemetry:/data/telemetry
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+
+  loadgen:
+    build:
+      context: ./services/loadgen
+      dockerfile: Dockerfile
+    container_name: alice-loadgen
+    depends_on:
+      orchestrator:
+        condition: service_started
+      guardian:
+        condition: service_healthy
+    environment:
+      - API_BASE=http://orchestrator:8000
+      - GUARD_HEALTH=http://guardian:8787/health
+      - SLO_BROWNOUT_TRIGGER_MS=150
+      - RECOVER_S=60
+      - MEMORY_BALLOON_GB=4
+      - CPU_THREADS=4
+      - DEEP_CONCURRENCY=2
+    volumes:
+      - ./data/telemetry:/data/telemetry
+    restart: "no"
+    profiles:
+      - loadtest
+
+volumes:
+  telemetry_data:
+    driver: local
