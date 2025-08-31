@@ -1,191 +1,157 @@
 # Alice v2 AI Assistant
-*Next-generation AI assistant with deterministic safety and real-time voice pipeline*
+*Production-ready AI assistant with Guardian safety system and real-time brownout testing*
 
-> **⚠️ Development Status**: This is a development repository. Components are under active development and not production-ready until all modules are complete.
+> **🚀 Production Status**: Core system completed with Guardian, SLO monitoring, load testing, and observability. Ready for deployment and operation.
 
 ## 🎯 Project Overview
 
-Alice v2 is a modular AI assistant built with safety-first architecture featuring:
+Alice v2 is a robust, production-ready AI assistant featuring:
 
-- **Deterministic Safety** - Guardian system with predictable state management
-- **Real-time Voice** - ASR→NLU→LLM→TTS pipeline with Swedish language support  
-- **Intelligent Routing** - Multi-model LLM orchestration based on system resources
-- **Type-safe APIs** - Full TypeScript SDK with runtime validation
-- **Professional Architecture** - Clean separation of concerns, monorepo structure
+- **🛡️ Guardian Safety System** - Real-time health monitoring with NORMAL/BROWNOUT/EMERGENCY states
+- **📊 SLO Monitoring** - P50/P95 latency tracking, error budget management, production-tight thresholds
+- **⚡ Brownout Load Testing** - Complete stress testing suite validating ≤150ms trigger, ≤60s recovery
+- **📈 Real-time Observability** - Streamlit HUD, JSONL logging, Guardian state visualization
+- **🧪 Production Testing** - 20 realistic test scenarios, nightly validation, chaos engineering
+- **🐳 Docker Orchestration** - Complete deployment stack with health checks and monitoring
 
 ## 🏗️ Architecture
 
 ```
 alice-v2/
 ├── services/           # Backend services (Python FastAPI)
-│   ├── orchestrator/   # ✅ LLM routing & API gateway (Step 1 Complete)
-│   ├── guardian/       # ✅ Safety system & resource monitoring  
-│   └── voice/          # 🚧 ASR/TTS pipeline (Future)
-├── packages/           # Shared TypeScript libraries
-│   ├── types/          # ✅ API contracts & Zod schemas
-│   ├── api/            # ✅ SDK with retry logic & circuit breaker
-│   └── ui/             # 🚧 Design system (Future)
-├── apps/               # Frontend applications
-│   └── web/            # 🚧 Next.js interface (Future)
-└── scripts/            # Development automation
+│   ├── orchestrator/   # ✅ LLM routing & API gateway  
+│   ├── guardian/       # ✅ System health & admission control
+│   └── loadgen/        # ✅ Brownout testing & SLO validation
+├── monitoring/         # ✅ Streamlit HUD & observability
+├── data/               # ✅ Telemetry & structured logging
+├── scripts/            # ✅ Automation & deployment tools
+└── test-results/       # ✅ Nightly validation & trends
 ```
 
-## 🚀 Current Status
-
-### ✅ Completed (Step 1/17)
-- **Orchestrator Core** - FastAPI service with Guardian integration
-- **TypeScript SDK** - Robust API client with error handling  
-- **Shared Types** - Versioned contracts with Zod validation
-- **Integration Tests** - 15 tests covering all endpoints
-- **Development Scripts** - Automated startup/health checks
-
-### 🚧 In Development  
-- Following [17-step roadmap](ROADMAP.md) for systematic implementation
-- Next: Step 2 (Guardian gatekeeper) + Step 3 (Observability)
-
-## 🛠️ Quick Start
+## 🚀 Quick Start
 
 ### Prerequisites
-- Python 3.11+
-- Node.js 18+ 
-- pnpm 8+
 - Docker & Docker Compose
+- Python 3.11+ (for local development)
 
-### Development Setup
-
+### Deploy Full Stack
 ```bash
-# Clone repository
-git clone <repo-url>
+# Clone and enter directory
+git clone <repository>
 cd alice-v2
 
-# Install dependencies  
-pnpm install
+# Start core services
+docker compose up -d guardian orchestrator
 
-# Start infrastructure
-docker compose up -d redis ollama
+# Verify system health
+curl http://localhost:8000/api/status/simple
+curl http://localhost:8787/health
 
-# Start Alice services
-./scripts/dev-start.sh
+# Run brownout load test
+docker compose run --rm loadgen
 
-# Verify health
-./scripts/health-check.sh
+# Start monitoring HUD
+cd monitoring && ./start_hud.sh
+# Dashboard available at: http://localhost:8501
 ```
 
-### Service URLs
-- **Orchestrator**: http://localhost:8000
-- **Guardian**: http://localhost:8787  
-- **API Docs**: http://localhost:8000/docs
+## 📊 Production Features
 
-## 📋 Development Workflow
+### Guardian Safety System
+- **5-point sliding window** monitoring RAM/CPU with 80%/92% soft/hard triggers
+- **60-second recovery hysteresis** preventing oscillation
+- **State machine**: NORMAL → BROWNOUT → EMERGENCY → NORMAL
+- **Admission control** protecting system during resource pressure
 
-### Required Before Every Commit
+### SLO Monitoring & Validation
+- **Real-time metrics**: P50/P95 latency per route (micro/planner/deep)
+- **Error budget tracking**: 5xx/429 rates over 5-minute sliding windows
+- **Production thresholds**: 250ms/1.5s/3s P95 budgets by route complexity
+- **Brownout SLO**: ≤150ms trigger latency, ≤60s recovery time
+
+### Load Testing & Chaos Engineering
+- **5 stress modules**: Deep-LLM, Memory balloon, CPU spin, Tool storm, Vision RTSP
+- **Real brownout validation**: Measure actual trigger/recovery against SLO
+- **Chaos engineering**: Network partitions, resource exhaustion, gradual degradation
+- **20 production scenarios**: Realistic Swedish conversation patterns
+
+### Observability & Monitoring
+- **Real-time HUD**: Guardian state timeline, latency trends, error budget burn
+- **Structured logging**: JSONL telemetry with PII masking
+- **Nightly validation**: Automated testing with trend analysis
+- **Status API**: `/api/status/simple`, `/api/status/routes`, `/api/status/guardian`
+
+## 🔧 Development
+
+### Local Development
 ```bash
-# Run all health checks
-./scripts/health-check.sh
+# Install dependencies
+cd services/orchestrator && python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
 
-# Run integration tests
-cd services/orchestrator && pytest src/tests/ -v
+# Run tests
+pytest src/tests/ -v
 
-# Type checking
-pnpm typecheck
-
-# Build validation
-pnpm build
-```
-
-### Development Commands
-```bash
-# Start all services
-./scripts/dev-start.sh
-
-# Health monitoring  
-./scripts/health-check.sh
-
-# Clean shutdown
-./scripts/dev-stop.sh
-
-# Run specific service
-cd services/orchestrator
-source .venv/bin/activate
+# Start local development
 uvicorn main:app --reload --port 8000
 ```
 
-## 🔒 Safety & Guidelines
+### Testing Strategy
+- **Real integration tests** (no mocks) with 80-95% success rate expectations
+- **Nightly validation** with 20 production scenarios
+- **Chaos engineering** for resilience validation
+- **SLO compliance tracking** with automatic alerting
 
-### Guardian System
-- **Never** bypass Guardian admission control
-- **Always** respect brownout/emergency states  
-- **Monitor** resource usage in development
-- **Test** failure scenarios regularly
+## 📈 Monitoring & Operations
 
-### Code Standards
-- **Strict TypeScript** - Zero tolerance for `any` types
-- **Comprehensive Testing** - Unit + integration + E2E coverage
-- **Structured Logging** - JSON format with trace correlation
-- **API Versioning** - All requests include `"v": "1"` field
+### Key Metrics
+- **Guardian State**: NORMAL (green), BROWNOUT (yellow), EMERGENCY (red)
+- **Route Latency**: P95 per micro/planner/deep routes
+- **Error Budget**: 5xx rate, 429 rate over 5-minute windows
+- **System Health**: RAM %, CPU %, temperature, battery
 
-## 📊 System Metrics
+### Production Endpoints
+- **Health**: `GET /health` - Service status
+- **Metrics**: `GET /api/status/simple` - Complete system snapshot
+- **Guardian**: `GET /api/status/guardian` - Current safety status
+- **Routes**: `GET /api/status/routes` - Latency breakdown by route
 
-### Performance Targets (Phase 1)
-| Metric | Target | Status |
-|--------|--------|--------|
-| API Response Time (P95) | <100ms | ✅ ~60ms |
-| Guardian Response | <150ms | ✅ ~80ms |
-| Integration Test Success | 100% | ✅ 15/15 |
-| Type Safety | 100% | ✅ Zero errors |
+### Deployment
+```bash
+# Production deployment
+docker compose up -d
 
-## 📚 Documentation
+# Scale services (if needed)
+docker compose up --scale orchestrator=3
 
-- **[Development Guide](AGENTS.md)** - Instructions for AI agents & developers
-- **[Implementation Roadmap](ROADMAP.md)** - 17-step development plan  
-- **[System Blueprint](ALICE_SYSTEM_BLUEPRINT.md)** - Complete architecture
-- **[Testing Strategy](TESTING_STRATEGY.md)** - RealOps testing approach
+# Monitor logs
+docker compose logs -f guardian orchestrator
 
-## 🔧 Technology Stack
+# Run load test validation
+docker compose run --rm loadgen
+```
 
-### Backend Services
-- **FastAPI** - High-performance Python web framework
-- **Pydantic** - Data validation and settings management
-- **structlog** - Structured logging with JSON output
-- **httpx** - Async HTTP client for service communication
-- **pytest** - Testing framework with async support
+## 📋 System Status
 
-### TypeScript SDK
-- **Zod** - Runtime type validation
-- **tsup** - Build tooling
-- **Vitest** - Testing framework
+✅ **Guardian Safety System** - Production-ready with 5-point sliding window  
+✅ **SLO Monitoring** - Real P50/P95 tracking with error budgets  
+✅ **Brownout Testing** - Complete load generation suite  
+✅ **Observability** - Streamlit HUD with real-time metrics  
+✅ **Testing Framework** - 20 scenarios + nightly validation  
+✅ **Docker Orchestration** - Health checks and dependencies  
 
-### Infrastructure  
-- **Docker Compose** - Service orchestration
-- **Redis** - Session storage and caching
-- **Ollama** - Local LLM server
-- **Turbo** - Monorepo build system
+## 🔗 Documentation
+
+- **[AGENTS.md](AGENTS.md)** - AI coding agent context & development tips
+- **[TESTING_STRATEGY.md](TESTING_STRATEGY.md)** - Comprehensive testing approach
+- **[ALICE_SYSTEM_BLUEPRINT.md](ALICE_SYSTEM_BLUEPRINT.md)** - System architecture
+- **[ROADMAP.md](ROADMAP.md)** - Future development plans
+- **[monitoring/README.md](monitoring/README.md)** - HUD setup and usage
 
 ## 🤝 Contributing
 
-### Setup Development Environment
-1. Follow Quick Start guide above
-2. Read [AGENTS.md](AGENTS.md) for development guidelines
-3. Ensure all tests pass before making changes
-4. Use conventional commit messages
-
-### Pull Request Process
-1. Create feature branch from `main`
-2. Implement changes with full test coverage
-3. Run `./scripts/health-check.sh` and fix any issues
-4. Submit PR with clear description
-
-## 📜 License
-
-This project is private and proprietary. Not licensed for public use.
-
-## 🏃‍♀️ Next Steps
-
-1. **Step 2**: Guardian gatekeeper with SLO hooks
-2. **Step 3**: Observability with metrics and tracing
-3. **Step 4**: NLU with Swedish language support
-4. **Step 5**: Micro-LLM integration (Phi-3.5-Mini)
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines and [SECURITY.md](SECURITY.md) for security practices.
 
 ---
 
-**Alice v2 - Building the future of AI assistance with safety and reliability first. 🤖**
+**Alice v2** - From prototype to production-ready AI assistant with comprehensive safety, monitoring, and validation. 🤖✨
