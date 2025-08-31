@@ -340,3 +340,42 @@ Alice v2 har gått från prototyp till **production-ready platform med komplett 
 ---
 
 **🤖 Status Updated by Claude Code - Alice v2 observability + eval-harness v1 complete! Ready for LLM integration! 🚀**
+
+---
+
+## ⚡ NEXT AI QUICKSTART (Dev-Proxy - No Mocks)
+
+Snabbstart för nästa AI-agent – allt via dev-proxy på port 18000.
+
+### 1) Starta stacken
+```bash
+scripts/dev_up.sh
+# eller
+docker compose up -d guardian orchestrator nlu dashboard dev-proxy
+```
+
+### 2) Sanity via proxy
+```bash
+curl -s http://localhost:18000/health | jq .
+curl -s http://localhost:18000/api/status/routes | jq .
+```
+
+### 3) NLU sanity (svenska)
+```bash
+curl -s -X POST http://localhost:18000/api/nlu/parse \
+  -H 'Content-Type: application/json' \
+  -d '{"v":"1","lang":"sv","text":"Boka möte med Anna imorgon kl 14","session_id":"nlu-sanity"}' | jq .
+```
+
+### 4) E2E verify (autonomt)
+```bash
+./scripts/auto_verify.sh || (echo "FAIL – se data/tests/summary.json" && exit 1)
+cat data/tests/summary.json | jq .
+open http://localhost:18000/hud
+```
+
+### 5) NLU v1 – DoD (nästa steg)
+- `/api/nlu/parse` P95 ≤ 80 ms (5 min fönster)
+- Intent-accuracy ≥ 92% (svensk svit)
+- Slots: ISO för uttryck som “imorgon 14:00”
+- Orchestrator sätter `X-Route-Hint` → route syns i P95 per route
