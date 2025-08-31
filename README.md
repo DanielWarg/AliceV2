@@ -35,25 +35,24 @@ alice-v2/
 - Docker & Docker Compose
 - Python 3.11+ (for local development)
 
-### Deploy Full Stack
+### Deploy Full Stack (Docker-only + dev-proxy)
 ```bash
 # Clone and enter directory
 git clone <repository>
 cd alice-v2
 
-# Start core services
-docker compose up -d guardian orchestrator
+# Start core services via proxy
+docker compose up -d guardian orchestrator nlu dashboard dev-proxy
 
-# Verify system health
-curl http://localhost:8000/api/status/simple
-curl http://localhost:8787/health
+# Verify via proxy
+curl http://localhost:18000/health
+curl http://localhost:18000/api/status/simple
 
 # Run autonomous E2E test (validates everything)
 ./scripts/auto_verify.sh
 
-# Start monitoring HUD
-cd monitoring && ./start_hud.sh
-# Dashboard available at: http://localhost:8501
+# HUD via proxy
+open http://localhost:18000/hud
 ```
 
 ## 📊 Production Features

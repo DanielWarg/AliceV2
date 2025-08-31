@@ -101,7 +101,7 @@
 
 ## Phase 2: Language Understanding (Vecka 2-3) 🔄 IN PROGRESS
 
-### Step 4: NLU (svenska) – multilingual-e5-small + xlm-roberta-xnli + regex
+### Step 4: NLU (svenska) – multilingual-e5-small + xlm-roberta-xnli + regex (IN PROGRESS)
 **Varför**: Intent/slots styr alla flöden.
 
 **Owner**: ML Team  
@@ -112,9 +112,9 @@
 - Memory usage <500MB
 
 **Definition of Done**:
-- [ ] Svenska intent classification fungerar
-- [ ] Slot extraction för datum/tid/personer
-- [ ] Confidence scores kalibrerade
+- [ ] Svenska intent classification fungerar (≥92%)
+- [ ] Slot extraction för datum/tid/personer (ISO-normaliserat)
+- [ ] Confidence scores kalibrerade, env-styrda thresholds
 - [ ] Fallback till regelbaserad parsing
 - [ ] Evaluation harness med svenska test cases
 

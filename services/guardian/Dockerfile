@@ -5,6 +5,7 @@ WORKDIR /app
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     gcc \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
@@ -14,6 +15,7 @@ RUN pip install fastapi uvicorn psutil
 COPY main.py .
 
 # Health check
+# Healthcheck via curl (endpoint implementerad i app)
 HEALTHCHECK --interval=10s --timeout=5s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:8787/health || exit 1
 

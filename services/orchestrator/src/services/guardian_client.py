@@ -4,6 +4,7 @@ Handles communication with Alice v2 Guardian safety system
 """
 
 import httpx
+import os
 import structlog
 from typing import Dict, Any, Optional
 import asyncio
@@ -16,8 +17,19 @@ logger = structlog.get_logger(__name__)
 class GuardianClient:
     """Client for Guardian safety system integration"""
     
-    def __init__(self, base_url: str = "http://localhost:8787", timeout: float = 0.5):
+    def __init__(self, base_url: str | None = None, timeout: float = 0.5):
+        # Prefer env configuration inside Docker network
+        env_health = os.getenv("GUARDIAN_HEALTH_URL")  # e.g. http://guardian:8787/health
+        env_base = os.getenv("GUARDIAN_BASE")  # e.g. http://guardian:8787
+        if base_url is None:
+            if env_base:
+                base_url = env_base
+            elif env_health:
+                base_url = env_health.rsplit("/health", 1)[0]
+            else:
+                base_url = "http://guardian:8787"
         self.base_url = base_url
+        self._health_url = env_health  # may be absolute URL
         self.timeout = timeout
         self._client: Optional[httpx.AsyncClient] = None
         self._last_health: Optional[Dict[str, Any]] = None
@@ -61,7 +73,9 @@ class GuardianClient:
             if not self._client:
                 await self.initialize()
                 
-            response = await self._client.get("/health")
+            # If full health URL provided, use it; otherwise hit /health on base
+            url = self._health_url or "/health"
+            response = await self._client.get(url)
             response.raise_for_status()
             
             health_data = response.json()

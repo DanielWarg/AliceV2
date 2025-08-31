@@ -2,6 +2,10 @@
 encode gzip
 log
 
+# Ensure NLU path is routed before generic /api/* (no path strip)
+@nlu path /api/nlu/*
+reverse_proxy @nlu nlu:9002
+
 # API and health routed to orchestrator
 @api path /api/* /health /metrics
 reverse_proxy @api orchestrator:8000
@@ -17,7 +21,5 @@ route /hud* {
 }
 
 # NLU proxy
-@nlup path /api/nlu/* /health-nlu
-reverse_proxy @nlup nlu:9002
 
 

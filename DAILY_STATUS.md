@@ -1,10 +1,10 @@
 # Alice v2 - Daily Status & Next Steps
-*Uppdaterad: 2025-08-31 - LLM Integration v1 Complete*
+*Uppdaterad: 2025-08-31 - Kvällsrapport*
 
 ## 🎯 **DAGENS SLUTSTATUS**
 
 ### ✅ **VAD VI HAR GJORT IDAG**
-**LLM Integration v1 är KOMPLETT och committad!**
+Kort: Docker-only dev-proxy, Observability+HUD klart, `/metrics` exponerad, NLU-service scaffoldad, curator/scheduler pipeline på plats (scheduler optional), Orchestrator↔Guardian URL fix, NLU-proxy routing, auto_verify uppdaterad.
 
 1. **🤖 LLM Drivers Implementerade:**
    - `services/orchestrator/src/llm/ollama_client.py` - Ollama client med timeouts
@@ -25,75 +25,59 @@
    - Planner degraded under resurstryck
    - Micro always available
 
-5. **🔧 Port Management Scripts:**
-   - `scripts/ports-kill.sh` - Städar portar 8000, 8787, 8501
-   - `scripts/start-llm-test.sh` - Startar tjänster och testar LLM integration
+5. **🐳 Docker-only + Dev-proxy (18000):**
+   - `ops/Caddyfile` - Proxy till orchestrator/guardian/HUD/NLU
+   - `scripts/dev_up.sh`/`dev_down.sh` - Deterministisk start/stop
+   - Compose: inga host-portar utom proxy; healthchecks på alla services
 
-6. **📚 Dokumentation Uppdaterad:**
-   - `AGENTS.md` - Uppdaterad med LLM integration v1
-   - `PORT_MANAGEMENT_ISSUE.md` - Förklarar port problem och lösningar
-   - Alla .md filer uppdaterade med aktuell status
+6. **📈 Observability & Metrics:**
+   - `/metrics` endpoint i Orchestrator (Prometheus-format)
+   - P50/P95 per route via middleware; tool-felklass som counters
+   - Turn events inkluderar RAM-peak, energy Wh, input/output/lang
+
+7. **🧠 NLU-service (svenska) – v1 scaffold:**
+   - `services/nlu/` (FastAPI) med `/api/nlu/parse`
+   - Baseline intents/slots (regex + dateparser), proxy routing via `/api/nlu/*`
+   - Orchestrator anropar NLU och sätter `X-Intent`/`X-Route-Hint`
+
+8. **🪄 Dataloop (curator):**
+   - `services/curator/` + `ops/schedule.cron` (indexer commented)
+   - `scripts/auto_verify.sh` kör curator och sparar summary
 
 ## 🚨 **AKTUELLT PROBLEM**
 
-### **Port Management Issue:**
-- Terminalen fastnar när vi försöker starta tjänster
-- Portarna 8000, 8787, 8501 är blockerade av kvarhängande processer
-- uvicorn/python processer kör i bakgrunden och blockerar TTY
-- Docker containers kan exponera samma portar som lokala processer
+Alla tidigare portkrockar eliminerade med Docker-only + dev-proxy. Scheduler-bild är optional (kan lämnas av tillsvidare). Ollama tillagd i compose; modell-pull och val av mikro-modell sker i nästa steg.
 
-### **Vad som behöver lösas:**
-1. Starta tjänster utan att terminalen fastnar
-2. Testa LLM integration mot riktiga endpoints
-3. Validera routing logic (micro/planner/deep)
-4. Köra auto_verify.sh för SLO compliance
-5. Verifiera Guardian integration
+### **Kvarstående småsaker:**
+1. NLU ONNX (multilingual-e5-small) + XNLI (int8) och threshold-tuning
+2. Micro-LLM (Phi-mini) via Ollama (modell-pull och sanity)
+3. Scheduler-image (cron) kan bytas till publik om nattkörningar önskas i dev
 
-## 🚀 **NÄSTA AI AGENT - VAD DU SKA GÖRA**
+## 🚀 **NÄSTA STEG (IMORGON)**
 
-### **Steg 1: Starta Rent (Efter Datorstart)**
+### **Steg 1: Start & Sanity**
 ```bash
-# 1. Städa portar först
-./scripts/ports-kill.sh
-
-# 2. Verifiera att portar är fria
-lsof -i:8000,8787,8501
-
-# 3. Starta tjänster med script
-./scripts/start-llm-test.sh
+scripts/dev_up.sh
+curl -s http://localhost:18000/health | jq .
+curl -s http://localhost:18000/api/status/routes | jq .
 ```
 
-### **Steg 2: Testa LLM Integration**
+### **Steg 2: NLU + Mikro-LLM**
 ```bash
-# Testa micro route
-curl -s -X POST http://localhost:8000/api/orchestrator/chat \
-  -H 'Content-Type: application/json' \
-  -d '{"v":"1","session_id":"test","lang":"sv","message":"Hej Alice, vad är klockan?"}' \
-  | jq .
+# NLU sanity
+curl -s -X POST http://localhost:18000/api/nlu/parse -H 'Content-Type: application/json' \
+  -d '{"v":"1","lang":"sv","text":"Boka möte med Anna imorgon kl 14","session_id":"nlu-sanity"}' | jq .
 
-# Testa planner route  
-curl -s -X POST http://localhost:8000/api/orchestrator/chat \
-  -H 'Content-Type: application/json' \
-  -d '{"v":"1","session_id":"test","lang":"sv","message":"Boka möte med Anna imorgon kl 14"}' \
-  | jq .
-
-# Testa deep route
-curl -s -X POST http://localhost:8000/api/orchestrator/chat \
-  -H 'Content-Type: application/json' \
-  -d '{"v":"1","session_id":"test","lang":"sv","message":"Analysera följande dataset och ge mig en detaljerad rapport"}' \
-  | jq .
+# (Efter modell-pull) mikro-LLM sanity
+curl -s -X POST http://localhost:18000/api/orchestrator/chat -H 'Content-Type: application/json' \
+  -d '{"v":"1","session_id":"dev","lang":"sv","message":"Hej Alice, vad är klockan?"}' | jq .
 ```
 
 ### **Steg 3: Validera System**
 ```bash
-# Kör autonom E2E test
 ./scripts/auto_verify.sh
-
-# Kontrollera SLO compliance
 cat data/tests/summary.json | jq .
-
-# Verifiera Guardian integration
-curl -s http://localhost:8787/health | jq .
+open http://localhost:18000/hud
 ```
 
 ### **Steg 4: Nästa Prioritet**

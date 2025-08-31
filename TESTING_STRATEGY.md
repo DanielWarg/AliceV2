@@ -5,7 +5,7 @@
 
 Alice v2 implements a **RealOps testing approach** - no mocks, only real data flows through actual services. The testing system runs continuously, validates SLOs, detects regressions, applies safe remediation, and generates actionable reports.
 
-**🚀 CURRENT STATUS**: Complete observability + eval-harness v1 system operational with autonomous E2E testing
+**🚀 CURRENT STATUS**: Complete observability + eval-harness v1 operational; NLU-service live via proxy; orchestrator/guardian behind dev-proxy; curator optional in nightly.
 
 **Philosophy**: Test with real Swedish voice data, actual SMTP/CalDAV integration, live RTSP streams, and production-equivalent LLM workloads. When issues arise, automatically fix them or create detailed issue reports.
 
@@ -57,7 +57,7 @@ test-results/                     # ✅ Historical test data
 - **Energy per turn (Wh)**: Energikonsumtion med konfigurerbar baseline
 - **Tool error classification**: Timeout/5xx/429/schema/other kategorisering med Prometheus metrics
 - **Structured turn events**: Komplett JSONL logging med alla metrics och metadata
-- **Real-time dashboard**: Streamlit HUD visar RAM, energi, latens, tool-fel och Guardian status
+- **Real-time dashboard**: Streamlit HUD (proxat via /hud) visar RAM, energi, latens, tool-fel och Guardian status
 
 ### Legacy Components (Replaced)
 ```
@@ -79,9 +79,9 @@ services/tester/                  # ❌ OBSOLETE - Replaced by services/eval/
 - **ASR Partial**: <300ms after speech detected
 - **ASR Final**: <800ms after silence
 - **Guardian Response**: <150ms state transitions ✅
-- **Micro LLM**: <250ms first token ✅
-- **Planner LLM**: <900ms first token, <1500ms complete ✅
-- **Deep LLM**: <1800ms first token, <3000ms complete ✅
+- **Micro LLM**: <250ms first token (modell-pull nästa steg)
+- **Planner LLM**: <900ms first token, <1500ms complete (modell-pull nästa steg)
+- **Deep LLM**: <1800ms first token, <3000ms complete (aktiveras efter Guardian-validering)
 - **TTS Cached**: <120ms audio generation
 - **TTS Uncached**: <800ms (≤40 characters)
 

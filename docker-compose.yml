@@ -41,6 +41,7 @@ services:
       - API_BASE=http://orchestrator:8000
       - GUARDIAN_HEALTH_URL=http://guardian:8787/health
       - LOG_DIR=/data/telemetry
+      - OLLAMA_HOST=http://ollama:11434
     volumes:
       - ./data/telemetry:/data/telemetry
     healthcheck:
@@ -121,6 +122,18 @@ services:
       - ./ops/Caddyfile:/etc/caddy/Caddyfile:ro
     restart: unless-stopped
 
+  ollama:
+    image: ollama/ollama:latest
+    container_name: alice-ollama
+    restart: unless-stopped
+    volumes:
+      - ollama:/root/.ollama
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:11434/api/tags"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
   nlu:
     build:
       context: ./
@@ -168,4 +181,6 @@ services:
 
 volumes:
   telemetry_data:
+    driver: local
+  ollama:
     driver: local
