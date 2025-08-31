@@ -1,0 +1,32 @@
+{
+  "name": "@alice/api",
+  "version": "1.0.0",
+  "description": "Alice v2 API SDK with TypeScript and Zod validation",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@alice/types": "workspace:*",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "tsup": "^8.0.1",
+    "vitest": "^1.0.4",
+    "@types/node": "^20.10.5"
+  },
+  "publishConfig": {
+    "access": "restricted"
+  }
+}

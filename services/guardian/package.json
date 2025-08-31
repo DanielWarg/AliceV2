@@ -1,0 +1,27 @@
+{
+  "name": "@alice/guardian-service",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Alice Guardian System - Deterministic safety controller",
+  "main": "src/guardian.py",
+  "scripts": {
+    "start": "python3 src/guardian.py",
+    "dev": "python3 src/guardian.py --dev",
+    "test": "python3 -m pytest src/tests/",
+    "lint": "ruff check src/",
+    "format": "ruff format src/"
+  },
+  "dependencies": {
+    "@alice/types": "workspace:*"
+  },
+  "devDependencies": {
+    "ruff": "^0.5.0",
+    "pytest": "^8.0.0"
+  },
+  "keywords": [
+    "guardian",
+    "safety",
+    "monitoring",
+    "resource-management"
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "name": "alice",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Alice AI Assistant - Clean Architecture V2",
+  "workspaces": [
+    "apps/*",
+    "services/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "start": "turbo run start",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "test:e2e": "turbo run test:e2e",
+    "type-check": "turbo run type-check",
+    "clean": "turbo run clean && rm -rf node_modules .turbo",
+    "migration:validate": "node scripts/validate-migration.js",
+    "guardian:start": "cd services/guardian && python src/guardian.py",
+    "guardian:dev": "cd services/guardian && python src/guardian.py --dev"
+  },
+  "devDependencies": {
+    "turbo": "^1.13.0",
+    "@changesets/cli": "^2.27.0",
+    "prettier": "^3.3.0",
+    "eslint": "^8.57.0"
+  },
+  "packageManager": "pnpm@8.15.0"
+}

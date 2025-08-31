@@ -1,0 +1,268 @@
+# Alice v2 Real-Data Test Scenarios
+# No mocks - only real Swedish data, live services, and actual tool integrations
+
+version: 1
+scenarios:
+  # === ASR/Voice Real Data Testing ===
+  - id: asr_clean_swedish
+    kind: voice
+    description: "Clean Swedish speech recognition accuracy"
+    data_glob: "/data/processed/clean/*.wav"
+    ground_truth: "/data/processed/clean/transcripts.tsv"
+    measure: [wer, asr_partial_ms, asr_final_ms]
+    slo_targets:
+      wer: 0.07  # ≤7% WER for clean audio
+      asr_final_ms: 800  # <800ms final transcript
+      
+  - id: asr_cafe_noise_swedish  
+    kind: voice
+    description: "Swedish speech recognition with café background noise"
+    mix_with_noise: "/data/noise/cafe.wav"
+    snr_db: 10
+    data_glob: "/data/processed/clean/*.wav"
+    ground_truth: "/data/processed/clean/transcripts.tsv"
+    measure: [wer, asr_partial_ms, asr_final_ms]
+    slo_targets:
+      wer: 0.11  # ≤11% WER with background noise
+      asr_final_ms: 800
+
+  - id: asr_traffic_noise_swedish
+    kind: voice  
+    description: "Swedish speech recognition with traffic noise"
+    mix_with_noise: "/data/noise/traffic.wav"
+    snr_db: 8
+    data_glob: "/data/processed/clean/*.wav"
+    ground_truth: "/data/processed/clean/transcripts.tsv"
+    measure: [wer, asr_partial_ms, asr_final_ms]
+    slo_targets:
+      wer: 0.11
+      asr_final_ms: 800
+
+  - id: vad_sensitivity_test
+    kind: voice
+    description: "Voice activity detection accuracy"
+    data_glob: "/data/processed/vad_test/*.wav"
+    ground_truth: "/data/processed/vad_test/segments.json"
+    measure: [vad_precision, vad_recall, vad_start_delay_ms]
+    slo_targets:
+      vad_precision: 0.90
+      vad_recall: 0.85
+      vad_start_delay_ms: 300
+
+  # === Swedish NLU Testing ===
+  - id: nlu_swedish_intents
+    kind: nlu
+    description: "Swedish intent classification accuracy"
+    prompts_file: "/data/prompts/intents_sv.jsonl"
+    measure: [intent_accuracy, slot_f1, nlu_latency_ms]
+    slo_targets:
+      intent_accuracy: 0.92  # ≥92% intent accuracy
+      slot_f1: 0.80
+      nlu_latency_ms: 80
+
+  - id: nlu_swedish_regional
+    kind: nlu
+    description: "Regional Swedish dialect handling" 
+    prompts_file: "/data/prompts/regional_sv.jsonl"
+    measure: [intent_accuracy, confidence_calibration]
+    slo_targets:
+      intent_accuracy: 0.88  # Slightly lower for dialects
+      confidence_calibration: 0.75
+
+  - id: nlu_out_of_scope
+    kind: nlu
+    description: "Out-of-scope utterance detection"
+    prompts_file: "/data/prompts/out_of_scope_sv.jsonl"
+    measure: [oos_precision, oos_recall]
+    slo_targets:
+      oos_precision: 0.85
+      oos_recall: 0.80
+
+  # === LLM Integration - Real Tool Usage ===
+  - id: email_send_real
+    kind: planner
+    description: "Send real email using sandbox SMTP account"
+    prompt: "Skicka ett mail till test@sandbox.example.com med ämnet 'Testmail från Alice'"
+    tools: [email.send]
+    validate_real_delivery: true
+    measure: [tool_success, llm_first_ms, llm_full_ms, e2e_ms]
+    slo_targets:
+      tool_success: 0.95
+      llm_first_ms: 900
+      e2e_ms: 2000
+
+  - id: calendar_create_real
+    kind: planner
+    description: "Create real calendar event in sandbox CalDAV"
+    prompt: "Skapa en påminnelse för möte med Alice-teamet imorgon klockan 14:00"
+    tools: [calendar.create]
+    validate_real_creation: true
+    measure: [tool_success, llm_first_ms, e2e_ms]
+    slo_targets:
+      tool_success: 0.95
+      e2e_ms: 2000
+
+  - id: home_assistant_real
+    kind: planner
+    description: "Control Home Assistant devices in dev environment"
+    prompt: "Sätt vardagsrumsbelysningen till 75% och ändra färgen till varmvit"
+    tools: [home_assistant.light_control]
+    validate_real_state_change: true
+    measure: [tool_success, device_response_ms]
+    slo_targets:
+      tool_success: 0.95
+      device_response_ms: 1500
+
+  - id: weather_api_real
+    kind: planner
+    description: "Fetch real weather data for Stockholm"
+    prompt: "Vad är vädret i Stockholm just nu?"
+    tools: [weather.current]
+    validate_real_data: true
+    measure: [tool_success, data_freshness_minutes, api_latency_ms]
+    slo_targets:
+      tool_success: 0.98
+      data_freshness_minutes: 30
+      api_latency_ms: 1000
+
+  # === Deep LLM Reasoning ===
+  - id: deep_summarize_swedish
+    kind: deep
+    description: "Summarize long Swedish article with deep reasoning"
+    doc_file: "/data/prompts/long_swedish_article.txt"
+    task: "Sammanfatta artikeln i 3 punkter och ge en kort analys av huvudargumenten"
+    measure: [llm_first_ms, llm_full_ms, output_quality_score]
+    slo_targets:
+      llm_first_ms: 1800  # <1.8s first token
+      llm_full_ms: 3000   # <3s complete response
+      output_quality_score: 0.80
+
+  - id: deep_reasoning_complex
+    kind: deep
+    description: "Complex reasoning task requiring multiple steps"
+    doc_file: "/data/prompts/complex_problem.txt"
+    task: "Analysera problemet steg för steg och föreslå en lösningsstrategi"
+    measure: [reasoning_steps, logical_coherence, llm_first_ms, llm_full_ms]
+    slo_targets:
+      llm_first_ms: 1800
+      llm_full_ms: 3000
+      logical_coherence: 0.85
+
+  # === Vision Pipeline - Real RTSP ===
+  - id: vision_rtsp_live
+    kind: vision
+    description: "Live RTSP stream object detection"
+    camera_url: "env:CAMERA_RTSP_URL"
+    duration_seconds: 30
+    measure: [first_detection_ms, objects_detected, reconnect_resilience]
+    slo_targets:
+      first_detection_ms: 350  # <350ms first object detection
+      objects_detected: 1      # At least 1 object detected
+      reconnect_resilience: 0.95
+
+  - id: vision_still_image
+    kind: vision
+    description: "Still image analysis and description"
+    image_file: "/data/images/test_scene.jpg"
+    task: "Beskriv vad du ser i bilden på svenska"
+    measure: [processing_ms, description_quality, object_accuracy]
+    slo_targets:
+      processing_ms: 2000
+      description_quality: 0.80
+      object_accuracy: 0.90
+
+  # === Chaos Engineering ===
+  - id: chaos_network_glitch
+    kind: chaos
+    description: "Network timeout during tool operation"
+    target: "email.send"
+    chaos_action: "network_timeout_5s"
+    expect_behavior: "graceful_degradation_to_draft"
+    measure: [recovery_time_ms, user_feedback_quality, data_loss]
+    slo_targets:
+      recovery_time_ms: 10000  # <10s recovery
+      user_feedback_quality: 0.90
+      data_loss: 0.0  # No data should be lost
+
+  - id: chaos_guardian_emergency
+    kind: chaos
+    description: "Guardian emergency state handling"
+    chaos_action: "simulate_high_memory_usage"
+    expect_behavior: "brownout_activation"
+    measure: [guardian_response_ms, service_degradation, recovery_time_s]
+    slo_targets:
+      guardian_response_ms: 150
+      service_degradation: "graceful"
+      recovery_time_s: 45
+
+  - id: chaos_tool_outage
+    kind: chaos
+    description: "Email server outage with fallback"
+    target: "email.send"
+    chaos_action: "blackhole_smtp_10s"
+    expect_fallback: "draft.create"
+    measure: [fallback_activation_ms, user_notification, success_alternative]
+    slo_targets:
+      fallback_activation_ms: 5000
+      user_notification: "clear_explanation"
+      success_alternative: true
+
+  - id: chaos_rtsp_disconnect
+    kind: chaos
+    description: "RTSP camera disconnection handling"
+    target: "vision_system"
+    chaos_action: "disconnect_rtsp_stream"
+    expect_fallback: "snapshot_mode"
+    measure: [disconnect_detection_ms, fallback_switch_ms, user_notification]
+    slo_targets:
+      disconnect_detection_ms: 2000
+      fallback_switch_ms: 1000
+      user_notification: "informative"
+
+  # === E2E User Scenarios ===
+  - id: e2e_morning_briefing
+    kind: e2e
+    description: "Complete morning briefing workflow"
+    user_utterance: "Hej Alice, ge mig en morgonuppdatering"
+    expected_flow: [asr, nlu, weather.get, calendar.today, email.unread_count, tts]
+    measure: [total_latency_ms, user_satisfaction, info_completeness]
+    slo_targets:
+      total_latency_ms: 5000  # Complete briefing in <5s
+      user_satisfaction: 0.85
+      info_completeness: 0.90
+
+  - id: e2e_schedule_meeting
+    kind: e2e
+    description: "Schedule meeting with email confirmation"
+    user_utterance: "Boka ett möte med Sara imorgon klockan 15 och skicka en inbjudan"
+    expected_flow: [asr, nlu, calendar.create, email.send, tts]
+    measure: [total_latency_ms, booking_success, email_delivered]
+    slo_targets:
+      total_latency_ms: 8000  # Complex workflow <8s
+      booking_success: 0.98
+      email_delivered: true
+
+  - id: e2e_voice_conversation
+    kind: e2e
+    description: "Multi-turn voice conversation with memory"
+    conversation_file: "/data/conversations/multi_turn_sv.json"
+    measure: [conversation_coherence, memory_recall, response_relevance]
+    slo_targets:
+      conversation_coherence: 0.85
+      memory_recall: 0.80
+      response_relevance: 0.90
+
+# === Test Configuration ===
+test_config:
+  cycle_interval_minutes: 15  # Run full test suite every 15 minutes
+  max_parallel_scenarios: 3   # Limit concurrent testing
+  remediation_enabled: true   # Enable automatic fixes
+  
+  # Data freshness requirements
+  dataset_max_age_days: 30    # Refresh voice data monthly
+  noise_profile_max_age_days: 7  # Update noise samples weekly
+  
+  # Remediation safety limits
+  max_remediations_per_cycle: 1
+  remediation_cooldown_minutes: 30
+  auto_rollback_after_failures: 2
