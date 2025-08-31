@@ -1,7 +1,7 @@
 # ASGI-middleware: mäter verklig latens + status och matar METRICS
 from starlette.middleware.base import BaseHTTPMiddleware
 from time import perf_counter
-from metrics import METRICS
+from .metrics import METRICS
 
 class MetricsMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):

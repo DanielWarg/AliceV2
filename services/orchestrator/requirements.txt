@@ -1,17 +1,25 @@
-# Alice v2 Orchestrator Dependencies
-# Core FastAPI framework
+# Core dependencies
 fastapi==0.115.6
 uvicorn[standard]==0.34.0
 pydantic==2.10.4
 
-# HTTP client for Guardian communication
+# HTTP client
 httpx==0.28.1
 
-# Configuration and logging
+# Environment and logging
 python-dotenv==1.0.1
 structlog==25.4.0
 
-# Development and testing
+# System monitoring
+psutil==6.1.0
+
+# Authentication and security
+python-multipart==0.0.6
+
+# Metrics and monitoring
+prometheus-client==0.19.0
+
+# Testing
 pytest==8.3.4
 pytest-asyncio==0.24.0
 pytest-cov==6.0.0
@@ -20,5 +28,5 @@ pytest-cov==6.0.0
 ruff==0.8.5
 mypy==1.14.1
 
-# OpenAPI documentation
+# API generation
 openapi-generator-cli==7.10.0

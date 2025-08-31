@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Alice v2 Orchestrator Service
-Main FastAPI application entry point
+Main FastAPI application entry point - production-ready with operational polish
 """
 
 from fastapi import FastAPI, Request, HTTPException
@@ -16,6 +16,9 @@ from src.middleware.logging import setup_logging, LoggingMiddleware
 from src.services.guardian_client import GuardianClient
 from src.mw_metrics import MetricsMiddleware
 from src.status_router import router as fix_status_router
+from src.health import check_readiness, check_liveness, wait_for_readiness
+from src.shutdown import shutdown_manager, setup_signal_handlers, request_context, shutdown_app
+from src.privacy import privacy_manager
 
 # Setup structured logging
 setup_logging()
@@ -26,20 +29,37 @@ guardian_client = GuardianClient()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    """Application lifespan management"""
-    logger.info("Alice v2 Orchestrator starting up", version="1.0.0")
-    
-    # Initialize Guardian client
-    await guardian_client.initialize()
-    
-    # Health check Guardian connection
-    guardian_status = await guardian_client.get_health()
-    logger.info("Guardian connection established", status=guardian_status)
-    
-    yield
-    
-    logger.info("Alice v2 Orchestrator shutting down")
-    await guardian_client.close()
+    """Application lifespan management with graceful shutdown"""
+    try:
+        # Setup signal handlers
+        setup_signal_handlers()
+        
+        logger.info("Alice v2 Orchestrator starting up", version="1.0.0")
+        
+        # Initialize Guardian client
+        await guardian_client.initialize()
+        
+        # Wait for readiness
+        ready = await wait_for_readiness(timeout_s=30.0)
+        if not ready:
+            logger.error("Service failed to become ready")
+            raise RuntimeError("Service not ready")
+        
+        # Health check Guardian connection
+        guardian_status = await guardian_client.get_health()
+        logger.info("Guardian connection established", status=guardian_status)
+        
+        yield
+        
+        logger.info("Alice v2 Orchestrator shutting down")
+        
+        # Perform graceful shutdown
+        await shutdown_app()
+        await guardian_client.close()
+        
+    except Exception as e:
+        logger.error("Failed to start Orchestrator", error=str(e))
+        raise
 
 # Create FastAPI application
 app = FastAPI(
@@ -66,25 +86,55 @@ app.add_middleware(LoggingMiddleware)
 # Add metrics middleware for real latency/status tracking
 app.add_middleware(MetricsMiddleware)
 
-# Health check endpoint
+# Health check endpoints
 @app.get("/health")
 async def health():
-    """Service health check with dependency status"""
+    """Liveness check - just process alive"""
+    return check_liveness()
+
+@app.get("/ready")
+async def ready():
+    """Readiness check - dependencies ready for traffic"""
+    readiness = await check_readiness()
+    
+    if not readiness["ready"]:
+        raise HTTPException(status_code=503, detail="Service not ready")
+    
+    return readiness
+
+# Privacy endpoints
+@app.post("/api/privacy/forget")
+async def forget_user(request: Request):
+    """Right to forget - delete user data"""
     try:
-        # Check Guardian status
-        guardian_health = await guardian_client.get_health()
+        body = await request.json()
+        user_id = body.get("user_id")
+        session_id = body.get("session_id")
         
+        if not user_id:
+            raise HTTPException(status_code=400, detail="user_id required")
+        
+        # Track request during shutdown
+        async with request_context(f"forget_{user_id}"):
+            deletion_report = privacy_manager.forget_user(user_id, session_id)
+            return deletion_report
+            
+    except Exception as e:
+        logger.error("Forget user failed", error=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/privacy/cleanup")
+async def cleanup_expired_data():
+    """Clean up expired data based on retention policies"""
+    try:
+        cleaned_items = privacy_manager.cleanup_expired_data()
         return {
-            "status": "healthy",
-            "service": "orchestrator",
-            "version": "1.0.0",
-            "dependencies": {
-                "guardian": guardian_health.get("state", "unknown")
-            }
+            "cleaned_items": cleaned_items,
+            "timestamp": "2025-08-31T19:30:00Z"
         }
     except Exception as e:
-        logger.error("Health check failed", error=str(e))
-        raise HTTPException(status_code=503, detail="Service unhealthy")
+        logger.error("Data cleanup failed", error=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 # Include API routers
 app.include_router(chat.router, prefix="/api", tags=["chat"])
@@ -102,7 +152,9 @@ async def root():
         "service": "Alice v2 Orchestrator",
         "version": "1.0.0",
         "docs": "/docs",
-        "health": "/health"
+        "health": "/health",
+        "ready": "/ready",
+        "privacy": "/api/privacy"
     }
 
 if __name__ == "__main__":

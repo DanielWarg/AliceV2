@@ -1,0 +1,22 @@
+[
+  {"id":"fast_time","kind":"chat","text":"Hej Alice, vad är klockan?","expect":{"route":"micro"}},
+  {"id":"planner_meeting","kind":"chat","text":"Boka möte med Anna imorgon kl 14","expect":{"route":"planner"}},
+  {"id":"weather_today","kind":"chat","text":"Vad är vädret idag?","expect":{"route":"planner"}},
+  {"id":"deep_summary","kind":"chat","text":"Sammanfatta följande text på 1500 ord: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.","expect":{"route":"deep"}},
+  {"id":"simple_greeting","kind":"chat","text":"Hej! Hur mår du?","expect":{"route":"micro"}},
+  {"id":"calendar_check","kind":"chat","text":"Vad har jag på schemat idag?","expect":{"route":"planner"}},
+  {"id":"email_compose","kind":"chat","text":"Skriv ett mail till chefen om projektstatus","expect":{"route":"planner"}},
+  {"id":"complex_analysis","kind":"chat","text":"Analysera följande dataset och ge mig en detaljerad rapport med rekommendationer för framtida strategier","expect":{"route":"deep"}},
+  {"id":"quick_math","kind":"chat","text":"Vad är 15 + 27?","expect":{"route":"micro"}},
+  {"id":"task_reminder","kind":"chat","text":"Påminn mig att ringa tandläkaren imorgon","expect":{"route":"planner"}},
+  {"id":"research_paper","kind":"chat","text":"Skriv en akademisk artikel om artificiell intelligens och dess påverkan på samhället","expect":{"route":"deep"}},
+  {"id":"simple_question","kind":"chat","text":"Vilken dag är det idag?","expect":{"route":"micro"}},
+  {"id":"travel_planning","kind":"chat","text":"Planera en resa till Stockholm nästa månad","expect":{"route":"planner"}},
+  {"id":"code_review","kind":"chat","text":"Granska denna kod och föreslå förbättringar","expect":{"route":"deep"}},
+  {"id":"basic_info","kind":"chat","text":"Vad är vädret?","expect":{"route":"micro"}},
+  {"id":"meeting_notes","kind":"chat","text":"Skapa mötesanteckningar från dagens presentation","expect":{"route":"planner"}},
+  {"id":"data_analysis","kind":"chat","text":"Analysera denna data och skapa visualiseringar","expect":{"route":"deep"}},
+  {"id":"simple_task","kind":"chat","text":"Vad är klockan?","expect":{"route":"micro"}},
+  {"id":"project_planning","kind":"chat","text":"Skapa en projektplan för Q1 2024","expect":{"route":"planner"}},
+  {"id":"complex_research","kind":"chat","text":"Genomför en omfattande litteraturstudie om maskininlärning och framtida trender","expect":{"route":"deep"}}
+]

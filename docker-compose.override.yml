@@ -1,0 +1,36 @@
+services:
+  guardian:
+    build:
+      context: ./services/guardian
+      dockerfile: Dockerfile
+    container_name: guardian
+    ports: ["8787:8787"]
+    environment:
+      - GUARD_RAM_SOFT=0.80
+      - GUARD_RAM_HARD=0.92
+      - GUARD_RECOVER_RAM=0.70
+      - GUARD_CPU_SOFT=0.80
+      - GUARD_TEMP_C_HARD=85
+      - GUARD_BATTERY_PCT_HARD=25
+    restart: unless-stopped
+
+  orchestrator:
+    environment:
+      - GUARDIAN_HEALTH_URL=http://guardian:8787/health
+
+  loadgen:
+    build: ./services/loadgen
+    environment:
+      - API_BASE=http://orchestrator:8000
+      - GUARD_HEALTH=http://guardian:8787/health
+      - SLO_BROWNOUT_TRIGGER_MS=150
+      - RECOVER_S=60
+      - MEMORY_BALLOON_GB=4
+      - DEEP_CONCURRENCY=2
+      - BURST_SECONDS=45
+    depends_on:
+      orchestrator: { condition: service_started }
+      guardian: { condition: service_started }
+    volumes:
+      - ./data/telemetry:/data/telemetry
+    restart: "no"

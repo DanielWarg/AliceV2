@@ -1,0 +1,51 @@
+groups:
+- name: alice-slo
+  interval: 30s
+  rules:
+  - alert: AliceP95FastOverBudget
+    expr: alice_route_p95_ms{route="micro"} > 250 for: 3m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Fast P95 över budget >3m"
+      runbook: "runbooks/slo.md#fast"
+
+  - alert: AliceP95DeepOverBudget
+    expr: (alice_route_p95_ms{route="deep"} > 3000) for: 3m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Deep P95 över 3000ms"
+      runbook: "runbooks/slo.md#deep"
+
+  - alert: AliceErrorBudget429
+    expr: alice_error_rate{code="429"} > 0.05 for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "429-rate >5% i 5m"
+      runbook: "runbooks/errors.md#429"
+
+  - alert: AliceGuardianEmergency
+    expr: alice_guardian_state{state="EMERGENCY"} == 1 for: 10s
+    labels:
+      severity: critical
+    annotations:
+      summary: "Guardian i EMERGENCY >10s"
+      runbook: "runbooks/guardian.md#emergency"
+
+  - alert: AliceGuardianBrownout
+    expr: alice_guardian_state{state="BROWNOUT"} == 1 for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Guardian i BROWNOUT >2m"
+      runbook: "runbooks/guardian.md#brownout"
+
+  - alert: AliceErrorRate5xx
+    expr: alice_error_rate{code="5xx"} > 0.02 for: 3m
+    labels:
+      severity: critical
+    annotations:
+      summary: "5xx-rate >2% i 3m"
+      runbook: "runbooks/errors.md#5xx"

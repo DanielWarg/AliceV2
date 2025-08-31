@@ -6,11 +6,16 @@ Handles LLM routing and ingestion requests
 from fastapi import APIRouter, HTTPException, Request, Response, Depends
 import structlog
 import time
-from typing import Dict, Any
+import json
+from typing import Dict, Any, List
+from datetime import datetime
 
-from ..models.api import IngestRequest, IngestResponse, APIError, ModelType
+from ..models.api import IngestRequest, IngestResponse, APIError, ModelType, ChatRequest, ChatResponse
 from ..services.guardian_client import GuardianClient
 from ..middleware.logging import get_logger_with_trace
+from ..utils.ram_peak import ram_peak_mb
+from ..utils.energy import EnergyMeter
+from ..utils.tool_errors import record_tool_call, classify_tool_error
 
 router = APIRouter()
 
@@ -20,6 +25,63 @@ guardian_client = GuardianClient()
 async def get_guardian_client() -> GuardianClient:
     """Dependency to get Guardian client"""
     return guardian_client
+
+def log_turn_event(
+    trace_id: str,
+    session_id: str,
+    route: str,
+    e2e_first_ms: int,
+    e2e_full_ms: int,
+    ram_peak: Dict[str, float],
+    tool_calls: List[Dict[str, Any]],
+    energy_wh: float,
+    guardian_state: str,
+    pii_masked: bool = True,
+    consent_scopes: List[str] = None,
+    rag_data: Dict[str, Any] = None
+) -> None:
+    """Logga komplett turn event enligt observability standard"""
+    
+    logger = structlog.get_logger(__name__)
+    logger.info("log_turn_event called", trace_id=trace_id, session_id=session_id)
+    
+    turn_event = {
+        "v": "1",
+        "ts": datetime.utcnow().isoformat() + "Z",
+        "trace_id": trace_id,
+        "session_id": session_id,
+        "route": route,
+        "e2e_first_ms": e2e_first_ms,
+        "e2e_full_ms": e2e_full_ms,
+        "ram_peak_mb": ram_peak,
+        "tool_calls": tool_calls,
+        "rag": rag_data or {"top_k": 0, "hits": 0},
+        "energy_wh": energy_wh,
+        "guardian_state": guardian_state,
+        "pii_masked": pii_masked,
+        "consent_scopes": consent_scopes or ["basic_logging"]
+    }
+    
+    # Skriv till JSONL fil
+    try:
+        import os
+        # Använd absolut sökväg från projekt root
+        telemetry_dir = os.path.abspath("../../data/telemetry")
+        logger.info("Telemetry dir", telemetry_dir=telemetry_dir)
+        os.makedirs(telemetry_dir, exist_ok=True)
+        
+        today = datetime.utcnow().strftime("%Y-%m-%d")
+        filename = os.path.join(telemetry_dir, f"events_{today}.jsonl")
+        logger.info("Writing to file", filename=filename)
+        
+        with open(filename, "a", encoding="utf-8") as f:
+            f.write(json.dumps(turn_event) + "\n")
+        
+        logger.info("Turn event written successfully")
+            
+    except Exception as e:
+        # Fallback till logging om filskrivning misslyckas
+        logger.error("Failed to write turn event to JSONL", error=str(e), turn_event=turn_event)
 
 def route_request(request: IngestRequest) -> ModelType:
     """
@@ -269,4 +331,279 @@ async def orchestrator_health(
             "status": "degraded",
             "error": str(e),
             "guardian_status": "error"
+        }
+
+@router.post("/chat")
+async def orchestrator_chat(
+    request: Request,
+    response: Response,
+    chat_request: ChatRequest,
+    guardian: GuardianClient = Depends(get_guardian_client)
+) -> ChatResponse:
+    """
+    Chat completion endpoint
+    
+    Processes chat messages and returns AI responses.
+    Phase 1: Always routes to micro model with Guardian protection.
+    """
+    logger = get_logger_with_trace(request, __name__)
+    start_time = time.time()
+    
+    # Start energy meter
+    energy_meter = EnergyMeter()
+    energy_meter.start()
+    
+    # Get trace ID for observability
+    trace_id = getattr(request.state, "trace_id", "unknown")
+    
+    logger.info(
+        "Orchestrator chat request",
+        session_id=chat_request.session_id,
+        message_length=len(chat_request.message),
+        preferred_model=chat_request.model,
+        trace_id=trace_id
+    )
+    
+    # Track tool calls
+    tool_calls: List[Dict[str, Any]] = []
+    
+    try:
+        # Get Guardian health status
+        try:
+            guardian_health = await guardian.get_health()
+            guardian_state = guardian_health.get("state", "UNKNOWN")
+            logger.info("Guardian health received", state=guardian_state)
+        except Exception as e:
+            logger.error("Guardian health check failed", error=str(e))
+            guardian_health = {"state": "ERROR"}
+            guardian_state = "ERROR"
+        
+        # Check admission control
+        try:
+            admitted = await guardian.check_admission({
+                "type": "chat",
+                "session_id": chat_request.session_id,
+                "message_length": len(chat_request.message),
+                "preferred_model": chat_request.model
+            })
+        except Exception as e:
+            logger.error("Admission control failed", error=str(e))
+            admitted = True  # Fail-open
+        
+        if not admitted:
+            retry_after = guardian.get_retry_after_seconds(guardian_health)
+            
+            logger.warning(
+                "Chat request blocked by Guardian",
+                session_id=chat_request.session_id,
+                guardian_state=guardian_state,
+                retry_after=retry_after
+            )
+            
+            raise HTTPException(
+                status_code=429,
+                detail=APIError.create(
+                    code="RATE_LIMITED",
+                    message="Too many requests, please try again later",
+                    retry_after=retry_after,
+                    trace_id=trace_id
+                ).model_dump(),
+                headers={"Retry-After": str(retry_after)}
+            )
+        
+        # Route to appropriate model (Phase 1: always micro)
+        model_used = "micro"
+        logger.info("Model selected", model_used=model_used)
+        
+        # Simulate tool calls for observability
+        logger.info("Starting tool calls simulation...")
+        tool_call_result = record_tool_call(
+            tool_name="calendar.create",
+            success=True,
+            error_class=None,
+            latency_ms=150
+        )
+        tool_calls.append(tool_call_result)
+        logger.info("Tool call recorded", tool_calls_count=len(tool_calls))
+        
+        # Get RAM peak and energy consumption
+        ram_peak = ram_peak_mb()
+        energy_wh = energy_meter.stop()
+        
+        # Calculate response latency
+        response_latency_ms = int((time.time() - start_time) * 1000)
+        
+        logger.info(
+            "Orchestrator chat completed",
+            session_id=chat_request.session_id,
+            model_used=model_used,
+            response_latency_ms=response_latency_ms,
+            ram_peak_mb=ram_peak,
+            energy_wh=energy_wh,
+            tool_calls_count=len(tool_calls),
+            guardian_state=guardian_state
+        )
+        
+        # Log turn event for observability
+        logger.info("About to log turn event", session_id=chat_request.session_id)
+        log_turn_event(
+            trace_id=trace_id,
+            session_id=chat_request.session_id,
+            route=model_used,
+            e2e_first_ms=response_latency_ms,
+            e2e_full_ms=response_latency_ms,
+            ram_peak_mb=ram_peak,
+            tool_calls=tool_calls,
+            energy_wh=energy_wh,
+            guardian_state=guardian_state
+        )
+        logger.info("Turn event logged successfully", trace_id=trace_id)
+        
+        # Set route header for metrics middleware
+        response.headers["X-Route"] = model_used
+        
+        # Build response
+        response_data = ChatResponse(
+            session_id=chat_request.session_id,
+            timestamp=int(time.time() * 1000),
+            trace_id=trace_id,
+            response=f"Phase 1: {model_used.title()} LLM response to '{chat_request.message[:50]}{'...' if len(chat_request.message) > 50 else ''}' (Guardian: {guardian_state})",
+            model_used=model_used,
+            latency_ms=response_latency_ms,
+            metadata=None
+        )
+        
+        return response_data
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        energy_wh = energy_meter.stop()
+        response_latency_ms = int((time.time() - start_time) * 1000)
+        
+        # Record error as tool call
+        error_class = classify_tool_error(None, e)
+        tool_call_result = record_tool_call(
+            tool_name="orchestrator.chat",
+            success=False,
+            error_class=error_class,
+            latency_ms=response_latency_ms
+        )
+        tool_calls.append(tool_call_result)
+        
+        # Log turn event even on error
+        try:
+            log_turn_event(
+                trace_id=trace_id,
+                session_id=chat_request.session_id,
+                route="error",
+                e2e_first_ms=response_latency_ms,
+                e2e_full_ms=response_latency_ms,
+                ram_peak_mb=ram_peak_mb(),
+                tool_calls=tool_calls,
+                energy_wh=energy_wh,
+                guardian_state=guardian_state
+            )
+        except Exception as log_error:
+            logger.error("Failed to log turn event on error", error=str(log_error))
+        
+        logger.error(
+            "Orchestrator chat failed",
+            session_id=chat_request.session_id,
+            error=str(e),
+            response_latency_ms=response_latency_ms,
+            exc_info=True
+        )
+        
+        raise HTTPException(
+            status_code=500,
+            detail=APIError.create(
+                code="INTERNAL_ERROR",
+                message="An internal error occurred while processing chat request",
+                details=str(e) if str(e) else "Unknown error",
+                trace_id=trace_id
+            ).model_dump()
+        )
+
+@router.post("/run")
+async def orchestrator_run(
+    request: Request,
+    response: Response,
+    ingest_request: IngestRequest,
+    guardian: GuardianClient = Depends(get_guardian_client)
+) -> IngestResponse:
+    """
+    Run endpoint - alias for /ingest for compatibility
+    
+    This endpoint provides the same functionality as /ingest
+    but with a more intuitive name for execution requests.
+    """
+    # Delegate to the main ingest endpoint
+    return await orchestrator_ingest(request, response, ingest_request, guardian)
+
+@router.get("/tools")
+async def orchestrator_tools(
+    guardian: GuardianClient = Depends(get_guardian_client)
+):
+    """
+    Get available tools and their status
+    
+    Returns information about available tools, their health,
+    and current capabilities based on Guardian state.
+    """
+    try:
+        guardian_health = await guardian.get_health()
+        
+        # Phase 1: Basic tool registry
+        available_tools = {
+            "micro_llm": {
+                "name": "Micro LLM",
+                "type": "text_generation",
+                "status": "available",
+                "model": "phi-3.5-mini",
+                "capabilities": ["simple_qa", "basic_conversation", "swedish_support"],
+                "guardian_restrictions": []
+            },
+            "planner_llm": {
+                "name": "Planner LLM", 
+                "type": "text_generation",
+                "status": "planned",
+                "model": "qwen2.5-moe",
+                "capabilities": ["planning", "tool_use", "complex_reasoning"],
+                "guardian_restrictions": ["requires_normal_state"]
+            },
+            "deep_llm": {
+                "name": "Deep LLM",
+                "type": "text_generation", 
+                "status": "planned",
+                "model": "llama-3.1",
+                "capabilities": ["deep_analysis", "research", "creative_writing"],
+                "guardian_restrictions": ["requires_normal_state", "low_memory_usage"]
+            }
+        }
+        
+        # Apply Guardian state restrictions
+        guardian_state = guardian_health.get("state", "NORMAL")
+        if guardian_state in ["BROWNOUT", "EMERGENCY"]:
+            # Restrict to micro only during resource pressure
+            available_tools["planner_llm"]["status"] = "restricted"
+            available_tools["deep_llm"]["status"] = "restricted"
+            available_tools["micro_llm"]["guardian_restrictions"].append("only_available_model")
+        
+        return {
+            "service": "orchestrator",
+            "status": "healthy",
+            "guardian_state": guardian_state,
+            "available_tools": available_tools,
+            "phase": "1",
+            "total_tools": len(available_tools)
+        }
+        
+    except Exception as e:
+        return {
+            "service": "orchestrator",
+            "status": "degraded", 
+            "error": str(e),
+            "available_tools": {},
+            "guardian_state": "unknown"
         }

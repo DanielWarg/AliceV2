@@ -71,6 +71,37 @@ services:
     profiles:
       - loadtest
 
+  eval:
+    build:
+      context: ./services/eval
+      dockerfile: Dockerfile
+    container_name: alice-eval
+    depends_on:
+      orchestrator:
+        condition: service_started
+      guardian:
+        condition: service_healthy
+    environment:
+      - API_BASE=http://orchestrator:8000
+    volumes:
+      - ./data/tests:/data/tests
+    restart: "no"
+    profiles:
+      - eval
+
+  dashboard:
+    build:
+      context: ./monitoring
+      dockerfile: Dockerfile
+    container_name: alice-dashboard
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
+    profiles:
+      - dashboard
+
 volumes:
   telemetry_data:
     driver: local

@@ -1,0 +1,12 @@
+{
+  "TIME.REMIND": ["calendar.create", "todo.create"],
+  "COMM.EMAIL": ["email.send", "email.draft"],
+  "VISION.DETECT": ["vision.rtsp", "vision.snapshot"],
+  "INFO.SUMMARIZE": ["planner.summarize", "deep.summarize"],
+  "SEARCH.WEB": ["web.search", "web.browse"],
+  "CALC.COMPUTE": ["math.calculate", "math.estimate"],
+  "TRANSLATE.TEXT": ["translate.swedish", "translate.english"],
+  "WEATHER.CHECK": ["weather.current", "weather.forecast"],
+  "NEWS.FETCH": ["news.latest", "news.trending"],
+  "MUSIC.PLAY": ["music.spotify", "music.search"]
+}
