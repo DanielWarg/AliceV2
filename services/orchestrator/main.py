@@ -4,14 +4,14 @@ Alice v2 Orchestrator Service
 Main FastAPI application entry point - production-ready with operational polish
 """
 
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import structlog
 import httpx
 from typing import AsyncGenerator
 
-from src.routers import chat, orchestrator, status
+from src.routers import chat, orchestrator, status, feedback
 from src.middleware.logging import setup_logging, LoggingMiddleware
 from src.services.guardian_client import GuardianClient
 from src.mw_metrics import MetricsMiddleware
@@ -102,6 +102,16 @@ async def ready():
     
     return readiness
 
+# Prometheus metrics endpoint (optional in dev)
+try:
+    from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+
+    @app.get("/metrics")
+    async def metrics():
+        return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
+except Exception:
+    pass
+
 # Privacy endpoints
 @app.post("/api/privacy/forget")
 async def forget_user(request: Request):
@@ -140,6 +150,7 @@ async def cleanup_expired_data():
 app.include_router(chat.router, prefix="/api", tags=["chat"])
 app.include_router(orchestrator.router, prefix="/api/orchestrator", tags=["orchestrator"])
 app.include_router(status.router, prefix="/api/status", tags=["status"])
+app.include_router(feedback.router)
 
 # Include Fix Pack v1 status router with real metrics
 app.include_router(fix_status_router)

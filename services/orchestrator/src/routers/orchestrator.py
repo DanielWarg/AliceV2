@@ -4,6 +4,7 @@ Handles LLM routing and ingestion requests with LLM integration v1
 """
 
 from fastapi import APIRouter, HTTPException, Request, Response, Depends
+import httpx
 import structlog
 import time
 import json
@@ -44,7 +45,10 @@ def log_turn_event(
     guardian_state: str,
     pii_masked: bool = True,
     consent_scopes: List[str] = None,
-    rag_data: Dict[str, Any] = None
+    rag_data: Dict[str, Any] = None,
+    input_text: str | None = None,
+    output_text: str | None = None,
+    lang: str | None = None,
 ) -> None:
     """Logga komplett turn event enligt observability standard"""
     
@@ -65,14 +69,16 @@ def log_turn_event(
         "energy_wh": energy_wh,
         "guardian_state": guardian_state,
         "pii_masked": pii_masked,
-        "consent_scopes": consent_scopes or ["basic_logging"]
+        "consent_scopes": consent_scopes or ["basic_logging"],
+        "input_text": input_text,
+        "output_text": output_text,
+        "lang": lang or "sv",
     }
     
     # Skriv till JSONL fil
     try:
-        import os
-        # Använd absolut sökväg från projekt root
-        telemetry_dir = os.path.abspath("../../data/telemetry")
+        # Använd konfigurerad katalog (monteras i Docker via LOG_DIR)
+        telemetry_dir = os.getenv("LOG_DIR", "/data/telemetry")
         logger.info("Telemetry dir", telemetry_dir=telemetry_dir)
         os.makedirs(telemetry_dir, exist_ok=True)
         
@@ -398,6 +404,31 @@ async def orchestrator_chat(
     tool_calls: List[Dict[str, Any]] = []
     
     try:
+        # --- NLU pre-parse (fail-open) ---
+        nlu_route_hint = None
+        nlu_intent_label = None
+        nlu_slots = None
+        try:
+            nlu_payload = {
+                "v": "1",
+                "text": chat_request.message,
+                "lang": getattr(chat_request, "lang", "sv"),
+                "session_id": chat_request.session_id,
+            }
+            with httpx.Client(timeout=0.08) as client:
+                nlu_resp = client.post("http://nlu:9002/api/nlu/parse", json=nlu_payload)
+                if nlu_resp.status_code == 200:
+                    nlu_json = nlu_resp.json()
+                    nlu_route_hint = nlu_json.get("route_hint")
+                    intent = (nlu_json.get("intent") or {})
+                    nlu_intent_label = intent.get("label")
+                    nlu_slots = nlu_json.get("slots") or {}
+                    if nlu_intent_label:
+                        response.headers["X-Intent"] = nlu_intent_label
+                    if nlu_route_hint:
+                        response.headers["X-Route-Hint"] = nlu_route_hint
+        except Exception as nlu_err:
+            logger.warning("NLU parse failed or timed out", error=str(nlu_err))
         # Get Guardian health status
         try:
             guardian_health = await guardian.get_health()
@@ -441,8 +472,10 @@ async def orchestrator_chat(
                 headers={"Retry-After": str(retry_after)}
             )
         
-        # Route to appropriate model using LLM Integration v1
+        # Route to appropriate model using LLM Integration v1 (+ NLU hint)
         route = route_request(chat_request)
+        if nlu_route_hint in {"micro", "planner", "deep"}:
+            route = nlu_route_hint
         logger.info("Route selected", route=route)
         
         # Generate response based on route
@@ -546,12 +579,15 @@ async def orchestrator_chat(
                 "fallback_used": fallback_used,
                 "blocked_by_guardian": blocked_by_guardian,
                 "tokens_used": llm_response.get("tokens_used", 0) if llm_response else 0
-            }
+            },
+            input_text=chat_request.message,
+            output_text=(llm_response or {}).get("text", ""),
+            lang=(getattr(chat_request, "lang", None) or "sv"),
         )
         logger.info("Turn event logged successfully", trace_id=trace_id)
         
         # Set route header for metrics middleware
-        response.headers["X-Route"] = model_used
+        response.headers["X-Route"] = route
         
         # Build response with LLM integration
         if llm_response:
@@ -567,7 +603,8 @@ async def orchestrator_chat(
             "fallback_used": fallback_used,
             "blocked_by_guardian": blocked_by_guardian,
             "tokens_used": llm_response.get("tokens_used", 0) if llm_response else 0,
-            "planner_execution": planner_execution
+            "planner_execution": planner_execution,
+            "nlu": {"intent": nlu_intent_label, "slots": nlu_slots} if (nlu_intent_label or nlu_slots) else None,
         }
         
         response_data = ChatResponse(

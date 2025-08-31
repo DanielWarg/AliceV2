@@ -4,7 +4,7 @@ services:
       context: ./services/guardian
       dockerfile: Dockerfile
     container_name: guardian
-    ports: ["8787:8787"]
+    # no host port exposure in docker-only dev
     environment:
       - GUARD_RAM_SOFT=0.80
       - GUARD_RAM_HARD=0.92

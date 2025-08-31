@@ -20,3 +20,4 @@
   {"id":"project_planning","kind":"chat","text":"Skapa en projektplan för Q1 2024","expect":{"route":"planner"}},
   {"id":"complex_research","kind":"chat","text":"Genomför en omfattande litteraturstudie om maskininlärning och framtida trender","expect":{"route":"deep"}}
 ]
+

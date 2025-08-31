@@ -1,4 +1,3 @@
-version: '3.8'
 
 services:
   guardian:
@@ -6,8 +5,11 @@ services:
       context: ./services/guardian
       dockerfile: Dockerfile
     container_name: alice-guardian
-    ports:
-      - "8787:8787"
+    restart: unless-stopped
+    init: true
+    tty: false
+    stdin_open: false
+    stop_grace_period: 15s
     environment:
       - GUARD_RAM_SOFT=0.80
       - GUARD_RAM_HARD=0.92
@@ -19,20 +21,22 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:8787/health"]
       interval: 10s
       timeout: 5s
-      retries: 3
+      retries: 20
       start_period: 10s
-    restart: unless-stopped
 
   orchestrator:
     build:
       context: ./services/orchestrator
       dockerfile: Dockerfile
     container_name: alice-orchestrator
-    ports:
-      - "8000:8000"
     depends_on:
       guardian:
         condition: service_healthy
+    restart: unless-stopped
+    init: true
+    tty: false
+    stdin_open: false
+    stop_grace_period: 15s
     environment:
       - API_BASE=http://orchestrator:8000
       - GUARDIAN_HEALTH_URL=http://guardian:8787/health
@@ -43,9 +47,8 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 10s
       timeout: 5s
-      retries: 3
+      retries: 20
       start_period: 15s
-    restart: unless-stopped
 
   loadgen:
     build:
@@ -94,13 +97,74 @@ services:
       context: ./monitoring
       dockerfile: Dockerfile
     container_name: alice-dashboard
-    ports:
-      - "8501:8501"
+    restart: unless-stopped
+    init: true
+    tty: false
+    stdin_open: false
+    stop_grace_period: 15s
     volumes:
       - ./data:/data
-    restart: unless-stopped
     profiles:
       - dashboard
+
+  dev-proxy:
+    image: caddy:2
+    container_name: alice-dev-proxy
+    depends_on:
+      orchestrator:
+        condition: service_healthy
+      guardian:
+        condition: service_healthy
+    ports:
+      - "18000:80"
+    volumes:
+      - ./ops/Caddyfile:/etc/caddy/Caddyfile:ro
+    restart: unless-stopped
+
+  nlu:
+    build:
+      context: ./
+      dockerfile: services/nlu/Dockerfile
+    container_name: alice-nlu
+    restart: unless-stopped
+    environment:
+      - NLU_LANG=sv
+      - NLU_SIM_THRESH=0.62
+      - NLU_MARGIN_MIN=0.06
+      - NLU_XNLI_ENABLE=true
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:9002/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 20
+
+  curator:
+    build:
+      context: ./
+      dockerfile: services/curator/Dockerfile
+    container_name: alice-curator
+    environment:
+      - LOG_DIR=/data/telemetry
+      - DATASETS_DIR=/data/datasets
+    volumes:
+      - ./data/telemetry:/data/telemetry
+      - ./data/datasets:/data/datasets
+    profiles:
+      - curator
+
+  scheduler:
+    image: browt/supercronic:latest
+    container_name: alice-scheduler
+    restart: unless-stopped
+    depends_on:
+      orchestrator:
+        condition: service_started
+    volumes:
+      - ./ops/schedule.cron:/etc/crontab:ro
+      - ./:/workspace
+      - ./logs:/workspace/logs
+      - ./data:/workspace/data
+      - /var/run/docker.sock:/var/run/docker.sock
 
 volumes:
   telemetry_data:

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-API_BASE="${API_BASE:-http://localhost:8000}"
-GUARD_BASE="${GUARD_BASE:-http://localhost:8787}"
-DASH_URL="${DASH_URL:-http://localhost:8501}"
+API_BASE="${API_BASE:-http://localhost:18000}"
+GUARD_BASE="${GUARD_BASE:-http://localhost:18000}"
+DASH_URL="${DASH_URL:-http://localhost:18000}"
 ART_DIR="${ART_DIR:-data/tests}"
 TEL_DIR="${TEL_DIR:-data/telemetry}"
 SLO_FAST_P95=${SLO_FAST_P95:-250}
@@ -14,17 +14,12 @@ GUARD_RECOVER_S=${GUARD_RECOVER_S:-60}
 
 mkdir -p "$ART_DIR"
 
-echo "▶️  Startar tjänster via docker compose (om de inte redan kör)…"
-docker compose up -d orchestrator guardian || true
-# dashboard valfritt
-docker compose up -d dashboard || true
+echo "▶️  Startar tjänster via docker compose (docker-only)…"
+docker compose up -d guardian orchestrator dev-proxy || true
 
-echo "⏳ Väntar på hälsa (orchestrator, guardian)…"
-for i in {1..30}; do
+echo "⏳ Väntar på hälsa (via dev-proxy)…"
+for i in {1..40}; do
   curl -fsS "$API_BASE/health" >/dev/null 2>&1 && break || sleep 1
-done
-for i in {1..30}; do
-  curl -fsS "$GUARD_BASE/health" >/dev/null 2>&1 && break || sleep 1
 done
 
 echo "✅ Hälsa OK. Samlar basstatus…"
@@ -92,3 +87,6 @@ if(fails.length || rate < 80){ process.exit(1) }
 NODE
 
 echo "🎉 AUTO-VERIFY PASS. Sammanfattning finns i $ART_DIR/summary.json"
+
+echo "🪄 Kör curator för gårdagen…"
+docker compose run --rm curator > "$ART_DIR/curator_summary.json" || true

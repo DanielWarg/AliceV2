@@ -1,0 +1,7 @@
+# 01:30 – eval-harness
+30 1 * * * /bin/sh -lc "cd /workspace && ./scripts/auto_verify.sh >> logs/auto_verify.log 2>&1"
+# 02:10 – curator (bygger datasets & exports)
+10 2 * * * /bin/sh -lc "docker compose run --rm curator >> logs/curator.log 2>&1"
+# 02:25 – indexera RAG (tillfälligt avstängt tills indexer-service finns)
+#25 2 * * * /bin/sh -lc "docker compose run --rm indexer >> logs/indexer.log 2>&1 || true"
+

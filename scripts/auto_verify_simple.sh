@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-API_BASE="${API_BASE:-http://localhost:8000}"
-GUARD_BASE="${GUARD_BASE:-http://localhost:8787}"
+API_BASE="${API_BASE:-http://localhost:18000}"
+GUARD_BASE="${GUARD_BASE:-http://localhost:18000}"
 ART_DIR="${ART_DIR:-data/tests}"
 TEL_DIR="${TEL_DIR:-data/telemetry}"
 SLO_FAST_P95=${SLO_FAST_P95:-250}
@@ -11,12 +11,9 @@ SLO_DEEP_FULL_P95=${SLO_DEEP_FULL_P95:-3000}
 
 mkdir -p "$ART_DIR"
 
-echo "⏳ Väntar på hälsa (orchestrator, guardian)…"
-for i in {1..30}; do
+echo "⏳ Väntar på proxy (hälsa via /health)…"
+for i in {1..40}; do
   curl -fsS "$API_BASE/health" >/dev/null 2>&1 && break || sleep 1
-done
-for i in {1..30}; do
-  curl -fsS "$GUARD_BASE/health" >/dev/null 2>&1 && break || sleep 1
 done
 
 echo "✅ Hälsa OK. Samlar basstatus…"

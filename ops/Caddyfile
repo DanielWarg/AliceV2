@@ -1,0 +1,23 @@
+:80
+encode gzip
+log
+
+# API and health routed to orchestrator
+@api path /api/* /health /metrics
+reverse_proxy @api orchestrator:8000
+
+# Guardian endpoints (status/health)
+@guardian path /guardian* /api/status/guardian
+reverse_proxy @guardian guardian:8787
+
+# HUD (dashboard) via /hud
+route /hud* {
+  uri strip_prefix /hud
+  reverse_proxy dashboard:8501
+}
+
+# NLU proxy
+@nlup path /api/nlu/* /health-nlu
+reverse_proxy @nlup nlu:9002
+
+

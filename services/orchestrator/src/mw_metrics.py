@@ -10,7 +10,7 @@ class MetricsMiddleware(BaseHTTPMiddleware):
         ms = (perf_counter() - t0) * 1000.0
         # route klass hämtas från svarshuvud satt av din handler, annars infer
         route = resp.headers.get("X-Route") or \
-                ("planner" if request.url.path.startswith("/orchestrator/ingest") else "other")
+                ("planner" if request.url.path.startswith("/api/orchestrator/ingest") else "other")
         METRICS.observe_latency(route, ms)
         METRICS.observe_status(resp.status_code)
         return resp
