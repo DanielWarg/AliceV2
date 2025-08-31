@@ -1,12 +1,13 @@
 """
 Orchestrator API Router
-Handles LLM routing and ingestion requests
+Handles LLM routing and ingestion requests with LLM integration v1
 """
 
 from fastapi import APIRouter, HTTPException, Request, Response, Depends
 import structlog
 import time
 import json
+import os
 from typing import Dict, Any, List
 from datetime import datetime
 
@@ -16,6 +17,11 @@ from ..middleware.logging import get_logger_with_trace
 from ..utils.ram_peak import ram_peak_mb
 from ..utils.energy import EnergyMeter
 from ..utils.tool_errors import record_tool_call, classify_tool_error
+
+# LLM Integration v1 imports
+from ..llm import get_micro_driver, get_planner_driver, get_deep_driver
+from ..router import get_router_policy
+from ..planner import get_planner_executor
 
 router = APIRouter()
 
@@ -83,24 +89,37 @@ def log_turn_event(
         # Fallback till logging om filskrivning misslyckas
         logger.error("Failed to write turn event to JSONL", error=str(e), turn_event=turn_event)
 
-def route_request(request: IngestRequest) -> ModelType:
+def route_request(request) -> str:
     """
-    Phase 1 routing logic: Always return micro model
+    LLM Integration v1 routing logic: Choose between micro, planner, deep
     
-    Future phases will implement sophisticated routing based on:
-    - Message complexity analysis
-    - Available system resources
+    Routes based on:
+    - Text analysis and pattern matching
     - Guardian system state
-    - User preferences and history
+    - Message complexity and length
     
     Args:
-        request: Ingestion request to route
+        request: IngestRequest or ChatRequest to route
         
     Returns:
-        Model to use for processing
+        Route string: "micro", "planner", or "deep"
     """
-    # Phase 1: Always route to micro model as specified
-    return ModelType.MICRO
+    # Handle both IngestRequest (text) and ChatRequest (message)
+    text = getattr(request, 'text', None) or getattr(request, 'message', '')
+    
+    router_policy = get_router_policy()
+    route_decision = router_policy.decide_route(text)
+    
+    # Log routing decision if enabled
+    if os.getenv("ROUTER_LOG_DECISION", "true").lower() == "true":
+        logger = structlog.get_logger(__name__)
+        logger.info("Route decision", 
+                   route=route_decision.route,
+                   confidence=route_decision.confidence,
+                   reason=route_decision.reason,
+                   text_length=len(text))
+    
+    return route_decision.route
 
 def estimate_latency(model: ModelType, text_length: int) -> int:
     """
@@ -124,18 +143,21 @@ def estimate_latency(model: ModelType, text_length: int) -> int:
     
     return base_latency.get(model, 100) + text_penalty
 
-def calculate_priority(request: IngestRequest, guardian_health: Dict[str, Any]) -> int:
+def calculate_priority(request, guardian_health: Dict[str, Any]) -> int:
     """
     Calculate request priority (1-10, where 10 is highest)
     
     Args:
-        request: Ingestion request
+        request: IngestRequest or ChatRequest
         guardian_health: Guardian system health data
         
     Returns:
         Priority score 1-10
     """
     base_priority = 5  # Default priority
+    
+    # Handle both IngestRequest (text) and ChatRequest (message)
+    text = getattr(request, 'text', None) or getattr(request, 'message', '')
     
     # Adjust based on Guardian state
     state = guardian_health.get("state", "NORMAL")
@@ -149,7 +171,7 @@ def calculate_priority(request: IngestRequest, guardian_health: Dict[str, Any]) 
         priority_modifier = -3
     
     # Shorter messages get slight priority boost
-    if len(request.text) < 100:
+    if len(text) < 100:
         priority_modifier += 1
     
     return max(1, min(10, base_priority + priority_modifier))
@@ -312,17 +334,25 @@ async def orchestrator_health(
             "service": "orchestrator",
             "status": "healthy",
             "routing": {
-                "phase": "1",
-                "available_models": ["micro"],
-                "routing_logic": "always_micro",
-                "guardian_integration": True
+                "phase": "llm_integration_v1",
+                "available_models": ["micro", "planner", "deep"],
+                "routing_logic": "intelligent_routing",
+                "guardian_integration": True,
+                "llm_drivers": {
+                    "micro": "phi3.5:mini",
+                    "planner": "qwen2.5:7b-moe", 
+                    "deep": "llama3.1:8b"
+                }
             },
             "guardian_status": guardian_health.get("state", "unknown"),
             "features": {
                 "admission_control": True,
                 "priority_calculation": True,
                 "latency_estimation": True,
-                "metrics_reporting": True
+                "metrics_reporting": True,
+                "llm_integration": True,
+                "planner_execution": True,
+                "fallback_matrix": True
             }
         }
     except Exception as e:
@@ -411,20 +441,70 @@ async def orchestrator_chat(
                 headers={"Retry-After": str(retry_after)}
             )
         
-        # Route to appropriate model (Phase 1: always micro)
-        model_used = "micro"
-        logger.info("Model selected", model_used=model_used)
+        # Route to appropriate model using LLM Integration v1
+        route = route_request(chat_request)
+        logger.info("Route selected", route=route)
         
-        # Simulate tool calls for observability
-        logger.info("Starting tool calls simulation...")
-        tool_call_result = record_tool_call(
-            tool_name="calendar.create",
-            success=True,
-            error_class=None,
-            latency_ms=150
-        )
-        tool_calls.append(tool_call_result)
-        logger.info("Tool call recorded", tool_calls_count=len(tool_calls))
+        # Generate response based on route
+        llm_response = None
+        planner_execution = None
+        fallback_used = False
+        blocked_by_guardian = False
+        
+        try:
+            if route == "micro":
+                micro_driver = get_micro_driver()
+                llm_response = micro_driver.generate(chat_request.message)
+                model_used = llm_response["model"]
+                
+            elif route == "planner":
+                planner_driver = get_planner_driver()
+                llm_response = planner_driver.generate(chat_request.message)
+                model_used = llm_response["model"]
+                
+                # Execute plan if JSON was parsed successfully
+                if llm_response.get("json_parsed") and llm_response.get("plan"):
+                    planner_executor = get_planner_executor()
+                    plan = planner_executor.validate_plan(llm_response["plan"])
+                    if plan:
+                        planner_execution = planner_executor.execute_plan(plan)
+                        fallback_used = planner_execution.get("fallback_used", False)
+                        
+                        # Record tool calls from plan execution
+                        for step_result in planner_execution.get("executed_steps", []):
+                            tool_call_result = record_tool_call(
+                                tool_name=step_result["tool"],
+                                success=step_result["success"],
+                                error_class=step_result.get("klass"),
+                                latency_ms=step_result["latency_ms"]
+                            )
+                            tool_calls.append(tool_call_result)
+                
+            elif route == "deep":
+                deep_driver = get_deep_driver()
+                llm_response = deep_driver.generate(chat_request.message)
+                model_used = llm_response["model"]
+                blocked_by_guardian = llm_response.get("blocked_by_guardian", False)
+                fallback_used = llm_response.get("fallback_used", False)
+                
+            else:
+                # Fallback to micro for unknown routes
+                micro_driver = get_micro_driver()
+                llm_response = micro_driver.generate(chat_request.message)
+                model_used = llm_response["model"]
+                fallback_used = True
+                
+        except Exception as llm_error:
+            logger.error("LLM generation failed", route=route, error=str(llm_error))
+            # Fallback to micro
+            try:
+                micro_driver = get_micro_driver()
+                llm_response = micro_driver.generate(chat_request.message)
+                model_used = llm_response["model"]
+                fallback_used = True
+            except Exception as fallback_error:
+                logger.error("Fallback to micro also failed", error=str(fallback_error))
+                raise llm_error
         
         # Get RAM peak and energy consumption
         ram_peak = ram_peak_mb()
@@ -444,33 +524,60 @@ async def orchestrator_chat(
             guardian_state=guardian_state
         )
         
-        # Log turn event for observability
+        # Log turn event for observability with LLM integration data
         logger.info("About to log turn event", session_id=chat_request.session_id)
         log_turn_event(
             trace_id=trace_id,
             session_id=chat_request.session_id,
-            route=model_used,
+            route=route,
             e2e_first_ms=response_latency_ms,
             e2e_full_ms=response_latency_ms,
             ram_peak_mb=ram_peak,
             tool_calls=tool_calls,
             energy_wh=energy_wh,
-            guardian_state=guardian_state
+            guardian_state=guardian_state,
+            pii_masked=True,
+            consent_scopes=["basic_logging"],
+            rag_data={
+                "top_k": 0,
+                "hits": 0,
+                "llm_model": model_used,
+                "planner_schema_ok": llm_response.get("json_parsed", False) if llm_response else False,
+                "fallback_used": fallback_used,
+                "blocked_by_guardian": blocked_by_guardian,
+                "tokens_used": llm_response.get("tokens_used", 0) if llm_response else 0
+            }
         )
         logger.info("Turn event logged successfully", trace_id=trace_id)
         
         # Set route header for metrics middleware
         response.headers["X-Route"] = model_used
         
-        # Build response
+        # Build response with LLM integration
+        if llm_response:
+            response_text = llm_response["text"]
+        else:
+            response_text = f"LLM response not available for route {route}"
+        
+        # Add metadata for observability
+        metadata = {
+            "route": route,
+            "llm_model": model_used,
+            "planner_schema_ok": llm_response.get("json_parsed", False) if llm_response else False,
+            "fallback_used": fallback_used,
+            "blocked_by_guardian": blocked_by_guardian,
+            "tokens_used": llm_response.get("tokens_used", 0) if llm_response else 0,
+            "planner_execution": planner_execution
+        }
+        
         response_data = ChatResponse(
             session_id=chat_request.session_id,
             timestamp=int(time.time() * 1000),
             trace_id=trace_id,
-            response=f"Phase 1: {model_used.title()} LLM response to '{chat_request.message[:50]}{'...' if len(chat_request.message) > 50 else ''}' (Guardian: {guardian_state})",
+            response=response_text,
             model_used=model_used,
             latency_ms=response_latency_ms,
-            metadata=None
+            metadata=metadata
         )
         
         return response_data

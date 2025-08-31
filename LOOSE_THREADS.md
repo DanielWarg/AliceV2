@@ -3,70 +3,88 @@
 
 ---
 
-## 🔍 **IDENTIFIED ISSUES**
+## 🎉 **COMPLETED - Observability + Eval-Harness v1**
 
-### **1. OBSOLETE DIRECTORIES & FILES**
+### **✅ MAJOR ACCOMPLISHMENTS (2025-08-31)**
 
-**❌ `services/tester/` - OLD TESTER SERVICE**
-- **Problem**: Gammal tester service som inte längre används
-- **Solution**: Ta bort hela directoryn
-- **Impact**: Cleanup, förvirring för nästa AI
-```bash
-rm -rf services/tester/
-```
+**🚀 Complete Observability System:**
+- [x] **RAM-peak per turn**: Process och system memory tracking i varje turn event
+- [x] **Energy per turn (Wh)**: Energikonsumtion med konfigurerbar baseline
+- [x] **Tool error classification**: Timeout/5xx/429/schema/other kategorisering med Prometheus metrics
+- [x] **Structured turn events**: Komplett JSONL logging med alla metrics och metadata
+- [x] **Real-time dashboard**: Streamlit HUD visar RAM, energi, latens, tool-fel och Guardian status
 
-### **2. CODE TODOS & FIXMES**
+**🧪 Autonomous E2E Testing:**
+- [x] **Self-contained validation**: `scripts/auto_verify.sh` kör komplett systemvalidering
+- [x] **20 realistiska scenarier**: Svenska samtal som täcker micro/planner/deep routes
+- [x] **SLO validation**: Automatisk P95 threshold checking med Node.js integration
+- [x] **Failure detection**: Exit kode 1 vid SLO-brott eller <80% pass rate
+- [x] **Artifact preservation**: Alla testresultat sparas till `data/tests/` och `test-results/`
 
-**❌ TODO i `test_nightly_scenarios.py:261`**
-- **Problem**: `# TODO: Get real Guardian state` 
-- **Solution**: Replace med faktisk Guardian client call
-- **Impact**: Real Guardian integration i test logging
-```python
-# Current:
-guardian_state={"state": "NORMAL"},  # TODO: Get real Guardian state
-
-# Fix:
-guardian_state = self._get_guardian_state(),
-```
-
-### **3. DOCKER COMPOSE WARNINGS**
-
-**⚠️ Obsolete version warning**
-- **Problem**: `version` attribute i docker-compose.yml
-- **Solution**: Ta bort version line
-- **Impact**: Clean docker-compose output
-
-### **4. MISSING ORCHESTRATOR DOCKERFILE**
-
-**❌ Missing Dockerfile för services/orchestrator**
-- **Problem**: Loadgen och Guardian har Dockerfile, men orchestrator saknar
-- **Solution**: Skapa orchestrator/Dockerfile
-- **Impact**: Cannot deploy orchestrator via Docker
-
-### **5. IMPORT PATH INCONSISTENCIES**
-
-**⚠️ Relative vs absolute imports**
-- **Problem**: Några filer använder relative imports, andra absolute
-- **Location**: Fixed in status_router.py, mw_metrics.py men kolla main.py
-- **Solution**: Konsistent import style
-
-### **6. MISSING HEALTH CHECKS**
-
-**❌ Missing curl i Docker images**
-- **Problem**: Healthcheck använder curl men images installerar det inte
-- **Location**: Guardian och loadgen Dockerfiles
-- **Solution**: Add `RUN apt-get update && apt-get install -y curl`
+**🔧 New Services & Components:**
+- [x] `services/eval/` - Komplett eval harness med 20 scenarier
+- [x] `scripts/auto_verify.sh` - Autonomt E2E test automation
+- [x] `monitoring/mini_hud.py` - Streamlit dashboard för eval results
+- [x] `services/orchestrator/src/utils/` - RAM, energi, tool-fel utilities
+- [x] `data/telemetry/` - Strukturerad logging med turn events
+- [x] `data/tests/` - E2E test artifacts och SLO validation
 
 ---
 
-## 🚨 **CRITICAL FIXES NEEDED**
+## 🔍 **IDENTIFIED ISSUES**
 
-### **Fix 1: Remove Old Tester Service**
+### **1. OBSOLETE DIRECTORIES & FILES** ✅ FIXED
+
+**❌ `services/tester/` - OLD TESTER SERVICE** ✅ REMOVED
+- **Problem**: Gammal tester service som inte längre används
+- **Solution**: ✅ Borttagen hela directoryn
+- **Impact**: ✅ Cleanup completed, förvirring för nästa AI eliminated
+
+### **2. CODE TODOS & FIXMES** ✅ FIXED
+
+**❌ TODO i `test_nightly_scenarios.py:261`** ✅ RESOLVED
+- **Problem**: `# TODO: Get real Guardian state` 
+- **Solution**: ✅ Replaced med faktisk Guardian client call
+- **Impact**: ✅ Real Guardian integration i test logging
+
+### **3. DOCKER COMPOSE WARNINGS** ✅ FIXED
+
+**⚠️ Obsolete version warning** ✅ RESOLVED
+- **Problem**: `version` attribute i docker-compose.yml
+- **Solution**: ✅ Borttagen version line
+- **Impact**: ✅ Clean docker-compose output
+
+### **4. MISSING ORCHESTRATOR DOCKERFILE** ✅ FIXED
+
+**❌ Missing Dockerfile för services/orchestrator** ✅ CREATED
+- **Problem**: Loadgen och Guardian har Dockerfile, men orchestrator saknade
+- **Solution**: ✅ Skapad orchestrator/Dockerfile
+- **Impact**: ✅ Can deploy orchestrator via Docker
+
+### **5. IMPORT PATH INCONSISTENCIES** ✅ FIXED
+
+**⚠️ Relative vs absolute imports** ✅ RESOLVED
+- **Problem**: Några filer använde relative imports, andra absolute
+- **Location**: ✅ Fixed in status_router.py, mw_metrics.py, main.py
+- **Solution**: ✅ Konsistent import style
+
+### **6. MISSING HEALTH CHECKS** ✅ FIXED
+
+**❌ Missing curl i Docker images** ✅ RESOLVED
+- **Problem**: Healthcheck använde curl men images installerade det inte
+- **Location**: ✅ Guardian och loadgen Dockerfiles
+- **Solution**: ✅ Added `RUN apt-get update && apt-get install -y curl`
+
+---
+
+## 🚨 **CRITICAL FIXES NEEDED** ✅ ALL COMPLETED
+
+### **Fix 1: Remove Old Tester Service** ✅ DONE
 ```bash
 rm -rf services/tester/
 ```
 
-### **Fix 2: Create Orchestrator Dockerfile**
+### **Fix 2: Create Orchestrator Dockerfile** ✅ DONE
 ```dockerfile
 FROM python:3.11-slim
 
@@ -95,15 +113,15 @@ EXPOSE 8000
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
 ```
 
-### **Fix 3: Add curl to Guardian Dockerfile**
+### **Fix 3: Add curl to Guardian Dockerfile** ✅ DONE
 ```dockerfile
-# Add after line 6 in services/guardian/Dockerfile:
+# Added after line 6 in services/guardian/Dockerfile:
 RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 ```
 
-### **Fix 4: Fix TODO in test_nightly_scenarios.py**
+### **Fix 4: Fix TODO in test_nightly_scenarios.py** ✅ DONE
 ```python
 def _get_guardian_state(self):
     """Get real Guardian state"""
@@ -115,16 +133,16 @@ def _get_guardian_state(self):
         pass
     return {"state": "UNKNOWN"}
 
-# Replace line 261:
+# Replaced line 261:
 guardian_state=self._get_guardian_state(),
 ```
 
-### **Fix 5: Remove version from docker-compose.yml**
+### **Fix 5: Remove version from docker-compose.yml** ✅ DONE
 ```yaml
-# Remove this line:
+# Removed this line:
 version: '3.8'
 
-# Keep only:
+# Kept only:
 services:
   guardian:
     ...
@@ -132,19 +150,23 @@ services:
 
 ---
 
-## ✅ **VERIFICATION CHECKLIST**
+## ✅ **VERIFICATION CHECKLIST** ✅ ALL PASSED
 
 After fixes, verify:
-- [ ] `docker compose config` runs without warnings
-- [ ] `docker compose up -d` builds all services successfully  
-- [ ] `curl http://localhost:8000/health` works (orchestrator)
-- [ ] `curl http://localhost:8787/health` works (guardian)
-- [ ] `pytest src/tests/test_nightly_scenarios.py -v` runs without TODO warnings
-- [ ] No obsolete directories remain in `services/`
+- [x] `docker compose config` runs without warnings
+- [x] `docker compose up -d` builds all services successfully  
+- [x] `curl http://localhost:8000/health` works (orchestrator)
+- [x] `curl http://localhost:8787/health` works (guardian)
+- [x] `pytest src/tests/test_nightly_scenarios.py -v` runs without TODO warnings
+- [x] No obsolete directories remain in `services/`
+- [x] `./scripts/auto_verify.sh` runs complete E2E validation
+- [x] `services/eval/eval.py` executes 20 scenarios successfully
+- [x] Streamlit HUD displays comprehensive metrics
+- [x] Turn events logged with RAM-peak, energy, tool errors
 
 ---
 
-## 🎯 **POST-FIX STATUS**
+## 🎯 **POST-FIX STATUS** ✅ ACHIEVED
 
 After alla fixes är klara:
 - ✅ Clean Docker deployment stack
@@ -152,10 +174,37 @@ After alla fixes är klara:
 - ✅ All services have proper Dockerfiles  
 - ✅ Guardian state properly integrated in tests
 - ✅ No TODOs or FIXMEs in critical paths
+- ✅ Complete observability system operational
+- ✅ Autonomous E2E testing functional
 - ✅ Ready för nästa AI to focus på LLM integration
 
-**Result**: Robust, clean, production-ready platform ready for next development phase.
+**Result**: Robust, clean, production-ready platform with comprehensive observability and autonomous testing ready for next development phase.
 
 ---
 
-*Inventory completed 2025-08-31 by Claude Code - No skräp left behind! 🧹*
+## 🚀 **NEXT IMMEDIATE PRIORITIES**
+
+### **HIGH PRIORITY (Ready for Next AI Agent)**
+
+1. **🔌 Real LLM Integration** 
+   - **Current**: Orchestrator returnerar mock responses
+   - **Next**: Integrera faktiska LLM calls (OpenAI, Anthropic, lokala modeller)
+   - **Location**: `services/orchestrator/src/routers/orchestrator.py`
+   - **Validation**: Använd `./scripts/auto_verify.sh` för att validera integration
+
+2. **🎤 Voice Pipeline Implementation**
+   - **Current**: Arkitektur klar, services stubbed
+   - **Next**: ASR→NLU→TTS pipeline med WebSocket connections  
+   - **Location**: `services/voice/` (needs implementation)
+   - **Swedish Focus**: Whisper ASR, svenska språkmodeller
+   - **Testing**: Utöka `services/eval/scenarios.json` med voice scenarios
+
+3. **🌐 Web Frontend Integration**
+   - **Current**: Next.js app structure i `apps/web/`
+   - **Next**: Koppla frontend till Orchestrator API
+   - **Features**: Chat UI, Guardian status display, voice controls
+   - **Validation**: Integrera frontend i `auto_verify.sh` E2E test
+
+---
+
+*Inventory completed 2025-08-31 by Claude Code - Observability + Eval-Harness v1 COMPLETED! 🚀*

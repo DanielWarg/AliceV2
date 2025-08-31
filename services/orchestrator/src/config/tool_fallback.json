@@ -1,0 +1,65 @@
+{
+  "tool_fallbacks": {
+    "calendar.create": {
+      "primary": "calendar.create",
+      "fallback": "email.draft",
+      "reason": "If calendar creation fails, draft an email instead"
+    },
+    "email.draft": {
+      "primary": "email.draft",
+      "fallback": null,
+      "reason": "No fallback available for email drafting"
+    },
+    "weather.get": {
+      "primary": "weather.get",
+      "fallback": null,
+      "reason": "No fallback available for weather data"
+    },
+    "time.get": {
+      "primary": "time.get",
+      "fallback": null,
+      "reason": "No fallback available for time data"
+    },
+    "vision.analyze": {
+      "primary": "vision.analyze",
+      "fallback": "text.describe",
+      "reason": "If vision analysis fails, provide text description"
+    },
+    "text.describe": {
+      "primary": "text.describe",
+      "fallback": null,
+      "reason": "No fallback available for text description"
+    }
+  },
+  "llm_fallbacks": {
+    "deep": {
+      "primary": "llama3.1:8b",
+      "fallback": "qwen2.5:7b-moe",
+      "reason": "If deep model fails, use planner model"
+    },
+    "planner": {
+      "primary": "qwen2.5:7b-moe",
+      "fallback": "phi3.5:mini",
+      "reason": "If planner model fails, use micro model"
+    },
+    "micro": {
+      "primary": "phi3.5:mini",
+      "fallback": null,
+      "reason": "No fallback available for micro model"
+    }
+  },
+  "guardian_degradation": {
+    "BROWNOUT": {
+      "deep": "blocked",
+      "planner": "degraded",
+      "micro": "normal",
+      "reason": "Deep blocked, planner degraded, micro normal during brownout"
+    },
+    "EMERGENCY": {
+      "deep": "blocked",
+      "planner": "blocked", 
+      "micro": "degraded",
+      "reason": "Only micro available during emergency"
+    }
+  }
+}
