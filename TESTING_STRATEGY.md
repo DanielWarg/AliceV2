@@ -388,6 +388,441 @@ open services/tester/runs/latest/summary.md
 
 ---
 
-**Alice v2 Testing Strategy delivers enterprise-grade quality assurance through continuous, autonomous validation of real-world scenarios. The system ensures production readiness while providing detailed insights for continuous improvement.**
+## 📊 Structured Data Collection for Alice's Learning
 
-🎯 **Ready for implementation - this testing architecture will catch regressions before they reach users!**
+### Data Pipeline Architecture (Bronze → Silver → Gold)
+
+Alice v2 implements a **multi-tier data collection system** that captures all test interactions for three purposes:
+1. **Telemetry & Debugging** - Real-time operational insights
+2. **SLO Monitoring & Evaluation** - Performance tracking and regression detection  
+3. **Training & Fine-tuning** - SFT/LoRA, DPO, and RAG improvement
+
+#### Directory Structure
+```
+/data/
+  telemetry/                 # BRONZE: Raw JSONL events (append-only)
+    YYYY-MM-DD/*.jsonl
+  datasets/
+    bronze/turns.jsonl       # Sampled raw data (uncleaned)
+    silver/                  # Cleaned + masked + normalized
+      turns.jsonl
+      tool_calls.jsonl
+      rag_pairs.jsonl
+    gold/                    # Manually reviewed "ground truth"
+      sft_conversations.jsonl
+      dpo_preferences.jsonl
+      nlu_intents.jsonl
+  artifacts/
+    audio/                   # Only if scope = audio:store
+    tts/                     # TTS cache files
+  registries/
+    schema/v1/*.json         # JSON Schema for logs
+    hashes/seen_hashes.db    # Deduplication index
+```
+
+### Unified Event Format (JSONL)
+
+All modules write structured events with **schema versioning** and **hash-based deduplication**:
+
+```json
+{
+  "v": "1",
+  "event": "orchestrator.turn",
+  "ts": "2025-08-31T11:23:45.120Z",
+  "user_id": "anon_c2f1",        // Pseudonymized
+  "session_id": "test_session_42",
+  "turn_id": "t-00042",
+  "lang": "sv",
+  "input": {
+    "text": "boka med Anders imorgon 10",
+    "audio_ref": null,           // artifacts/audio/..wav if permitted
+    "asr": { "partial_ms": 210, "final_ms": 640, "wer_ref": null }
+  },
+  "nlu": {
+    "intent": "TIME.BOOK", 
+    "confidence": 0.88,
+    "slots": { "contact": "Anders", "date": "2025-09-01", "time": "10:00" }
+  },
+  "guardian": { "state": "NORMAL", "ram_pct": 61.2, "brownout": "NONE" },
+  "route": "planner",             // micro|planner|deep
+  "rag": { 
+    "query": "möte Anders 10:00", 
+    "top_k": 3, 
+    "hits": [{"doc_id":"cal_001","score":0.52}] 
+  },
+  "tool_calls": [
+    { 
+      "name": "calendar.create", 
+      "args": {"when":"2025-09-01T10:00","with":"Anders"}, 
+      "ok": true, 
+      "lat_ms": 220 
+    }
+  ],
+  "llm": { 
+    "model": "qwen2.5-7b-moe", 
+    "first_ms": 180, 
+    "full_ms": 740, 
+    "tokens": 146 
+  },
+  "output": {
+    "text_en": "Scheduled meeting with Anders at 10:00 on Sep 1",
+    "tts": { 
+      "voice": "alice_neutral", 
+      "cache": "HIT", 
+      "lat_ms": 118, 
+      "audio_ref": "artifacts/tts/response_042.mp3" 
+    }
+  },
+  "metrics": {
+    "e2e_first_ms": 430,
+    "e2e_full_ms": 980,
+    "ram_peak_mb": 5120,
+    "energy_wh": 0.08
+  },
+  "test_metadata": {
+    "test_scenario": "swedish_calendar_booking",
+    "slo_target_ms": 2000,
+    "slo_compliance": true,
+    "regression_flag": false
+  },
+  "consent_scopes": ["memory:write","calendar:read"],
+  "pii_masked": true,
+  "hash": "sha256:2f0a...ef"
+}
+```
+
+### PII Protection & Consent Management
+
+#### Automatic PII Masking
+```python
+def mask_pii(text: str) -> tuple[str, bool]:
+    """Mask PII in text, return (masked_text, was_modified)"""
+    patterns = {
+        r'\b[\w.-]+@[\w.-]+\.\w+\b': '<EMAIL>',
+        r'\b(?:\+46|0)[1-9]\d{8,9}\b': '<PHONE>',
+        r'\b\d{6,8}-\d{4}\b': '<PERSONNUMMER>',
+        r'\b[A-ZÅÄÖ][a-zåäö]+ [A-ZÅÄÖ][a-zåäö]+\b': '<FULLNAME>'
+    }
+    
+    modified = False
+    for pattern, replacement in patterns.items():
+        if re.search(pattern, text):
+            text = re.sub(pattern, replacement, text)
+            modified = True
+    
+    return text, modified
+```
+
+#### Consent Scope Management
+- `audio:store` - Permission to save raw audio
+- `memory:write` - Allow long-term memory updates
+- `email:full` - Access full email content (not just metadata)
+- `calendar:write` - Permission to create calendar events
+- `analytics:training` - Allow data use for model training
+
+### Data Processing Pipelines
+
+#### Bronze → Silver (Automated Hourly)
+```python
+def process_bronze_to_silver():
+    """Clean and normalize raw telemetry data"""
+    
+    # 1. Deduplication via hash
+    seen_hashes = load_seen_hashes()
+    
+    # 2. PII masking and normalization
+    for event in read_bronze_events():
+        if event['hash'] in seen_hashes:
+            continue
+            
+        # Normalize Swedish relative dates to ISO
+        if 'input' in event and 'text' in event['input']:
+            event['input']['text'] = normalize_swedish_dates(event['input']['text'])
+            
+        # Build training datasets
+        turns_data.append(extract_turn_data(event))
+        
+        if event.get('tool_calls'):
+            tool_calls_data.extend(extract_tool_calls(event))
+            
+        if event.get('rag', {}).get('hits'):
+            rag_pairs_data.append(extract_rag_pairs(event))
+    
+    # Write to silver datasets
+    write_jsonl('silver/turns.jsonl', turns_data)
+    write_jsonl('silver/tool_calls.jsonl', tool_calls_data)  
+    write_jsonl('silver/rag_pairs.jsonl', rag_pairs_data)
+```
+
+#### Silver → Gold (Manual/Semi-Automatic)
+Active learning pipeline identifies high-value samples:
+
+```python
+def identify_gold_candidates():
+    """Flag samples for manual review and labeling"""
+    
+    candidates = []
+    
+    for turn in read_silver_turns():
+        # Low confidence NLU results
+        if turn.get('nlu', {}).get('confidence', 1.0) < 0.6:
+            candidates.append({
+                'type': 'nlu_uncertainty',
+                'data': turn,
+                'priority': 'HIGH'
+            })
+            
+        # Tool call failures
+        if any(not call.get('ok', True) for call in turn.get('tool_calls', [])):
+            candidates.append({
+                'type': 'tool_failure', 
+                'data': turn,
+                'priority': 'CRITICAL'
+            })
+            
+        # SLO violations
+        if turn.get('metrics', {}).get('e2e_full_ms', 0) > turn.get('test_metadata', {}).get('slo_target_ms', 2000):
+            candidates.append({
+                'type': 'slo_violation',
+                'data': turn, 
+                'priority': 'MEDIUM'
+            })
+            
+        # Guardian state changes
+        if turn.get('guardian', {}).get('state') != 'NORMAL':
+            candidates.append({
+                'type': 'guardian_event',
+                'data': turn,
+                'priority': 'HIGH'
+            })
+    
+    return candidates
+```
+
+### RAG Training Data Enhancement
+
+Capture "hard negatives" for embedding fine-tuning:
+
+```json
+{
+  "query": "ytterdörr kamera", 
+  "positive": "doc:cam_frontdoor.md",
+  "hard_negatives": ["doc:cam_kitchen.md", "doc:random_doc.md"],
+  "context": {
+    "user_intent": "HOME.SECURITY.STATUS",
+    "search_type": "device_lookup",
+    "confidence_threshold": 0.7
+  }
+}
+```
+
+### Test-Specific Data Collection
+
+#### Performance Baselines
+```python
+def log_performance_baseline(test_name: str, metrics: dict):
+    """Log performance metrics for regression detection"""
+    
+    baseline_event = {
+        "v": "1",
+        "event": "test.baseline",
+        "ts": datetime.utcnow().isoformat(),
+        "test_name": test_name,
+        "component": "orchestrator",
+        "metrics": metrics,
+        "environment": {
+            "guardian_state": get_guardian_state(),
+            "system_load": get_system_metrics(),
+            "concurrent_users": get_active_sessions()
+        },
+        "slo_compliance": {
+            "api_response_p95": metrics.get('p95_ms', 0) < 100,
+            "guardian_response": metrics.get('guardian_ms', 0) < 150,
+            "success_rate": metrics.get('success_rate', 0) >= 0.95
+        }
+    }
+    
+    log_event(baseline_event)
+```
+
+#### Failure Pattern Detection
+```python
+def log_test_failure(test_name: str, failure_info: dict):
+    """Log detailed failure information for learning"""
+    
+    failure_event = {
+        "v": "1", 
+        "event": "test.failure",
+        "ts": datetime.utcnow().isoformat(),
+        "test_name": test_name,
+        "failure_type": failure_info.get('type'),
+        "root_cause": failure_info.get('root_cause'),
+        "system_state": {
+            "guardian_state": get_guardian_state(),
+            "memory_usage": get_memory_usage(),
+            "active_connections": get_connection_count()
+        },
+        "stack_trace": failure_info.get('stack_trace'),
+        "reproduction_steps": failure_info.get('steps'),
+        "impact_assessment": {
+            "severity": failure_info.get('severity', 'MEDIUM'),
+            "user_impact": failure_info.get('user_impact'),
+            "system_stability": assess_system_stability()
+        }
+    }
+    
+    log_event(failure_event)
+```
+
+### Data Quality Governance
+
+#### Privacy & Security Checklist
+- [ ] **Consent logging**: All `consent_scopes` recorded per session
+- [ ] **PII masking**: Email, phone, personnummer, full names masked
+- [ ] **Right to forget**: `/memory/forget` endpoint clears logs + artifacts
+- [ ] **Retention limits**: 7d telemetry, 30d silver, gold until manual cleanup
+- [ ] **Deduplication**: Hash-based to prevent duplicate sensitive data
+- [ ] **Test vs prod**: Clear environment tagging for filtering
+
+#### Data Quality Validation
+```python
+def validate_data_quality():
+    """Ensure collected data meets quality standards"""
+    
+    quality_metrics = {
+        "schema_compliance": validate_schema_compliance(),
+        "pii_masking_rate": check_pii_masking_coverage(), 
+        "deduplication_rate": calculate_duplicate_percentage(),
+        "consent_coverage": verify_consent_logging(),
+        "retention_compliance": check_retention_policy()
+    }
+    
+    # Alert if quality drops below thresholds
+    for metric, value in quality_metrics.items():
+        if value < QUALITY_THRESHOLDS[metric]:
+            alert_data_quality_issue(metric, value)
+```
+
+### Alice's Learning Integration
+
+#### Model Fine-tuning Preparation
+```python
+def prepare_training_data():
+    """Convert gold data to training formats"""
+    
+    # SFT conversations for tool use
+    sft_data = []
+    for conv in read_gold_conversations():
+        sft_data.append({
+            "messages": [
+                {"role": "user", "content": conv['user_input']},
+                {"role": "assistant", "content": conv['assistant_response']},
+                {"role": "tool", "name": conv['tool_name'], "content": conv['tool_result']},
+                {"role": "assistant", "content": conv['final_response']}
+            ]
+        })
+    
+    # DPO preference pairs
+    dpo_data = []
+    for pref in read_gold_preferences():
+        dpo_data.append({
+            "prompt": pref['user_input'],
+            "chosen": pref['preferred_response'], 
+            "rejected": pref['alternative_response'],
+            "reason": pref['preference_reason']
+        })
+    
+    # RAG training pairs
+    rag_data = []
+    for pair in read_rag_pairs():
+        rag_data.append({
+            "query": pair['query'],
+            "positive_doc": pair['positive'],
+            "hard_negatives": pair['hard_negatives']
+        })
+    
+    return sft_data, dpo_data, rag_data
+```
+
+### Implementation in Testing Framework
+
+#### Drop-in Logging Function
+```python
+import json, time, hashlib, os, pathlib
+from datetime import datetime
+
+LOG_DIR = pathlib.Path(os.getenv("LOG_DIR", "/data/telemetry")) / time.strftime("%Y-%m-%d")
+LOG_DIR.mkdir(parents=True, exist_ok=True)
+log_file = open(LOG_DIR / "events.jsonl", "a", buffering=1)
+
+def log_event(payload: dict):
+    """Thread-safe event logging with PII protection"""
+    
+    # Ensure schema version
+    payload["v"] = payload.get("v", "1")
+    payload["ts"] = datetime.utcnow().isoformat() + "Z"
+    
+    # PII masking
+    if "input" in payload and "text" in payload["input"]:
+        original_text = payload["input"]["text"]
+        masked_text, was_masked = mask_pii(original_text)
+        payload["input"]["text"] = masked_text
+        payload["pii_masked"] = was_masked
+    
+    # Hash for deduplication
+    hash_content = json.dumps(payload, sort_keys=True, ensure_ascii=False)
+    payload["hash"] = f"sha256:{hashlib.sha256(hash_content.encode()).hexdigest()}"
+    
+    # Atomic write
+    log_file.write(json.dumps(payload, ensure_ascii=False) + "\n")
+    log_file.flush()
+```
+
+#### Integration with Test Framework
+```python
+# In test_orchestrator_comprehensive.py
+def test_chat_api_with_logging(client, test_metrics):
+    """Enhanced test with structured data collection"""
+    
+    start_time = time.perf_counter()
+    
+    request_payload = {
+        "v": "1",
+        "session_id": "test_chat_logging_001", 
+        "message": "Boka möte med Anna imorgon kl 14"
+    }
+    
+    response = client.post("/api/chat", json=request_payload)
+    end_time = time.perf_counter()
+    
+    # Log structured test event
+    log_event({
+        "event": "test.orchestrator.chat",
+        "test_name": "test_chat_api_with_logging",
+        "input": request_payload,
+        "response": {
+            "status_code": response.status_code,
+            "content": response.json() if response.status_code == 200 else None
+        },
+        "metrics": {
+            "response_time_ms": (end_time - start_time) * 1000,
+            "success": response.status_code == 200
+        },
+        "test_metadata": {
+            "scenario": "swedish_meeting_booking",
+            "expected_intent": "TIME.BOOK",
+            "slo_target_ms": 100
+        },
+        "consent_scopes": ["calendar:read", "memory:write"]
+    })
+    
+    # Original test assertions
+    assert response.status_code == 200
+    test_metrics("chat_with_logging_ms", (end_time - start_time) * 1000)
+```
+
+---
+
+**This enhanced data collection strategy ensures Alice receives high-quality, ethically-sourced training data that improves system performance while maintaining user privacy and data governance standards.**
+
+🎯 **Ready for implementation - structured data collection will accelerate Alice's learning while maintaining enterprise security standards!**

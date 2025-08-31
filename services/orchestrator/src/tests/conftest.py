@@ -167,11 +167,18 @@ pytest_sessionfinish = collector.pytest_sessionfinish
 
 
 @pytest.fixture
-def test_metrics():
+def test_metrics(request):
     """Fixture to add custom metrics to tests"""
     def add_metric(name: str, value):
         """Add custom metric that will be logged"""
         # This gets picked up by the test reporter
-        return pytest.current_request.node.user_properties.append((f"metric_{name}", value))
+        if hasattr(request, 'node'):
+            request.node.user_properties.append((f"metric_{name}", value))
+        # Also log directly to collector
+        collector.log_event("custom_metric", {
+            "test_name": request.node.name,
+            "metric_name": name,
+            "metric_value": value
+        })
     
     return add_metric
