@@ -1,26 +1,28 @@
 # Alice v2 System Blueprint & Architecture
-*Komplett systemskiss för Alice AI Assistant med clean architecture*
+*Complete system blueprint for Alice AI Assistant with clean architecture*
 
-## 🎯 Översikt
+## 🎯 Overview
 
-Alice v2 är en modulär AI-assistent med deterministisk säkerhetskontroll, intelligent resurshantering och proaktiv användarupplevelse. Systemet kombinerar mikroservices, clean architecture och enterprise-grade observability.
+Alice v2 is a modular AI assistant with deterministic security control, intelligent resource management, and proactive user experience. The system combines microservices, clean architecture, and enterprise-grade observability.
 
 **🚀 CURRENT STATUS**: Complete observability + eval-harness v1 system operational with autonomous E2E testing
 
-## 🏗️ Systemarkitektur
+> Note: For current delivery status, next steps, and live test‑gates, see `ROADMAP.md` → "🚦 Live Milestone Tracker". No milestones are checked off without a green gate via `./scripts/auto_verify.sh` and saved artifacts in `data/tests/` and `data/telemetry/`.
+
+## 🏗️ System Architecture
 
 ```
 +--------------------------------------------------------------------------------------------------------------+
-|  🧑‍💻 Användare (svenskt tal) ──WS──▶ ASR (Whisper.cpp+VAD) ──▶ NLU (sv-intent/slots/mood)                   |
+|  🧑‍💻 User (Swedish speech) ──WS──▶ ASR (Whisper.cpp+VAD) ──▶ NLU (sv-intent/slots/mood)                   |
 |                                                                                                              |
 |                              (JSON)                                                                          |
 |                                     ┌──────────── Guardian Gate (admission control) ───────────┐             |
-|                                     │     (RAM/CPU/temp/batteri → Brownout/Degrade)            │             |
+|                                     │     (RAM/CPU/temp/battery → Brownout/Degrade)            │             |
 |                                     └───────────────────────▲───────────────────────────────────┘             |
 |                                                             │ (status/pubsub)                                |
 |  ◀── AR/HUD & status ── WebSocket events ───────────────────┼───────────────────────────────────────────────▶ |
 |                                                                                                              |
-|                             Orkestrator (LangGraph Router + policies)                                        |
+|                             Orchestrator (LangGraph Router + policies)                                        |
 |                         ┌─────────────────────────────────────────────────────┐                              |
 |                         │ - Router (Phi-mini)                                │                              |
 |                         │ - Policies/SLO + Tool registry (MCP)               │                              |
@@ -31,65 +33,65 @@ Alice v2 är en modulär AI-assistent med deterministisk säkerhetskontroll, int
 |                ┌────────────────────────┘               └───────────────────────────┐                       |
 |                v                                                                    v                       |
 |      +-----------------+        +------------------+        +--------------------+        +-----------------+
-|      | Micro-LLM       |        | Planner-LLM      |        | Deep Resonemang    |        | Vision/Sensorer |
-|      | (enkla svar)    |        | (planering+tools)|        | (djup analys)      |        | (YOLO/SAM/RTSP) |
+|      | Micro-LLM       |        | Planner-LLM      |        | Deep Reasoning     |        | Vision/Sensors |
+|      | (simple answers) |        | (planning+tools) |        | (deep analysis)    |        | (YOLO/SAM/RTSP) |
 |      | Phi-3.5-Mini    |        | Qwen2.5-MoE      |        | Llama-3.1 (on-dmd) |        | events→router   |
 |      +--------┬--------+        +---------┬--------+        +---------┬----------+        +---------┬-------+
 |               │                         ┌─┴───────────────────────────┘                           │        |
 |               │  (read)                 │ (tool calls, plans)                                      │        |
 |     +---------▼----------+     +--------▼---------+                                      +---------▼-------+
-|     | Minne (RAG)        |     | Verktyg/APIs     |                                      | Guardian Daemon |
-|     | FAISS (user mem)   |◀──▶ | (Mail, Kalender, | ◀── health/latency class (MCP)       | psutil/energy   |
+|     | Memory (RAG)       |     | Tools/APIs       |                                      | Guardian Daemon |
+|     | FAISS (user mem)   |◀──▶ | (Mail, Calendar, | ◀── health/latency class (MCP)       | psutil/energy   |
 |     | Redis TTL (session)|     |  Home Assistant) |                                      | state machine   |
 |     +---------┬----------+     +------------------+                                      +---------▲-------+
 |               │   (write/update, consent)                                                        │ status   |
 |               └───────────────────────────────────────────────────────────────────────────────────┘         |
 |                                                                                                              |
-|  Textsvar (eng) ─▶ TTS (VITS/Piper + cache) ─▶ Högtalare                                                     |
+|  Text response (eng) ─▶ TTS (VITS/Piper + cache) ─▶ Speakers                                                   |
 |                       │                                                                                      |
-|  Dashboard/HUD ◀──────┼── events+metrics (P50/P95, RAM, tool-fel, RAG-hit, energi)                           |
+|  Dashboard/HUD ◀──────┼── events+metrics (P50/P95, RAM, tool errors, RAG-hit, energy)                        |
 |                       │                                                                                      |
-|  Proaktivitet: Prophet/Goal Scheduler ──▶ Orkestrator (idle triggers, prewarm/defer)                         |
-|  Reflektion: logg+metrics ──▶ förslag (cache, RAG-K, prewarm) ─▶ Orkestrator (explicit accept)               |
+|  Proactivity: Prophet/Goal Scheduler ──▶ Orchestrator (idle triggers, prewarm/defer)                         |
+|  Reflection: logs+metrics ──▶ suggestions (cache, RAG-K, prewarm) ─▶ Orchestrator (explicit accept)         |
 +--------------------------------------------------------------------------------------------------------------+
 ```
 
-## 🔧 Komponentöversikt
+## 🔧 Component Overview
 
 ### 1. **Frontend Layer (Web/Mobile)** ✅ IMPLEMENTED
 ```typescript
 apps/web/                    # Next.js frontend app
 ├── src/components/
-│   ├── AliceHUD.tsx        # Huvudgränssnitt
-│   ├── VoiceInterface.tsx  # Röstinteraktion
+│   ├── AliceHUD.tsx        # Main interface
+│   ├── VoiceInterface.tsx  # Voice interaction
 │   └── GuardianBanner.tsx  # System status
 ```
 
-**Funktioner:**
-- Real-time WebSocket kommunikation
-- Voice interface med audio visualizer
+**Features:**
+- Real-time WebSocket communication
+- Voice interface with audio visualizer
 - Guardian-aware UX (brownout feedback)
-- Performance HUD och system metrics
-- Responsive design för desktop/mobil
+- Performance HUD and system metrics
+- Responsive design for desktop/mobile
 
 ### 2. **Voice Pipeline** 🔄 IN PROGRESS
 ```
-Användare ──▶ Browser Audio API ──▶ WebSocket ──▶ ASR Server
+User ──▶ Browser Audio API ──▶ WebSocket ──▶ ASR Server
 ```
 
-**Komponenter:**
-- **ASR (Whisper.cpp)**: Svensk speech-to-text
-- **VAD (Voice Activity Detection)**: Intelligent audio segmentering  
-- **NLU**: Intent classification med svensk språkförståelse
-- **TTS (Piper/VITS)**: Text-to-speech med cache
+**Components:**
+- **ASR (Whisper.cpp)**: Swedish speech-to-text
+- **VAD (Voice Activity Detection)**: Intelligent audio segmentation  
+- **NLU**: Intent classification with Swedish language understanding
+- **TTS (Piper/VITS)**: Text-to-speech with cache
 
 #### **TTS-Persona (Mood-Driven)**
 ```python
 mood_score ∈ [0..1] → voice preset
-0.00–0.33: empatisk_alice
+0.00–0.33: empathetic_alice
 0.34–0.66: neutral_alice  
-0.67–1.00: glad_alice
-Brownout != NONE → forcerad neutral_alice
+0.67–1.00: happy_alice
+Brownout != NONE → forced neutral_alice
 ```
 
 **SLO Targets:**
@@ -97,7 +99,7 @@ Brownout != NONE → forcerad neutral_alice
 - Final transcript: <1000ms  
 - End-to-end: <2000ms
 
-### 3. **Guardian System (Säkerhet)** ✅ IMPLEMENTED
+### 3. **Guardian System (Security)** ✅ IMPLEMENTED
 ```
 services/guardian/
 ├── src/core/
@@ -106,7 +108,7 @@ services/guardian/
 │   └── kill_sequence.py     # Graceful shutdown
 ```
 
-**Tillståndsmaskin:**
+**State Machine:**
 ```
 NORMAL ──80% RAM──▶ BROWNOUT ──92% RAM──▶ EMERGENCY
   ▲                    │                     │
@@ -117,7 +119,7 @@ NORMAL ──80% RAM──▶ BROWNOUT ──92% RAM──▶ EMERGENCY
                   LOCKDOWN (1h)
 ```
 
-#### **Guardian Trösklar (Environment Variables)**
+#### **Guardian Thresholds (Environment Variables)**
 ```bash
 GUARD_RAM_SOFT=0.80
 GUARD_RAM_HARD=0.92
@@ -128,18 +130,18 @@ GUARD_BATTERY_PCT_HARD=25
 GUARD_BROWNOUT_LEVEL=LIGHT|MODERATE|HEAVY  # auto
 ```
 
-**Åtgärder:**
+**Actions:**
 - **Brownout**: Model switch (20b→7b), context reduction, tool disable
 - **Emergency**: Graceful Ollama kill + restart
 - **Lockdown**: Manual intervention required
 
 ### 4. **LLM Orchestrator** ✅ IMPLEMENTED WITH OBSERVABILITY
 ```
-Micro-LLM (Phi-3.5-Mini)     # Enkla svar, snabb respons
+Micro-LLM (Phi-3.5-Mini)     # Simple answers, quick response
      │
-Planner-LLM (Qwen2.5-MoE)    # Tool calls, planering  
+Planner-LLM (Qwen2.5-MoE)    # Tool calls, planning  
      │
-Deep Reasoning (Llama-3.1)   # Komplex analys (on-demand)
+Deep Reasoning (Llama-3.1)   # Complex analysis (on-demand)
 ```
 
 **Router Logic:**
@@ -148,10 +150,10 @@ Deep Reasoning (Llama-3.1)   # Komplex analys (on-demand)
 - SLO enforcement → Timeout/fallback
 
 **🎯 NEW FEATURES:**
-- **RAM-peak per turn**: Process och system memory tracking
-- **Energy per turn (Wh)**: Energikonsumtion med konfigurerbar baseline
-- **Tool error classification**: Timeout/5xx/429/schema/other kategorisering
-- **Structured turn events**: Komplett JSONL logging med alla metrics
+- **RAM-peak per turn**: Process and system memory tracking
+- **Energy per turn (Wh)**: Energy consumption with configurable baseline
+- **Tool error classification**: Timeout/5xx/429/schema/other categorization
+- **Structured turn events**: Complete JSONL logging with all metrics
 
 ### 5. **Tool Integration (MCP)** 🔄 IN PROGRESS
 ```
@@ -179,42 +181,42 @@ packages/tools/
 }
 ```
 
-**Fallback Matrix** (intent → primär → fallback1 → fallback2 → user-feedback):
-- `GREETING`: micro → — → — → *"✔ Snabbt svar."*
-- `TIME.BOOK`: planner → email.draft → todo.create → *"Kalender låst—la till en todo."*
-- `COMM.EMAIL.SEND`: planner → email.draft → — → *"SMTP segt—sparade som utkast."*
-- `INFO.SUMMARIZE (lång)`: deep → planner → micro → *"Kör lättare sammanfattning."*
-- `VISION.DETECT`: vision → snapshot → — → *"Ström bröt—visar stillbild."*
+**Fallback Matrix** (intent → primary → fallback1 → fallback2 → user-feedback):
+- `GREETING`: micro → — → — → *"✔ Quick response."*
+- `TIME.BOOK`: planner → email.draft → todo.create → *"Calendar locked—add a todo."*
+- `COMM.EMAIL.SEND`: planner → email.draft → — → *"SMTP failed—saved as draft."*
+- `INFO.SUMMARIZE (long)`: deep → planner → micro → *"Running lighter summary."*
+- `VISION.DETECT`: vision → snapshot → — → *"Stream broke—showing still image."*
 
 **Tool Registry:**
 - Health monitoring per tool
 - Latency classification (fast/slow/heavy)
-- Automatic disable vid brownout
-- **Vision Pre-warm**: Orkestrator förvärmer Vision 2s inför sannolika events
+- Automatic disable at brownout
+- **Vision Pre-warm**: Orchestrator pre-warms Vision 2s for likely events
 
 ### 6. **Memory & RAG** 🔄 IN PROGRESS
 ```
 Memory Layer:
-├── FAISS Vector Store    # User memory, långsiktig
-├── Redis TTL Cache      # Session memory, kortsiktig  
+├── FAISS Vector Store    # User memory, long-term
+├── Redis TTL Cache      # Session memory, short-term  
 └── Consent Manager      # Privacy-aware updates
 ```
 
 #### **Consent & Memory Policy**
 **Memory Scopes:**
-- **Session memory**: Redis (TTL=7d, AOF on). Innehåller transients, contextual turns
-- **User memory**: FAISS + embeddings. Kräver consent scope
+- **Session memory**: Redis (TTL=7d, AOF on). Contains transients, contextual turns
+- **User memory**: FAISS + embeddings. Requires consent scope
 
 **Consent Scopes:**
 - `memory:read` | `memory:write` | `email:metadata` | `email:full` | `calendar:read` | `calendar:write`
 
 **User Control:**
-- `POST /memory/forget {id}` → <1s radering (embeddings + index)
-- **Memory diff**: Efter ny lagring returnerar Alice: *"Jag sparade X – vill du behålla det?"*
+- `POST /memory/forget {id}` → <1s deletion (embeddings + index)
+- **Memory diff**: After new storage, Alice returns: *"I saved X – do you want to keep it?"*
 
 **RAG Pipeline:**
-- Embedding: sentence-transformers svenska
-- Retrieval: top_k med brownout awareness
+- Embedding: sentence-transformers Swedish
+- Retrieval: top_k with brownout awareness
 - Re-ranking: relevance scoring
 
 ### 7. **Observability & Metrics** ✅ IMPLEMENTED
@@ -227,20 +229,20 @@ Metrics Collection:
 ```
 
 #### **Observability & Retention Policy** ✅ COMPLETED
-**Eventtyper:**
+**Event Types:**
 - `start`, `tool_call`, `cache_hit`, `rag_hit`, `degrade_on`, `degrade_off`
 - `brownout_on`, `brownout_off`, `error_{net|tool|model|validate}`
 
 **Retention:**
-- Session-loggar: 7d
-- Energi/aggregat: 30d  
-- Audio_out: ej persisterad (endast testkörningar)
+- Session logs: 7d
+- Energy/aggregate: 30d  
+- Audio_out: not persisted (only test runs)
 
-**PII:** Maska e-post/telefon/personnummer i loggar
+**PII:** Mask e-mail/phone/SSN in logs
 
 **Rate Limits:**
 - 10 req/min per session
-- Max 1 deep-jobb samtidigt
+- Max 1 deep-job simultaneously
 
 **Dashboard Components:** ✅ IMPLEMENTED
 - Real-time system health
@@ -250,12 +252,12 @@ Metrics Collection:
 - **NEW**: RAM-peak, energy consumption, tool error classification
 
 **🧪 Autonomous E2E Testing:** ✅ IMPLEMENTED
-- `scripts/auto_verify.sh`: Komplett systemvalidering
-- `services/eval/`: 20 realistiska scenarier
-- SLO validation med Node.js integration
-- Automatic failure detection och artifact preservation
+- `scripts/auto_verify.sh`: Complete system validation
+- `services/eval/`: 20 realistic scenarios
+- SLO validation with Node.js integration
+- Automatic failure detection and artifact preservation
 
-## 📦 Monorepo Struktur
+## 📦 Monorepo Structure
 
 ```
 v2/
@@ -376,9 +378,9 @@ services:
 - **Accuracy**: >90% intent classification
 
 ### Guardian System
-- **Protection**: 0 system crashes från överbelastning
-- **Recovery**: <60s från emergency till normal
-- **Brownout**: Gradvis degradation, inte total avbrott
+- **Protection**: 0 system crashes from overload
+- **Recovery**: <60s from emergency to normal
+- **Brownout**: Gradual degradation, not total outage
 
 ### Tool Integration  
 - **Fast Tools**: <500ms (weather, time)
@@ -387,42 +389,42 @@ services:
 
 ### **NEW: Observability SLO** ✅ IMPLEMENTED
 - **Metrics Collection**: <10ms overhead per turn
-- **Dashboard Load**: <2s för komplett HUD
-- **E2E Test Success**: ≥80% pass rate för 20 scenarier
+- **Dashboard Load**: <2s for complete HUD
+- **E2E Test Success**: ≥80% pass rate for 20 scenarios
 - **SLO Validation**: Automatic P95 threshold checking
 
-## 🔒 Säkerhet & Privacy
+## 🔒 Security & Privacy
 
 ### Guardian Protection
-- **Deterministisk**: Inga AI-beslut i säkerhetsloopen
+- **Deterministic**: No AI decisions in security loop
 - **Rate Limiting**: Max 3 kills/30min
 - **Hysteresis**: Anti-flapping protection
-- **Lockdown**: Manual intervention vid överträdelse
+- **Lockdown**: Manual intervention on violation
 
 ### Data Privacy
-- **Consent Management**: Explicit approval för minnesuppdateringar
-- **PII Masking**: Automatic detection och maskering
-- **Session Isolation**: Redis TTL för temporär data
-- **Local Processing**: Känslig data lämnar inte enheten
+- **Consent Management**: Explicit approval for memory updates
+- **PII Masking**: Automatic detection and masking
+- **Session Isolation**: Redis TTL for temporary data
+- **Local Processing**: Sensitive data does not leave the device
 
-## 🎯 Proaktivitet & Reflektion
+## 🎯 Proactivity & Reflection
 
 ### Goal Scheduler
 ```python
-# Exempel: Proaktiv vädervarning
+# Example: Proactive weather warning
 if morning_routine_detected() and weather_alert():
     schedule_notification("Rain expected, bring umbrella")
 ```
 
 ### Reflection Loop
 ```python
-# Exempel: Cache optimization förslag  
+# Example: Cache optimization suggestion  
 if cache_hit_rate < 0.7:
     suggest_prewarming(["weather", "calendar", "email"])
 ```
 
 ### Learning Pipeline
-- **Prophet**: Seasonal patterns i användaraktivitet
+- **Prophet**: Seasonal patterns in user activity
 - **Performance**: Tool latency trends
 - **Usage**: Command frequency analysis
 - **Optimization**: Automatic model/cache tuning
@@ -430,14 +432,14 @@ if cache_hit_rate < 0.7:
 ## 💡 Innovation Highlights
 
 ### 1. **Guardian-Aware UX**
-- Användaren får mänskligt begriplig feedback vid brownout
+- User receives human-understandable feedback during brownout
 - "I'm switching to lighter mode for faster responses"
-- Gradvis degradation istället för systemkrasch
+- Gradual degradation instead of system crash
 
 ### 2. **Intelligent Model Routing**  
-- Micro-LLM för enkla svar (snabb)
-- Planner-LLM för tool calls (balanserad)
-- Deep reasoning för komplex analys (on-demand)
+- Micro-LLM for simple answers (quick)
+- Planner-LLM for tool calls (balanced)
+- Deep reasoning for complex analysis (on-demand)
 
 ### 3. **Proactive Resource Management**
 - Predictive brownout activation
@@ -445,18 +447,18 @@ if cache_hit_rate < 0.7:
 - Energy-aware scheduling
 
 ### 4. **Swedish-First Design**
-- Native svenska i voice pipeline
-- Cultural context i NLU
+- Native Swedish in voice pipeline
+- Cultural context in NLU
 - Local privacy requirements
 
 ### 5. **NEW: Complete Observability** ✅ IMPLEMENTED
-- **RAM-peak per turn**: Process och system memory tracking
-- **Energy per turn (Wh)**: Energikonsumtion med konfigurerbar baseline
-- **Tool error classification**: Timeout/5xx/429/schema/other kategorisering
-- **Autonomous E2E testing**: Self-contained validation med 20 scenarier
-- **Real-time HUD**: Streamlit dashboard med comprehensive metrics
+- **RAM-peak per turn**: Process and system memory tracking
+- **Energy per turn (Wh)**: Energy consumption with configurable baseline
+- **Tool error classification**: Timeout/5xx/429/schema/other categorization
+- **Autonomous E2E testing**: Self-contained validation with 20 scenarios
+- **Real-time HUD**: Streamlit dashboard with comprehensive metrics
 
-## 🔮 Framtida Utveckling
+## 🔮 Future Development
 
 ### Phase 1: Core Stability (Q1) ✅ COMPLETED
 - Guardian system hardening ✅
@@ -465,7 +467,7 @@ if cache_hit_rate < 0.7:
 - **NEW**: Complete observability system ✅
 
 ### Phase 2: Intelligence (Q2)  
-- Advanced NLU med emotion detection
+- Advanced NLU with emotion detection
 - Proactive scheduling implementation
 - Performance optimization AI
 
@@ -479,28 +481,84 @@ if cache_hit_rate < 0.7:
 - Enterprise security features  
 - Multi-tenant architecture
 
-## ✅ Deployment Checklista
+## ✅ Deployment Checklist
 
-**Miljövalidering:**
-- [x] Guardian env för temp/batteri är satta och syns i `/guardian/health` ✅
-- [x] MCP-registry exponeras och fallback-matrisen är incheckad ✅
-- [x] NLU→Orkestrator-payload innehåller `v:"1"`, `mood_score` och `session_id` ✅
-- [x] TTS svar loggar cache: `HIT|MISS` och HUD visar TTS P95 ✅
-- [x] Memory-scopes är dokumenterade och `/memory/forget` tar <1s ✅
-- [x] HUD visar red/yellow/green + P50/P95, RAM-peak, tool-felklass, RAG-hit, energi ✅
-- [x] **NEW**: RAM-peak per turn loggas i varje turn event ✅
-- [x] **NEW**: Energy per turn (Wh) spåras och loggas ✅
-- [x] **NEW**: Tool error classification fungerar med Prometheus metrics ✅
-- [x] **NEW**: Autonomous E2E testing med 20 scenarier ✅
-- [x] **NEW**: SLO validation med automatic failure detection ✅
+**Environment Validation:**
+- [x] Guardian env for temp/battery is set and visible in `/guardian/health` ✅
+- [x] MCP-registry exposed and fallback matrix is checked ✅
+- [x] NLU→Orchestrator payload includes `v:"1"`, `mood_score` and `session_id` ✅
+- [x] TTS response logs cache: `HIT|MISS` and HUD shows TTS P95 ✅
+- [x] Memory-scopes are documented and `/memory/forget` takes <1s ✅
+- [x] HUD shows red/yellow/green + P50/P95, RAM-peak, tool error classification, RAG-hit, energy ✅
+- [x] **NEW**: RAM-peak per turn logged in each turn event ✅
+- [x] **NEW**: Energy per turn (Wh) tracked and logged ✅
+- [x] **NEW**: Tool error classification works with Prometheus metrics ✅
+- [x] **NEW**: Autonomous E2E testing with 20 scenarios ✅
+- [x] **NEW**: SLO validation with automatic failure detection ✅
 
-**Kontrakts-versionering:**
-- Alla payloads innehåller `"v":"1"` för framtida kompatibilitet
-- API endpoints stödjer version headers
-- Graceful degradation vid version mismatch
+**Contract Versioning:**
+- All payloads include `"v":"1"` for future compatibility
+- API endpoints support version headers
+- Graceful degradation on version mismatch
 
 ---
 
-**Alice v2 Blueprint** representerar nästa generation AI-assistenter med fokus på säkerhet, prestanda och användarupplevelse. Systemet kombinerar cutting-edge AI med robust engineering för produktion-redo deployment.
+**Alice v2 Blueprint** represents the next generation of AI assistants with a focus on security, performance, and user experience. The system combines cutting-edge AI with robust engineering for production-ready deployment.
 
 🚀 **Ready for the future of AI assistance! Complete observability + eval-harness v1 operational!**
+
+---
+
+## 📋 Updated Project Plan – with improvements (baseline → next step)
+
+### Orchestrator-core (LangGraph) + API-contract + client-SDK
+- Ready when: /health, /run, /tools; structured events; web‑SDK only via API
+- Improvement: Hash `system_prompt_sha256` in `/health` + per turn‑event
+
+### Guardian (gatekeeper) + SLO‑hooks + red/yellow/green
+- Ready when: RAM/CPU‑thresholds, brownout/restore, 429/503 + UI‑texts
+- Improvements:
+  - mTLS + allowlist + audit‑log for risk‑endpoints
+  - Mapping Guardian→Security: NORMAL→NORMAL, BROWNOUT→STRICT, EMERGENCY→LOCKDOWN
+  - Kill/lockdown rate‑limit ≥5 min
+
+### Observability + eval‑harness v1
+- Ready when: P50/P95, RAM‑peak, tool error classification, energy in HUD; `auto_verify` 14:00
+- Improvements: Redis eviction HUD + alert; `ollama_ready_ms`, `whisper_checksum_mismatch_total`
+
+### NLU (Swedish) – e5 + XNLI (+ regex)
+- Ready when: Intent‑accuracy ≥92%, P95 ≤80 ms
+- Improvements: Intent‑card UX (idempotency: intent_id, nonce, expiry); Swedish security messages in policy
+
+### Micro‑LLM (Phi‑3.5‑Mini via Ollama)
+- Ready when: <250 ms to first character (P95)
+- Improvement: Warm‑slot (micro/planner resident; deep gated)
+
+### Memory (Redis TTL + FAISS user memory)
+- Ready when: RAG top‑3 hit‑rate ≥80%, P@1 ≥60%, "forget me" <1 s
+- Improvements: FAISS hot/cold split (HNSW i RAM/ondisk kall); Redis eviction policy + HUD; forget <500 ms
+
+### Planner‑LLM (Qwen‑7B‑MoE) + tool layer (MCP) v1
+- Ready when: 1–2 tool‑calls/flow, tool‑success ≥95%
+- Improvements: Signed manifests + schema‑validation in CI; tool‑quota (5 calls/5 min per session)
+
+### Text E2E‑hardtest (quick + planner) against SLO
+- Ready when: Quick ≤250 ms; Planner ≤900 ms / ≤1.5 s; `auto_verify` green
+- Improvements: A/B framework (TTS/intent‑cards); 8–10 red‑team scenarios in enforce mode
+
+### ASR (Whisper.cpp + Silero‑VAD)
+- Ready when: WER ≤7%/≤11%; partial ≤300 ms; final ≤800 ms
+- Improvement: Model‑checksum vid startup; dual‑slot fallback
+
+### TTS (Piper/VITS) + cache + mood‑hook
+- Ready when: Cached ≤120 ms; uncached ≤800 ms; 3 presets linked to mood_score
+- Improvement: A/B experiment for voice variants
+
+### Deep‑LLM (Llama‑3.1‑8B via Ollama)
+- Ready when: ≤1.8 s / 3.0 s; max 1 concurrent; Guardian gate protects
+
+### Vision (YOLOv8‑nano + SAM2‑tiny, RTSP) on‑demand
+- Ready when: First‑box ≤350 ms; reconnect ≤2 s; degrade gracefully
+
+### Guardian+UX polish / Reflection / Proactivity / UI milestones / vLLM+Flower
+- Same structure as in ROADMAP, with above improvements woven into respective steps

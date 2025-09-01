@@ -2,39 +2,39 @@
 
 ## 🛡️ Security Overview
 
-Alice v2 tar säkerhet och privacy på högsta allvar. Detta dokument beskriver våra säkerhetsrutiner och hur du rapporterar säkerhetsproblem.
+Alice v2 takes security and privacy very seriously. This document describes our security procedures and how to report security issues.
 
 ## 🚨 Reporting Security Vulnerabilities
 
 ### How to Report
-**DO NOT** create public GitHub issues för säkerhetsproblem.
+**DO NOT** create public GitHub issues for security problems.
 
-Rapportera istället via:
+Report instead via:
 - **Email**: security@alice-ai.se
 - **Encrypted**: Use GPG key [ABC123...] if needed
-- **Response**: Vi svarar inom 24 timmar
+- **Response**: We respond within 24 hours
 
 ### What to Include
-- Detaljerad beskrivning av vulnerability
+- Detailed description of the vulnerability
 - Steps to reproduce the issue
 - Potential impact assessment
 - Suggested fixes (if any)
 - Your contact information
 
 ### Response Process
-1. **Acknowledgment**: Vi bekräftar mottagandet inom 24h
-2. **Investigation**: Säkerhetsteam undersöker inom 72h
-3. **Fix Development**: Priority-baserad utveckling av fix
-4. **Disclosure**: Coordinated disclosure med reporter
-5. **Recognition**: Credit till reporter (om önskat)
+1. **Acknowledgment**: We confirm receipt within 24h
+2. **Investigation**: Security team investigates within 72h
+3. **Fix Development**: Priority-based development of fix
+4. **Disclosure**: Coordinated disclosure with reporter
+5. **Recognition**: Credit to reporter (if desired)
 
 ## 🔒 Security Measures
 
 ### Guardian System Security
-Guardian systemets säkerhet är **deterministisk och AI-fri**:
+The Guardian system's security is **deterministic and AI-free**:
 
 ```python
-# Guardian safety är ALDRIG AI-driven
+# Guardian safety is NEVER AI-driven
 def evaluate_system_state(metrics: SystemMetrics) -> GuardianState:
     # Hard-coded thresholds, no AI inference
     if metrics.ram_pct >= HARD_THRESHOLD:
@@ -58,10 +58,10 @@ SECRET     - API keys, internal tokens
 ```
 
 #### Privacy Controls
-- **Memory Consent**: Explicit user approval för minneslagring
-- **PII Masking**: Automatic detection och maskering i loggar
-- **Local Processing**: Känslig data lämnar aldrig enheten
-- **Session Isolation**: Redis TTL för temporary data
+- **Memory Consent**: Explicit user approval for memory storage
+- **PII Masking**: Automatic detection and masking in logs
+- **Local Processing**: Sensitive data never leaves the device
+- **Session Isolation**: Redis TTL for temporary data
 
 #### Data Encryption
 - **In Transit**: TLS 1.3 för all HTTP/WebSocket communication

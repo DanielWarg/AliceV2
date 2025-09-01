@@ -3,14 +3,14 @@
 ## 🚀 Quick Setup Instructions
 
 ### 1. Create GitHub Repository
-Gå till [GitHub](https://github.com) och:
+Go to [GitHub](https://github.com) and:
 
-1. Klicka "New repository"
+1. Click "New repository"
 2. **Repository name**: `alice-v2`
 3. **Description**: `Alice v2 AI Assistant - Next-generation AI assistant with deterministic safety and real-time voice pipeline`
-4. **Visibility**: ✅ **Private** (viktigt!)
-5. **DON'T** initialize with README, .gitignore, or license (vi har redan dessa)
-6. Klicka "Create repository"
+4. **Visibility**: ✅ **Private** (important!)
+5. **DON'T** initialize with README, .gitignore, or license (we already have these)
+6. Click "Create repository"
 
 ### 2. Connect Local Repository
 
@@ -26,7 +26,7 @@ git push -u origin main
 
 ### 3. Repository Settings (Recommended)
 
-Efter du skapat repot, gå till Settings och konfigurera:
+After creating the repo, go to Settings and configure:
 
 #### General Settings
 - ✅ Restrict pushes that create files larger than 100 MB
@@ -35,7 +35,7 @@ Efter du skapat repot, gå till Settings och konfigurera:
 - ✅ Allow rebase merging
 - ✅ Automatically delete head branches
 
-#### Branch Protection (för main branch)
+#### Branch Protection (for main branch)
 - ✅ Require a pull request before merging
 - ✅ Require status checks to pass before merging
 - ✅ Restrict pushes that create files larger than 100 MB
@@ -47,7 +47,7 @@ Efter du skapat repot, gå till Settings och konfigurera:
 
 ## 📂 Repository Structure Verification
 
-Kontrollera att dessa filer/mappar finns i ditt repo:
+Check that these files/folders exist in your repo:
 
 ```
 alice-v2/
@@ -71,7 +71,7 @@ alice-v2/
 
 ## 🧪 Verification Commands
 
-Efter push till GitHub, testa lokalt:
+After pushing to GitHub, test locally:
 
 ```bash
 # Install dependencies
@@ -89,22 +89,11 @@ pytest src/tests/test_integration.py -v
 
 ## 🎯 Success Criteria
 
-Du vet att setup lyckades när:
+You know the setup succeeded when:
 
-1. ✅ Repository är **privat** på GitHub
-2. ✅ Alla filer pushades korrekt (98 files i första commit)
-3. ✅ README.md visas snyggt på GitHub med projekt-översikt
-4. ✅ Integration tester passerar lokalt (15/15)
-5. ✅ pnpm install fungerar utan errors
-6. ✅ Repository har professionell struktur och dokumentation
-
-## 🔒 Important Notes
-
-- **PRIVAT**: Repot måste vara privat eftersom det innehåller utvecklingskod
-- **CLEAN**: Detta är en ren start - ingen legacy kod eller history
-- **READY**: Step 1 är komplett och testad, redo för fortsatt utveckling
-- **FOUNDATION**: Professionell grund för resten av 17-steg roadmap
-
----
-
-**🤖 Alice v2 är nu redo för sitt eget professionella hem på GitHub!**
+1. ✅ Repository is **private** on GitHub
+2. ✅ All files pushed correctly (98 files in first commit)
+3. ✅ README.md displays nicely on GitHub with project overview
+4. ✅ Integration tests pass locally (15/15)
+5. ✅ pnpm install works without errors
+6. ✅ Repository has professional structure and documentation

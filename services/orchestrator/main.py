@@ -12,6 +12,7 @@ import httpx
 from typing import AsyncGenerator
 
 from src.routers import chat, orchestrator, status, feedback
+from src.security.router import router as security_router
 from src.middleware.logging import setup_logging, LoggingMiddleware
 from src.services.guardian_client import GuardianClient
 from src.mw_metrics import MetricsMiddleware
@@ -19,6 +20,8 @@ from src.status_router import router as fix_status_router
 from src.health import check_readiness, check_liveness, wait_for_readiness
 from src.shutdown import shutdown_manager, setup_signal_handlers, request_context, shutdown_app
 from src.privacy import privacy_manager
+from src.security.policy import load_policy
+from src.security.metrics import set_mode
 
 # Setup structured logging
 setup_logging()
@@ -48,6 +51,15 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         # Health check Guardian connection
         guardian_status = await guardian_client.get_health()
         logger.info("Guardian connection established", status=guardian_status)
+        # Load security policy and set default mode
+        try:
+            import os as _os
+            policy_path = _os.getenv("SECURITY_POLICY_PATH", "config/security_policy.yaml")
+            app.state.security_policy = load_policy(policy_path)
+            set_mode("NORMAL")
+            logger.info("Security policy loaded", path=policy_path)
+        except Exception as e:
+            logger.warning("Security policy load failed", error=str(e))
         
         yield
         
@@ -149,6 +161,7 @@ async def cleanup_expired_data():
 # Include API routers
 app.include_router(chat.router, prefix="/api", tags=["chat"])  # NLU‑aware chat mock
 app.include_router(orchestrator.router, prefix="/api/orchestrator", tags=["orchestrator"])  # full LLM v1
+app.include_router(security_router, tags=["security"])  # /api/security/state
 app.include_router(status.router, prefix="/api/status", tags=["status"])
 app.include_router(feedback.router)
 

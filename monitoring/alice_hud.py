@@ -480,5 +480,77 @@ def main():
     time.sleep(refresh_interval)
     st.rerun()
 
+@st.cache_data(ttl=10)
+def get_metrics_text() -> str:
+    """Hämta Prometheus-metrics (orchestrator)"""
+    try:
+        resp = requests.get(f"{ORCHESTRATOR_BASE}/metrics", timeout=3)
+        if resp.status_code == 200:
+            return resp.text
+    except Exception:
+        pass
+    return ""
+
+def parse_security_metrics(metrics_text: str) -> Dict[str, Any]:
+    """Plocka ut security-relaterade metrics"""
+    data: Dict[str, Any] = {"injection_suspects": 0.0, "denials": {}, "mode": "UNKNOWN"}
+    if not metrics_text:
+        return data
+    try:
+        for line in metrics_text.splitlines():
+            if line.startswith("alice_injection_suspected_total "):
+                try:
+                    data["injection_suspects"] = float(line.split()[-1])
+                except Exception:
+                    pass
+            elif line.startswith("alice_tool_denied_total") and "{" in line:
+                try:
+                    label = line.split("{")[1].split("}")[0]
+                    # reason="xyz"
+                    reason = "unknown"
+                    for part in label.split(","):
+                        kv = part.split("=")
+                        if len(kv) == 2 and kv[0].strip() == "reason":
+                            reason = kv[1].strip('"')
+                    val = float(line.split()[-1])
+                    data["denials"][reason] = data["denials"].get(reason, 0) + val
+                except Exception:
+                    pass
+            elif line.startswith("alice_security_mode{"):
+                # e.g., alice_security_mode{mode="STRICT"} 1
+                try:
+                    label = line.split("{")[1].split("}")[0]
+                    mode = "UNKNOWN"
+                    for part in label.split(","):
+                        kv = part.split("=")
+                        if len(kv) == 2 and kv[0].strip() == "mode":
+                            mode = kv[1].strip('"')
+                    val = float(line.split()[-1])
+                    if val >= 1.0:
+                        data["mode"] = mode
+                except Exception:
+                    pass
+    except Exception:
+        pass
+    return data
+
+def render_security_panel():
+    st.subheader("🔐 Security")
+    mtext = get_metrics_text()
+    sec = parse_security_metrics(mtext)
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric("Mode", sec.get("mode", "UNKNOWN"))
+        st.metric("Injection suspects", f"{sec.get('injection_suspects', 0):.0f}")
+    with col2:
+        den = sec.get("denials", {}) or {}
+        if den:
+            df_den = pd.DataFrame({"reason": list(den.keys()), "count": list(den.values())})
+            fig = px.bar(df_den, x="reason", y="count", title="Tool denials by reason")
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info("No denials yet")
+
+
 if __name__ == "__main__":
     main()

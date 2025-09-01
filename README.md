@@ -10,7 +10,7 @@ Alice v2 is a robust, production-ready AI assistant featuring:
 - **🛡️ Guardian Safety System** - Real-time health monitoring with NORMAL/BROWNOUT/EMERGENCY states
 - **📊 Complete Observability** - RAM-peak per turn, energy tracking, tool error classification, structured JSONL logging
 - **🧪 Autonomous E2E Testing** - Self-contained test suite with 20 scenarios, SLO validation, and automatic failure detection
-- **🧠 NLU v1 (svenska)** - e5-embeddings + heuristik, `/api/nlu/parse`, headers `X-Intent`/`X-Route-Hint`
+- **🧠 NLU v1 (Swedish)** - e5-embeddings + heuristics, `/api/nlu/parse`, headers `X-Intent`/`X-Route-Hint`
 - **📈 Real-time Monitoring** - Streamlit HUD with comprehensive metrics visualization
 - **⚡ Brownout Load Testing** - Complete stress testing suite validating ≤150ms trigger, ≤60s recovery
 - **🐳 Docker Orchestration** - Complete deployment stack with health checks and monitoring
@@ -64,129 +64,116 @@ chmod +x scripts/setup-cron.sh
 crontab -l | grep auto_verify
 ```
 
-## 📊 Production Features
+## ✅ Quick checklist (daily)
 
-### Complete Observability System
-- **RAM-peak per turn**: Process and system memory tracking in every turn event
-- **Energy per turn (Wh)**: Energy consumption measurement with configurable baseline
-- **Tool error classification**: Timeout/5xx/429/schema/other categorization with Prometheus metrics
-- **Structured turn events**: Comprehensive JSONL logging with all metrics and metadata
-- **Real-time dashboard**: Streamlit HUD showing RAM, energy, latency, tool errors, and Guardian status
-  - Note: `/api/chat` sets `X-Route` early so per-route P50/P95 is accurate
+### Completed
 
-### Autonomous E2E Testing
-- **Self-contained validation**: `scripts/auto_verify.sh` runs complete system validation
-- **20 realistic scenarios**: Swedish conversation patterns (micro/planner emphasis in v1)
-- **SLO validation**: Automatic P95 threshold checking with Node.js integration
-- **Failure detection**: Exits with code 1 on SLO breaches or <80% pass rate
-- **Artifact preservation**: All test results saved to `data/tests/` and `test-results/`
+- [x] Observability + eval-harness v1
+- [x] Security v1 (baseline)
+- [x] NLU v1 (Swedish, embeddings)
 
-### Guardian Safety System
-- **5-point sliding window** monitoring RAM/CPU with 80%/92% soft/hard triggers
-- **60-second recovery hysteresis** preventing oscillation
-- **State machine**: NORMAL → BROWNOUT → EMERGENCY → NORMAL
-- **Admission control** protecting system during resource pressure
+### Next steps
 
-### SLO Monitoring & Validation
-- **Real-time metrics**: P50/P95 latency per route (micro/planner/deep)
-- **Error budget tracking**: 5xx/429 rates over 5-minute sliding windows
-- **Production thresholds**: 250ms/1.5s/3s P95 budgets by route complexity
-- **Brownout SLO**: ≤150ms trigger latency, ≤60s recovery time
+#### Step 4 – NLU + XNLI
+- [ ] Export XNLI to ONNX (int8) → `models/xnli/`
+- [ ] Connect entailment for low margin in NLU
+- [ ] Add 4–6 challenging test scenarios to eval-harness
+- [ ] Intent accuracy ≥92%, P95 ≤80ms
 
-### Load Testing & Chaos Engineering
-- **5 stress modules**: Deep-LLM, Memory balloon, CPU spin, Tool storm, Vision RTSP
-- **Real brownout validation**: Measure actual trigger/recovery against SLO
-- **Chaos engineering**: Network partitions, resource exhaustion, gradual degradation
-- **20 production scenarios**: Realistic Swedish conversation patterns
+#### Step 5 – Micro-LLM (Phi-3.5-mini via Ollama)
+- [ ] Enable micro-driver in `/api/chat`
+- [ ] Set `X-Route=micro` for simple intents
+- [ ] Measure P95 <250ms (first token)
+
+#### Step 6 – Memory (Redis TTL + FAISS user memory)
+- [ ] Session memory TTL=7 days
+- [ ] FAISS hot/cold index config (HNSW+ondisk)
+- [ ] "Forget me" <1s tested in eval
+
+#### Step 7 – Planner-LLM (Qwen 7B-MoE + MCP tools)
+- [ ] Tool schema (pydantic) + tool-firewall
+- [ ] Eval with 1–2 tool-calls/flow
+- [ ] Tool success ≥95%
+
+#### Step 8 – Text E2E hard test
+- [ ] Fast: P95 ≤250ms
+- [ ] Planner: P95 ≤900ms (first) / ≤1.5s (full)
+- [ ] Overall pass-rate ≥98%
 
 ## 🔧 Development
 
 ### Local Development
 ```bash
-# Install dependencies
-cd services/orchestrator && python -m venv .venv && source .venv/bin/activate
+# Start services
+docker compose up -d guardian orchestrator
+
+# Development environment
+cd services/orchestrator
+python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
-# Run tests
-pytest src/tests/ -v
+# Test
+curl http://localhost:8000/api/status/simple
+curl http://localhost:8787/health
 
-# Start local development
-uvicorn main:app --reload --port 8000
-```
-
-### Autonomous Testing
-```bash
-# Run complete E2E validation
+# Run validation
 ./scripts/auto_verify.sh
 
-# Run eval harness only
-cd services/eval && source .venv/bin/activate && python eval.py
-
-# Start mini-HUD for monitoring
+# Monitor
 cd monitoring && streamlit run mini_hud.py
 ```
 
 ### Testing Strategy
-- **Real integration tests** (no mocks) with 80-95% success rate expectations
-- **Autonomous E2E validation** with 20 production scenarios
-- **SLO compliance tracking** with automatic alerting
-- **Chaos engineering** for resilience validation
+- **E2E Testing**: `./scripts/auto_verify.sh` - Complete system validation
+- **Unit Testing**: `pytest` with realistic expectations (80-95% success rates)
+- **Load Testing**: `services/loadgen/main.py` - Brownout validation
+- **Monitoring**: Real-time HUD with comprehensive metrics
 
-## 📈 Monitoring & Operations
+## 📊 Monitoring & Observability
 
-### Key Metrics
-- **Guardian State**: NORMAL (green), BROWNOUT (yellow), EMERGENCY (red)
-- **Route Latency**: P95 per micro/planner/deep routes
-- **RAM Peak**: Per-turn memory usage tracking
-- **Energy Consumption**: Wh per turn with baseline calibration
-- **Tool Errors**: Classified error rates (timeout/5xx/429/schema/other)
-- **Error Budget**: 5xx rate, 429 rate over 5-minute windows
-
-### Production Endpoints
-- **Health**: `GET /health` - Service status
-- **Metrics**: `GET /api/status/simple` - Complete system snapshot (proxied via port 18000)
-- **Guardian**: `GET /api/status/guardian` - Current safety status
-- **Routes**: `GET /api/status/routes` - Latency breakdown by route
-
-### Deployment
+### Real-time Dashboard
 ```bash
-# Production deployment
-docker compose up -d
+# Start HUD
+cd monitoring && streamlit run mini_hud.py
 
-# Scale services (if needed)
-docker compose up --scale orchestrator=3
-
-# Monitor logs
-docker compose logs -f guardian orchestrator
-
-# Run autonomous validation
-./scripts/auto_verify.sh
+# Or via proxy
+open http://localhost:18000/hud
 ```
 
-## 📋 System Status
+### Key Metrics
+- **Performance**: P50/P95 latency per route, RAM peak per turn
+- **Reliability**: Guardian state, error rates, SLO compliance
+- **Security**: Injection attempts, tool denials, security mode
+- **Quality**: Intent accuracy, tool success rates, eval pass rates
 
-✅ **Complete Observability** - RAM-peak, energy tracking, tool error classification  
-✅ **Autonomous E2E Testing** - Self-contained validation with 20 scenarios  
-✅ **Guardian Safety System** - Production-ready with 5-point sliding window  
-✅ **SLO Monitoring** - Real P50/P95 tracking with error budgets  
-✅ **Brownout Testing** - Complete load generation suite  
-✅ **Real-time HUD** - Streamlit dashboard with comprehensive metrics  
-✅ **Structured Logging** - JSONL telemetry with PII masking  
-✅ **Docker Orchestration** - Health checks and dependencies  
+### Data Collection
+- **Telemetry**: Structured JSONL logging under `data/telemetry/`
+- **Test Results**: E2E validation artifacts under `data/tests/`
+- **Trends**: Nightly validation trends under `test-results/`
 
-## 🔗 Documentation
+## 🛡️ Security Features
 
-- **[AGENTS.md](AGENTS.md)** - AI coding agent context & development tips
-- **[TESTING_STRATEGY.md](TESTING_STRATEGY.md)** - Comprehensive testing approach
-- **[ALICE_SYSTEM_BLUEPRINT.md](ALICE_SYSTEM_BLUEPRINT.md)** - System architecture
-- **[ROADMAP.md](ROADMAP.md)** - Future development plans
-- **[LOOSE_THREADS.md](LOOSE_THREADS.md)** - Operational polish and production readiness
-- **[monitoring/README.md](monitoring/README.md)** - HUD setup and usage
+- **Guardian System**: Real-time health monitoring with automatic brownout
+- **Injection Detection**: Pattern-based injection attempt detection
+- **Tool Firewall**: Configurable tool access control
+- **Security Policy**: YAML-based security configuration
+
+## 📚 Documentation
+
+- **`ROADMAP.md`** - Live milestone tracker with test gates
+- **`ALICE_SYSTEM_BLUEPRINT.md`** - System architecture and design decisions
+- **`AGENTS.md`** - Instructions for AI coding agents
+- **`TESTING_STRATEGY.md`** - Comprehensive testing approach
+- **`SECURITY.md`** - Security architecture and policies
 
 ## 🤝 Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines and [SECURITY.md](SECURITY.md) for security practices.
+See `CONTRIBUTING.md` for development guidelines and contribution process.
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ---
 
-**Alice v2** - From prototype to production-ready AI assistant with comprehensive safety, monitoring, validation, and autonomous testing. 🤖✨
+**🤖 Built with Claude Code - Alice v2 observability + eval-harness v1 complete! 🚀**

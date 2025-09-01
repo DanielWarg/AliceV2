@@ -1,0 +1,9 @@
+# Default owners
+* @evil
+
+# Services
+/services/orchestrator/ @evil
+/services/guardian/ @evil
+/services/eval/ @evil
+/monitoring/ @evil
+/scripts/ @evil

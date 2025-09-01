@@ -1,85 +1,55 @@
 # Alice v2 AGENTS.md
-*Instructions and context for AI coding agents working on Alice AI Assistant*
+*Instructions and context for AI coding agents working on the Alice AI Assistant*
+
+> **⚠️ IMPORTANT**: This file is for AI coding agents only and should NOT be committed to Git. All project documentation must be in English.
+
+## 🌐 Documentation Language Policy
+
+**REQUIRED**: All `.md` files in this repository must be written in English only.
+- **CI Guard**: GitHub Actions automatically checks for Swedish text in documentation
+- **Exclusions**: Only `docs/archive/` directory may contain non-English content
+- **Purpose**: Ensure international accessibility and maintain professional standards
+
+**Files to translate**: `README.md`, `ROADMAP.md`, `ALICE_SYSTEM_BLUEPRINT.md`, `TESTING_STRATEGY.md`, `SECURITY.md`, `CONTRIBUTING.md`, `GITHUB_SETUP.md`, and all service README files.
 
 ---
 
-## 🚀 **CURRENT PROJECT STATUS (Updated 2025-08-31)**
+## 🚀 CURRENT PROJECT STATUS (Updated 2025-09-01)
 
-### **✅ COMPLETED - LLM Integration v1 + Complete Observability System**
+### ✅ COMPLETED – Observability + Eval Harness v1, Routing v1 ready
 
-Alice v2 har transformerats från prototyp till **robust, production-ready platform** med komplett LLM-integration, säkerhets-, övervaknings-, testramverk och **autonom E2E-validering**:
-
-**🤖 LLM Integration v1:**
-- ✅ **Intelligent routing**: Micro (Phi-mini), Planner (Qwen-MoE), Deep (Llama-3.1) med pattern matching
-- ✅ **LLM drivers**: Ollama integration med proper timeouts och error handling
-- ✅ **Planner execution**: JSON schema validation och tool execution med fallback matrix
-- ✅ **Guardian-aware**: Deep blocked i brownout, planner degraded under resurstryck
-- ✅ **Fallback system**: LLM + tool fallback med max 1 kedja per turn
-- ✅ **SLO compliance**: Fast ≤250ms, planner ≤1500ms, deep ≤3000ms
-
-Alice v2 har transformerats från prototyp till **robust, production-ready platform** med komplett säkerhets-, övervaknings-, testramverk och **autonom E2E-validering**:
-
-**🛡️ Guardian Safety System:**
-- ✅ Real-time health monitoring med NORMAL/BROWNOUT/EMERGENCY states
-- ✅ 5-punkts sliding window RAM/CPU monitoring (80%/92% trösklar)
-- ✅ 60-sekunds recovery hysteresis för stabil tillståndshantering
-- ✅ Admission control som skyddar systemet under resurstryck
-
-**📊 Complete Observability System:**
-- ✅ **RAM-peak per turn**: Process och system memory tracking i varje turn event
-- ✅ **Energy per turn (Wh)**: Energikonsumtion med konfigurerbar baseline
-- ✅ **Tool error classification**: Timeout/5xx/429/schema/other kategorisering med Prometheus metrics
-- ✅ **Structured turn events**: Komplett JSONL logging med alla metrics och metadata
-- ✅ **Real-time dashboard**: Streamlit HUD visar RAM, energi, latens, tool-fel och Guardian status
-
-**🧪 Autonomous E2E Testing:**
-- ✅ **Self-contained validation**: `scripts/auto_verify.sh` kör komplett systemvalidering
-- ✅ **20 realistiska scenarier**: Svenska samtal som täcker micro/planner/deep routes
-- ✅ **SLO validation**: Automatisk P95 threshold checking med Node.js integration
-- ✅ **Failure detection**: Exit kode 1 vid SLO-brott eller <80% pass rate
-- ✅ **Artifact preservation**: Alla testresultat sparas till `data/tests/` och `test-results/`
-
-**📈 Production Observability:**
-- ✅ Streamlit HUD med real-time Guardian timeline (röd/gul/grön)
-- ✅ Route latency trends, error budget burn rates, SLO compliance tracking
-- ✅ JSONL observability logging till `/data/telemetry` med PII masking
-- ✅ Auto-refresh monitoring lämpligt för DevOps-team
-
-**⚡ Complete Brownout Load Testing:**
-- ✅ 5 stress test modules: Deep-LLM, Memory balloon, CPU spin, Tool storm, Vision RTSP
-- ✅ SLO validation: ≤150ms brownout trigger, ≤60s recovery measurement
-- ✅ Real brownout trigger/recovery testing med Guardian state monitoring
-- ✅ Structured JSONL telemetry för trendanalys
-
-**🐳 Production Deployment:**
-- ✅ Docker Compose orchestration med health checks och dependencies
-- ✅ Environment-driven konfiguration med production-safe defaults
-- ✅ Komplett dokumentation och setup scripts
+Alice v2 is a robust, production‑ready platform with complete safety, observability, autonomous E2E testing and an initial LLM routing stack. Next agents can focus on real LLM integration and the voice pipeline while the guardrails are already in place.
 
 ---
 
-## 📋 **WHAT WE BUILT - Technical Deep Dive**
+## 🚦 Live Milestone Tracker (read first)
+- See `ROADMAP.md` → section "🚦 Live Milestone Tracker" for current status, next step and live test‑gates.
+- Policy: Do not check off a step until `./scripts/auto_verify.sh` is green and artifacts exist in `data/tests/` and `data/telemetry/`.
 
-### **Core Services Architecture**
+---
+
+## 📋 WHAT WE BUILT – Technical Deep Dive
+
+### Core Services Architecture
 
 ```
 alice-v2/
 ├── services/
-│   ├── orchestrator/    # ✅ LLM routing & API gateway med LLM integration v1
-│   │   ├── src/llm/ollama_client.py   # Ollama client med timeouts
-│   │   ├── src/llm/micro_phi.py       # Phi-mini driver för snabba svar
-│   │   ├── src/llm/planner_qwen.py    # Qwen-MoE driver med JSON output
-│   │   ├── src/llm/deep_llama.py      # Llama-3.1 driver med Guardian integration
-│   │   ├── src/router/policy.py       # Intelligent routing med pattern matching
-│   │   ├── src/planner/schema.py      # JSON schema för tool execution
-│   │   ├── src/planner/execute.py     # Plan execution med fallback matrix
+│   ├── orchestrator/    # ✅ LLM routing & API gateway with LLM integration v1
+│   │   ├── src/llm/ollama_client.py   # Ollama client with timeouts
+│   │   ├── src/llm/micro_phi.py       # Phi-mini driver for fast replies
+│   │   ├── src/llm/planner_qwen.py    # Qwen-MoE driver with JSON output
+│   │   ├── src/llm/deep_llama.py      # Llama-3.1 driver with Guardian integration
+│   │   ├── src/router/policy.py       # Intelligent routing with pattern matching
+│   │   ├── src/planner/schema.py      # JSON schema for tool execution
+│   │   ├── src/planner/execute.py     # Plan execution with fallback matrix
 │   │   ├── src/utils/ram_peak.py      # RAM-peak per turn tracking
 │   │   ├── src/utils/energy.py        # Energy per turn measurement
 │   │   ├── src/utils/tool_errors.py   # Tool error classification
 │   │   ├── src/metrics.py             # Real P50/P95 tracking
-│   │   ├── src/mw_metrics.py          # ASGI latency middleware  
+│   │   ├── src/mw_metrics.py          # ASGI latency middleware
 │   │   ├── src/guardian_client.py     # Guardian integration
-│   │   ├── src/status_router.py        # Status API endpoints
+│   │   ├── src/status_router.py       # Status API endpoints
 │   │   └── src/routers/orchestrator.py # LLM integration + turn logging
 │   │
 │   ├── guardian/        # ✅ 5-point sliding window safety
@@ -90,14 +60,14 @@ alice-v2/
 │   │   ├── scenarios.json # Test cases covering all routes
 │   │   └── requirements.txt # Dependencies
 │   │
-│   └── loadgen/         # ✅ Complete brownout testing suite
+│   └── loadgen/         # ✅ Brownout testing suite
 │       ├── main.py      # Orchestrates stress + measures SLO
-│       ├── watchers.py  # Mäter brownout trigger/recovery latency
+│       ├── watchers.py  # Brownout trigger/recovery latency
 │       └── burners/     # 5 stress test modules
 │
 ├── monitoring/          # ✅ Streamlit production HUD
 │   ├── alice_hud.py     # Real-time Guardian + metrics visualization
-│   └── mini_hud.py      # Lightweight dashboard för eval results
+│   └── mini_hud.py      # Lightweight dashboard for eval results
 │
 ├── scripts/             # ✅ Autonomous E2E test automation + port management
 │   ├── auto_verify.sh   # Complete system validation script
@@ -109,7 +79,7 @@ alice-v2/
 └── test-results/        # ✅ Nightly validation trends
 ```
 
-### **Key Technical Implementations**
+### Key Technical Implementations
 
 **LLM Integration v1 (services/orchestrator/src/routers/orchestrator.py):**
 ```python
@@ -137,11 +107,11 @@ elif route == "deep":
 
 **Turn Event Logging (services/orchestrator/src/routers/orchestrator.py & chat.py):**
 ```python
-def log_turn_event(trace_id: str, session_id: str, route: str, 
+def log_turn_event(trace_id: str, session_id: str, route: str,
                    e2e_first_ms: float, e2e_full_ms: float,
                    ram_peak_mb: Dict[str, float], energy_wh: float,
                    tool_calls: List[Dict], guardian_state: str):
-    """Logga komplett turn event med alla metrics"""
+    """Log full turn event with all metrics"""
     event = {
         "v": "1", "ts": datetime.utcnow().isoformat() + "Z",
         "trace_id": trace_id, "session_id": session_id, "route": route,
@@ -149,146 +119,133 @@ def log_turn_event(trace_id: str, session_id: str, route: str,
         "ram_peak_mb": ram_peak_mb, "energy_wh": energy_wh,
         "tool_calls": tool_calls, "guardian_state": guardian_state
     }
-    # Skriv till JSONL fil under data/telemetry/YYYY-MM-DD/events_YYYY-MM-DD.jsonl
+    # Write to JSONL file under data/telemetry/YYYY-MM-DD/events_YYYY-MM-DD.jsonl
 ```
 
 **Autonomous E2E Testing (scripts/auto_verify.sh):**
 ```bash
 #!/usr/bin/env bash
-# Startar tjänster, väntar på hälsa, kör eval, validerar SLO
+# Starts services, waits for health, runs eval, validates SLO
 docker compose up -d orchestrator guardian
-# Väntar på hälsa...
-./services/eval/eval.py  # Kör 20 scenarier
-# Node.js SLO validation...
-# Exit 1 vid SLO-brott eller <80% pass rate
+# Wait for health…
+./services/eval/eval.py  # Runs 20 scenarios
+# Node.js SLO validation…
+# Exit 1 on SLO breach or <80% pass rate
 ```
 
 **Eval Harness (services/eval/eval.py):**
 ```python
 def run_chat(text, session="eval"):
-    payload = {"v":"1","session_id":f"{session}-{uuid.uuid4().hex[:6]}",
-               "lang":"sv","text":text}
+    payload = {"session_id": f"{session}-{uuid.uuid4().hex[:6]}", "message": text}
     t0 = time.perf_counter()
     with httpx.Client(timeout=10) as c:
-        r = c.post(f"{API}/api/chat", json=payload)  # X-Route header sätts av /api/chat
-    dt = (time.perf_counter()-t0)*1000
+        r = c.post(f"{API}/api/chat", json=payload, headers={"Authorization": "Bearer test-key-123"})
+    dt = (time.perf_counter() - t0) * 1000
     return r, dt
 ```
 
 ---
 
-## 🎯 **NEXT PRIORITIES - Where to Go From Here**
+## 🎯 NEXT PRIORITIES – Where to go from here
 
-### **HIGH PRIORITY (Ready for Next AI Agent)**
-
+### HIGH PRIORITY (Ready for the next AI agent)
 1. **🎤 Voice Pipeline Implementation**
-   - **Current**: Arkitektur klar, services stubbed
-   - **Next**: ASR→NLU→TTS pipeline med WebSocket connections  
+   - **Current**: Architecture ready, services stubbed
+   - **Next**: ASR→NLU→TTS pipeline with WebSocket connections  
    - **Location**: `services/voice/` (needs implementation)
-   - **Swedish Focus**: Whisper ASR, svenska språkmodeller
-   - **Testing**: Utöka `services/eval/scenarios.json` med voice scenarios
+   - **Swedish Focus**: Whisper ASR, Swedish language models
+   - **Testing**: Extend `services/eval/scenarios.json` with voice scenarios
 
 2. **🌐 Web Frontend Integration**
-   - **Current**: Next.js app structure i `apps/web/`
-   - **Next**: Koppla frontend till Orchestrator API
+   - **Current**: Next.js app structure in `apps/web/`
+   - **Next**: Connect frontend to Orchestrator API
    - **Features**: Chat UI, Guardian status display, voice controls
-   - **Validation**: Integrera frontend i `auto_verify.sh` E2E test
+   - **Validation**: Integrate frontend into `auto_verify.sh` E2E test
 
-2. **🎤 Voice Pipeline Implementation**
-   - **Current**: Arkitektur klar, services stubbed
-   - **Next**: ASR→NLU→TTS pipeline med WebSocket connections  
-   - **Location**: `services/voice/` (needs implementation)
-   - **Swedish Focus**: Whisper ASR, svenska språkmodeller
-   - **Testing**: Utöka `services/eval/scenarios.json` med voice scenarios
+3. **NLU XNLI enablement** (place ONNX in `./models`, set `NLU_XNLI_ENABLE=true`, update eval with challenging scenarios)
 
-3. **🌐 Web Frontend Integration**
-   - **Current**: Next.js app structure i `apps/web/`
-   - **Next**: Koppla frontend till Orchestrator API
-   - **Features**: Chat UI, Guardian status display, voice controls
-   - **Validation**: Integrera frontend i `auto_verify.sh` E2E test
-
-### **MEDIUM PRIORITY**
+### MEDIUM PRIORITY
 
 4. **📦 Package System Completion**
-   - **Current**: TypeScript packages i `packages/`
-   - **Next**: Komplettera API client, types, UI components
-   - **Purpose**: Shared kod mellan services och frontend
+   - **Current**: TypeScript packages in `packages/`
+   - **Next**: Complete API client, types, UI components
+   - **Purpose**: Shared code between services and frontend
 
 5. **🔧 Advanced Monitoring**  
-   - **Current**: Streamlit HUD med comprehensive metrics
+   - **Current**: Streamlit HUD with comprehensive metrics
    - **Next**: Prometheus/Grafana integration, alerting
-   - **Location**: Utöka `monitoring/` med metrics exporters
+   - **Location**: Extend `monitoring/` with metrics exporters
 
-### **LOW PRIORITY (Future Iterations)**
+### LOW PRIORITY (Future Iterations)
 
 6. **🤖 Advanced AI Features**
    - Multi-modal processing (text + voice + vision)
    - Context retention across sessions
-   - Learning från user interactions
+   - Learning from user interactions
 
 7. **⚡ Performance Optimization**
    - LLM response caching
-   - Load balancing för multiple instances
-   - Database integration för persistent state
+   - Load balancing for multiple instances
+   - Database integration for persistent state
 
 ---
 
-## 🛠️ **DEVELOPMENT CONTEXT FOR NEXT AI**
+## 🛠️ DEVELOPMENT CONTEXT FOR NEXT AI
 
-### **How We Work - Proven Approach**
+### How We Work - Proven Approach
 
 **✅ Autonomous E2E Testing:**
 ```bash
-# Komplett systemvalidering med en kommand
+# Complete system validation with one command
 ./scripts/auto_verify.sh
-# Startar tjänster, kör eval, validerar SLO, sparar artifacts
+# Starts services, runs eval, validates SLO, saves artifacts
 ```
 
 **✅ Real Integration Testing (No Mocks):**
 ```bash
-# Vi testar mot riktiga services med realistiska förväntningar
+# We test against real services with realistic expectations
 pytest src/tests/test_real_integration.py -v
-# Success rate: 80-95% (inte 100% perfectionism)
+# Success rate: 80-95% (not 100% perfectionism)
 ```
 
 **✅ Production-Tight Development:**
 ```bash  
-# Starta hela stacken för development
+# Start the entire stack for development
 docker compose up -d guardian orchestrator
 
-# Kör autonom validering
+# Run autonomous validation
 ./scripts/auto_verify.sh
 
-# Övervaka i realtid  
+# Monitor in real time  
 cd monitoring && streamlit run mini_hud.py
 ```
 
 **✅ Structured Development Workflow:**
-1. **Plan**: Använd TodoWrite för att tracka tasks
-2. **Implement**: Real integration från början (inga mocks)
-3. **Test**: Kör `./scripts/auto_verify.sh` för komplett validering
-4. **Monitor**: Använd HUD för att se impact i realtid
+1. **Plan**: Use Todo tracking for task management
+2. **Implement**: Real integration from the start (no mocks)
+3. **Test**: Run `./scripts/auto_verify.sh` for complete validation
+4. **Monitor**: Use HUD to see impact in real time
 5. **Validate**: SLO compliance via autonomous testing
 
-### **Architecture Principles to Follow**
+### Architecture Principles to Follow
 
-- **Safety First**: Guardian ska alltid vara första prioritet
-- **Real Data**: Mät verkliga metrics, inte mocks eller estimates
-- **Production Ready**: Allt ska vara deployment-ready från dag 1
-- **Observable**: Logga structured data för debugging och ML training
-- **Autonomous Testing**: Alla features ska valideras via `auto_verify.sh`
-- **Swedish Focus**: Alice är optimerad för svenska användare
+- **Safety First**: Guardian should always be first priority
+- **Real Data**: Measure real metrics, not mocks or estimates
+- **Production Ready**: Everything should be deployment-ready from day 1
+- **Observable**: Log structured data for debugging and ML training
+- **Autonomous Testing**: All features should be validated via `auto_verify.sh`
+- **Swedish Focus**: Alice is optimized for Swedish users
 
-### **Code Conventions Established**
+### Code Conventions Established
 
-- **Python Services**: FastAPI + Pydantic, strukturerad logging med structlog
-- **Testing**: pytest med realistic expectations (80-95% success rates)  
-- **E2E Testing**: `scripts/auto_verify.sh` för komplett validering
-- **Monitoring**: JSONL för structured logging, Streamlit för dashboards
+- **Python Services**: FastAPI + Pydantic, structured logging with structlog
+- **Testing**: pytest with realistic expectations (80-95% success rates)  
+- **E2E Testing**: `scripts/auto_verify.sh` for complete validation
+- **Monitoring**: JSONL for structured logging, Streamlit for dashboards
 - **Docker**: Health checks, proper dependencies, environment-driven config
-- **Git**: Descriptive commits med 🤖 Claude Code signature
+- **Git**: Descriptive commits with 🤖 Claude Code signature
 
-### **Files You Should Read First**
+### Files You Should Read First
 
 1. **`README.md`** - Production deployment guide
 2. **`ALICE_SYSTEM_BLUEPRINT.md`** - System architecture  
@@ -298,7 +255,7 @@ cd monitoring && streamlit run mini_hud.py
 6. **`services/orchestrator/main.py`** - Current integration points
 7. **`monitoring/mini_hud.py`** - Real-time system visibility
 
-### **Key Environment Setup**
+### Key Environment Setup
 
 ```bash
 # Repository navigation
@@ -325,17 +282,17 @@ cd monitoring && streamlit run mini_hud.py
 
 ---
 
-## 🔮 **STRATEGIC DIRECTION**
+## 🔮 STRATEGIC DIRECTION
 
-Alice v2 har gått från prototyp till **production-ready platform med komplett observability och autonom E2E-testing**. Nästa AI agent kan fokusera på **actual LLM integration** och **voice pipeline** medan hela safety/monitoring/test infrastrukturen redan är robust.
+Alice v2 has moved from prototype to a **production-ready platform with complete observability and autonomous E2E testing**. The next AI agent can focus on **actual LLM integration** and **voice pipeline** while the entire safety/monitoring/test infrastructure is already robust.
 
 **Key Success Factors:**
-- Guardian säkerhetsystem ger trygg LLM experimentation 
-- Complete observability ger immediate feedback på förändringar
-- Autonomous E2E testing validerar att nya features inte bryter SLO
-- HUD dashboard ger visual confirmation att allt fungerar
+- Guardian safety system enables safe LLM experimentation 
+- Complete observability gives immediate feedback on changes
+- Autonomous E2E testing validates that new features don't break SLOs
+- HUD dashboard provides visual confirmation that everything works
 
-**Philosophy**: Vi bygger inte bara en AI assistant - vi bygger en **robust, observable, säker plattform** som kan utvecklas iterativt utan att kompromissa på kvalitet eller säkerhet, med autonom validering av alla förändringar.
+**Philosophy**: We're not just building an AI assistant - we're building a **robust, observable, secure platform** that can be developed iteratively without compromising quality or security, with autonomous validation of all changes.
 
 ---
 
@@ -345,12 +302,12 @@ Alice v2 har gått från prototyp till **production-ready platform med komplett 
 
 ## ⚡ NEXT AI QUICKSTART (Dev-Proxy - No Mocks)
 
-Snabbstart för nästa AI-agent – allt via dev-proxy på port 18000.
+Quickstart for the next AI agent – everything via dev-proxy on port 18000.
 
-### 1) Starta stacken
+### 1) Start the stack
 ```bash
 scripts/dev_up.sh
-# eller
+# or
 docker compose up -d guardian orchestrator nlu dashboard dev-proxy
 ```
 
@@ -360,22 +317,30 @@ curl -s http://localhost:18000/health | jq .
 curl -s http://localhost:18000/api/status/routes | jq .
 ```
 
-### 3) NLU sanity (svenska)
+### 3) NLU sanity (Swedish)
 ```bash
 curl -s -X POST http://localhost:18000/api/nlu/parse \
   -H 'Content-Type: application/json' \
-  -d '{"v":"1","lang":"sv","text":"Boka möte med Anna imorgon kl 14","session_id":"nlu-sanity"}' | jq .
+  -d '{"v":"1","lang":"sv","text":"Schedule meeting with Anna tomorrow at 14:00","session_id":"nlu-sanity"}' | jq .
 ```
 
-### 4) E2E verify (autonomt)
+### 4) E2E verify (autonomous)
 ```bash
-./scripts/auto_verify.sh || (echo "FAIL – se data/tests/summary.json" && exit 1)
+./scripts/auto_verify.sh || (echo "FAIL – see data/tests/summary.json" && exit 1)
 cat data/tests/summary.json | jq .
 open http://localhost:18000/hud
 ```
 
-### 5) NLU v1 – DoD (nästa steg)
-- `/api/nlu/parse` P95 ≤ 80 ms (5 min fönster)
-- Intent-accuracy ≥ 92% (svensk svit)
-- Slots: ISO för uttryck som “imorgon 14:00”
-- Orchestrator sätter `X-Route-Hint` → route syns i P95 per route
+### 5) NLU v1 – DoD (next step)
+- `/api/nlu/parse` P95 ≤ 80 ms (5 min window)
+- Intent accuracy ≥ 92% (Swedish suite)
+- Slots: ISO formatting for expressions like "tomorrow 14:00"
+- Orchestrator sets `X-Route-Hint` → route visible in P95 per route
+
+---
+
+## 🔐 Security & Enforcement (for agents)
+- Orchestrator ENV: `SECURITY_ENFORCE=true`, `SECURITY_POLICY_PATH=config/security_policy.yaml`
+- HUD: Security panel in `monitoring/alice_hud.py` (mode, injection suspects, tool denials)
+- Metrics: `alice_injection_suspected_total`, `alice_tool_denied_total{reason=...}`, `alice_security_mode{mode=...}`
+- Gate: For high risk, return an intent‑card (requires confirmation) and log turn‑event security fields

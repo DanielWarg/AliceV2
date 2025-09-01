@@ -1,0 +1,20 @@
+risk:
+  # Tröskel för injektionsdetektion (0..1)
+  injection_threshold: 0.62
+  # Intent som kräver explicit bekräftelse (intent-card) innan körning
+  high_risk_intents:
+    - email.send
+    - calendar.create
+    - calendar.move
+    - system.lights
+
+tool_firewall:
+  # Exempel: blockera nätverksverktyg vid STRICT/LOCKDOWN
+  deny_on_modes:
+    STRICT: ["vision.stream", "web.fetch"]
+    LOCKDOWN: ["*"]
+
+messages:
+  require_confirm_sv: "Säkerhet: Åtgärden kräver bekräftelse i UI (intent‑kort)."
+
+

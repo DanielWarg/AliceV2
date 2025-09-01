@@ -4,6 +4,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from pathlib import Path
+import requests
 import time
 from datetime import datetime, timedelta
 
@@ -79,6 +80,54 @@ with col2:
                 st.plotly_chart(fig, use_container_width=True)
     else:
         st.info("No guardian logs yet")
+
+# Security Panel
+st.subheader("🔐 Security")
+sec_col1, sec_col2 = st.columns(2)
+with sec_col1:
+    try:
+        m = requests.get("http://localhost:18000/metrics", timeout=1).text
+        inj = 0
+        den = {}
+        for line in m.splitlines():
+            if line.startswith("alice_injection_suspected_total "):
+                try:
+                    inj = float(line.split()[-1])
+                except Exception:
+                    pass
+            if line.startswith("alice_tool_denied_total") and "{" in line:
+                # e.g., alice_tool_denied_total{reason="net_blocked"} 3
+                try:
+                    key = line.split("{")[1].split("}")[0]
+                    reason = key.split("=")[1].strip('"')
+                    val = float(line.split()[-1])
+                    den[reason] = den.get(reason,0)+val
+                except Exception:
+                    pass
+        st.metric("Injection suspects", f"{inj:.0f}")
+        if den:
+            df_den = pd.DataFrame({"reason": list(den.keys()), "count": list(den.values())})
+            fig = px.bar(df_den, x="reason", y="count", title="Tool denials by reason")
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info("No denials yet")
+    except Exception as e:
+        st.warning(f"Metrics not available: {e}")
+with sec_col2:
+    # Latest turn-event security fields
+    try:
+        latest_dir = max(telemetry_dir.glob("*/"), key=lambda p: p.stat().st_mtime)
+        ev = (latest_dir / f"events_{latest_dir.name}.jsonl")
+        if ev.exists():
+            lines = ev.read_text().strip().split('\n')
+            if lines:
+                last = json.loads(lines[-1])
+                sec = (last.get("security") or {})
+                st.json({"mode": sec.get("mode"), "inj": sec.get("injection_score"), "sanitised": sec.get("sanitised_context")})
+        else:
+            st.info("No turn events yet")
+    except Exception as e:
+        st.warning(f"Telemetry not available: {e}")
 
 # Raw data
 with st.expander("📋 Raw Data"):

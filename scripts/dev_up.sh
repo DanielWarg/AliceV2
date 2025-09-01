@@ -1,37 +1,70 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+log_info() {
+    echo -e "${GREEN}[INFO]${NC} $1"
+}
+
+log_warn() {
+    echo -e "${YELLOW}[WARN]${NC} $1"
+}
+
+log_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
 check_port () {
   local p=$1
   if lsof -nP -iTCP:$p -sTCP:LISTEN >/dev/null 2>&1; then
-    echo "⚠️ Port $p är upptagen – kör scripts/dev_down.sh eller scripts/ports-kill.sh först."
+    log_warn "Port $p is occupied – run scripts/dev_down.sh or scripts/ports-kill.sh first."
     exit 1
   fi
 }
 
-# Enda exponerade porten i dev
+# Only exposed port in dev
 PORT=18000
 check_port $PORT
 
-echo "🧹 Rensar gamla containers (om några)…"
+# Check if models exist, fetch if needed
+log_info "Checking required models..."
+if [[ ! -f "models/e5-small.onnx" ]] || [[ ! -f "models/e5-tokenizer.json" ]]; then
+    log_warn "Required models not found. Fetching models..."
+    if ! ./scripts/fetch_models.sh; then
+        log_error "Failed to fetch models. Please run: make fetch-models"
+        exit 1
+    fi
+else
+    log_info "Required models found ✓"
+fi
+
+log_info "Cleaning old containers (if any)..."
 docker compose down --remove-orphans >/dev/null 2>&1 || true
 
-echo "🐳 Startar guardian, orchestrator, nlu, dashboard, dev-proxy…"
+log_info "Starting guardian, orchestrator, nlu, dashboard, dev-proxy..."
 docker compose up -d --build guardian orchestrator nlu dashboard dev-proxy || true
 
-echo "ℹ️  Startar scheduler (om bild finns)…"
+log_info "Starting scheduler (if image exists)..."
 docker compose up -d scheduler || true
 
-echo "⏳ Väntar på dev-proxy på http://localhost:$PORT/health …"
+log_info "Waiting for dev-proxy at http://localhost:$PORT/health..."
 for i in {1..60}; do
   if curl -fsS http://localhost:$PORT/health >/dev/null 2>&1; then
-    echo "✅ Uppe: http://localhost:$PORT"
+    log_info "✅ Up: http://localhost:$PORT"
+    log_info "🚀 Alice v2 development stack is ready!"
+    log_info "📊 HUD: http://localhost:$PORT/hud"
+    log_info "🔍 Health: http://localhost:$PORT/health"
     exit 0
   fi
   sleep 1
 done
 
-echo "❌ Proxy svarar inte i tid. Kolla loggar: docker compose logs -f dev-proxy"
+log_error "❌ Proxy not responding in time. Check logs: docker compose logs -f dev-proxy"
 exit 1
 
 

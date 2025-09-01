@@ -1,183 +1,219 @@
 # Alice v2 Development Roadmap
-*Professionell implementationsplan med mätbara milstolpar*
+*Professional implementation plan with measurable milestones*
 
-## 🎯 Övergripande Strategi
+## 🎯 Overall Strategy
 
-**Filosofi**: Dependency-driven development med tidiga säkerhetsnät och kontinuerlig mätning.
+**Philosophy**: Dependency-driven development with early safety nets and continuous measurement.
 
-**Timeline**: 16 steg över 6-8 veckor med parallell utveckling i senare faser.
+**Timeline**: 16 steps over 6-8 weeks with parallel development in later phases.
 
 **🚀 CURRENT STATUS**: Phase 1 Steps 1-3 COMPLETED - Foundation & Safety system operational
 
 ---
 
-## Phase 1: Foundation & Safety (Vecka 1-2) ✅ COMPLETED
+## 🚦 Live Milestone Tracker
 
-### Step 1: Orchestrator Core (LangGraph) + API-kontrakt + klient-SDK ✅ DONE
-**Varför**: Allt annat pluggar in här. Utan stabila kontrakt blir resten spagetti.
+**Current status**
+- **Current step**: Step 4 – NLU + XNLI (IN PROGRESS)
+- **Next step**: Step 5 – Micro‑LLM (Phi‑3.5‑Mini via Ollama)
+
+**Live test-gate (must be green before checking off)**
+- Run: `./scripts/auto_verify.sh` (via dev-proxy :18000, no mocks)
+- HUD: `monitoring/mini_hud.py` or `http://localhost:18000/hud`
+- Artifacts: `data/tests/summary.json`, `data/tests/results.jsonl`, `data/telemetry/events_YYYY-MM-DD.jsonl`
+- Criteria:
+  - Real services (no mocks), P95 per route within budget
+  - Pass-rate ≥80% on relevant scenarios
+  - Guardian without EMERGENCY during execution
+
+**Per‑step live gates**
+- Step 4 – NLU + XNLI:
+  - Commands: `./scripts/auto_verify.sh`; NLU sanity: `curl -s -X POST http://localhost:18000/api/nlu/parse -H 'Content-Type: application/json' -d '{"v":"1","lang":"sv","text":"Schedule meeting with Anna tomorrow at 14:00","session_id":"nlu-sanity"}' | jq .`
+  - Pass: Intent‑accuracy ≥92%, P95 ≤80ms; eval ≥80% with challenging examples
+  - Artifacts: updated `services/eval/scenarios.json`, logged `X-Intent`/`X-Route-Hint`
+- Step 5 – Micro‑LLM (Phi‑3.5‑Mini via Ollama):
+  - Commands: `./scripts/start-llm-test.sh` and `./scripts/auto_verify.sh`
+  - Pass: First token P95 <250ms; `X-Route=micro` for simple intents; eval green on micro‑cases
+  - Artifacts: turn‑events with `route:"micro"` and latency per route
+- Step 6 – Memory (Redis TTL + FAISS):
+  - Commands: `./scripts/auto_verify.sh` + manual `POST /memory/forget`
+  - Pass: RAG top‑3 ≥80%, P@1 ≥60%, `forget` <1s; no SLO‑regressions
+  - Artifacts: memory‑metrics in HUD, events with `rag_hit`
+- Step 7 – Planner‑LLM + Tools (MCP):
+  - Commands: `./scripts/auto_verify.sh` with tool‑scenarios
+  - Pass: Tool‑success ≥95%, schema‑validated tool‑calls, max 3 tools/turn
+  - Artifacts: tool‑events with error‑classification and success‑ratio
+- Step 8 – Text E2E hard test:
+  - Commands: `./scripts/auto_verify.sh` + loadgen `services/loadgen/main.py`
+  - Pass: Fast P95 ≤250ms (first), Planner P95 ≤900ms (first)/≤1.5s (full), pass‑rate ≥98%
+  - Artifacts: `test-results/` nightly trends, SLO‑report
+
+> Policy: No steps are checked off until the live test‑gate is green and artifacts exist under `data/tests/` and `data/telemetry/`.
+
+## Phase 1: Foundation & Safety (Week 1-2) ✅ COMPLETED
+
+### Step 1: Orchestrator Core (LangGraph) + API contracts + client-SDK ✅ DONE
+**Why**: Everything else plugs in here. Without stable contracts, the rest becomes spaghetti.
 
 **Owner**: Backend Lead  
-**Timeline**: 3-4 dagar  
+**Timeline**: 3-4 days  
 **SLO Targets**:
 - API response time P95 <100ms
 - Contract stability 100%
 - SDK type safety 100%
 
 **Definition of Done**:
-- [x] `/health`, `/run`, `/tools` endpoints fungerar
-- [x] Events/loggar standardiserade (structured JSON)
-- [x] Web-SDK pratar endast via detta (no direct service calls)
-- [x] OpenAPI spec genererad och versionerad
-- [x] Integration tests för alla endpoints
+- [x] `/health`, `/run`, `/tools` endpoints working
+- [x] Events/logs standardized (structured JSON)
+- [x] Web-SDK only communicates via this (no direct service calls)
+- [x] OpenAPI spec generated and versioned
+- [x] Integration tests for all endpoints
 
 **Checklist**:
-- [x] FastAPI server med auto-documentation
-- [x] LangGraph router stub (returnerar "micro" always)
-- [x] TypeScript SDK med Zod validation  
-- [x] Structured logging med trace IDs
-- [x] Health check med dependency status
+- [x] FastAPI server with auto-documentation
+- [x] LangGraph router stub (returns "micro" always)
+- [x] TypeScript SDK with Zod validation  
+- [x] Structured logging with trace IDs
+- [x] Health check with dependency status
 
 ---
 
-### Step 2: Guardian (gatekeeper) + SLO-hooks + röd/gul/grön status ✅ DONE
-**Varför**: Tidiga skyddsnät → sparar dig timmar av felsökning när moduler läggs på.
+### Step 2: Guardian (gatekeeper) + SLO-hooks + red/yellow/green status ✅ DONE
+**Why**: Early safety nets → save you hours of debugging when modules are added.
 
 **Owner**: DevOps/Reliability  
-**Timeline**: 2-3 dagar  
+**Timeline**: 2-3 days  
 **SLO Targets**:
 - State transition time <150ms
 - Protection activation P99 <200ms
 - Zero system crashes from overload
 
 **Definition of Done**:
-- [x] RAM/CPU-trösklar implementerade (80%/92%/70%)
-- [x] Brownout/restore state machine fungerar
-- [x] 429/503 responses med retry-after headers
-- [x] Mänskliga UI-meddelanden definierade
-- [x] Dashboard visar röd/gul/grön status
+- [x] RAM/CPU thresholds implemented (80%/92%/70%)
+- [x] Brownout/restore state machine working
+- [x] 429/503 responses with retry-after headers
+- [x] Human UI messages defined
+- [x] Dashboard shows red/yellow/green status
 
 **Checklist**:
 - [x] psutil system monitoring (1s interval)
-- [x] State machine med hysteresis
-- [x] Admission control middleware
-- [x] Guardian API client i orchestrator
-- [x] Frontend status component
+- [x] State machine with hysteresis
 
 ---
 
-### Step 3: Observability (metrics/logg/trace) + eval-harness v1 ✅ DONE
-**Varför**: Du vill mäta innan du optimerar.
+### Step 3: Observability (metrics/logs/trace) + eval-harness v1 ✅ DONE
+**Why**: You want to measure before you optimize.
 
 **Owner**: Platform Team  
-**Timeline**: 2-3 dagar  
+**Timeline**: 2-3 days  
 **SLO Targets**:
 - Metrics collection latency <10ms
 - Log ingestion 99.9% success rate
 - Dashboard load time <2s
 
 **Definition of Done**:
-- [x] P50/P95 latency mätning per endpoint
-- [x] RAM-peak, tool-felklass, energi loggas
-- [x] Dashboard visar real-time metrics
-- [x] Trace correlation fungerar mellan services
-- [x] Eval-harness baseline tests kör
+- [x] P50/P95 latency measurement per endpoint
+- [x] RAM-peak, tool error classification, energy logged
+- [x] Dashboard shows real-time metrics
+- [x] Trace correlation works between services
+- [x] Eval-harness baseline tests run
 
 **Checklist**:
 - [x] Prometheus metrics export
-- [x] Structured JSON logging med correlation IDs
-- [x] Streamlit dashboard med live graphs
+- [x] Structured JSON logging with correlation IDs
+- [x] Streamlit dashboard with live graphs
 - [x] Performance baseline tests
 - [x] SLO alerting rules
 
 **🎯 NEW FEATURES COMPLETED**:
-- [x] **RAM-peak per turn**: Process och system memory tracking
-- [x] **Energy per turn (Wh)**: Energikonsumtion med konfigurerbar baseline
-- [x] **Tool error classification**: Timeout/5xx/429/schema/other kategorisering
-- [x] **Autonomous E2E testing**: `scripts/auto_verify.sh` med 20 scenarier (micro/planner v1)
-- [x] **SLO validation**: Automatisk P95 threshold checking med Node.js
-- [x] **Real-time HUD**: Streamlit dashboard med comprehensive metrics
+- [x] **RAM-peak per turn**: Process and system memory tracking
+- [x] **Energy per turn (Wh)**: Energy consumption with configurable baseline
+- [x] **Tool error classification**: Timeout/5xx/429/schema/other categorization
+- [x] **Autonomous E2E testing**: `scripts/auto_verify.sh` with 20 scenarios (micro/planner v1)
+- [x] **SLO validation**: Automatic P95 threshold checking with Node.js
+- [x] **Real-time HUD**: Streamlit dashboard with comprehensive metrics
 
-### Step 4: NLU v1 (svenska) – e5 + regex (✅ BASELINE LIVE)
-- [x] `/api/nlu/parse` aktiv, P95 <80ms (CPU)
-- [x] Orchestrator `/api/chat` sätter `X-Intent`/`X-Route-Hint` + `X-Route`
-- [x] 20 scenarier i eval (micro/planner); pass-rate ≥80% (nu 100%)
-- [ ] XNLI ONNX entailment vid låg marginal (nästa på tur)
+### Step 4: NLU v1 (Swedish) – e5 + regex (✅ BASELINE LIVE)
+- [x] `/api/nlu/parse` active, P95 <80ms (CPU)
+- [x] Orchestrator `/api/chat` sets `X-Intent`/`X-Route-Hint` + `X-Route`
+- [x] 20 scenarios in eval (micro/planner); pass-rate ≥80% (now 100%)
+- [ ] XNLI ONNX entailment at low margin (next on turn)
 
 ---
 
-## Phase 2: Language Understanding (Vecka 2-3) 🔄 IN PROGRESS
+## Phase 2: Language Understanding (Week 2-3) 🔄 IN PROGRESS
 
-### Step 4: NLU (svenska) – multilingual-e5-small + xlm-roberta-xnli + regex (IN PROGRESS)
-**Varför**: Intent/slots styr alla flöden.
+### Step 4: NLU (Swedish) – multilingual-e5-small + xlm-roberta-xnli + regex (IN PROGRESS)
+**Why**: Intent/slots control all flows.
 
 **Owner**: ML Team  
-**Timeline**: 4-5 dagar  
+**Timeline**: 4-5 days  
 **SLO Targets**:
-- Intent accuracy ≥92% på testsvit
+- Intent accuracy ≥92% on test suite
 - Latency P95 ≤80ms
 - Memory usage <500MB
 
 **Definition of Done**:
-- [ ] Svenska intent classification fungerar (≥92%)
-- [ ] Slot extraction för datum/tid/personer (ISO-normaliserat)
-- [ ] Confidence scores kalibrerade, env-styrda thresholds
-- [ ] Fallback till regelbaserad parsing
-- [ ] Evaluation harness med svenska test cases
+- [ ] Swedish intent classification works (≥92%)
+- [ ] Slot extraction for date/time/people (ISO-normalized)
+- [ ] Confidence scores calibrated, env-controlled thresholds
+- [ ] Fallback to rule-based parsing
+- [ ] Evaluation harness with Swedish test cases
 
 **Checklist**:
-- [ ] multilingual-e5-small för embeddings
-- [ ] xlm-roberta-xnli för intent classification
-- [ ] Regex patterns för svenska datetime/entities
+- [ ] multilingual-e5-small for embeddings
+- [ ] xlm-roberta-xnli for intent classification
+- [ ] Regex patterns for Swedish datetime/entities
 - [ ] Confidence threshold tuning
-- [ ] 100 svenska test utterances
+- [ ] 100 Swedish test utterances
 
 ---
 
-### Step 5: Micro-LLM (Phi-3.5-Mini via Ollama) – "snabbvägen"
-**Varför**: Få end-to-end text→text svar ultrasnabbt.
+### Step 5: Micro-LLM (Phi-3.5-Mini via Ollama) – "fast track"
+**Why**: Get end-to-end text→text response ultra-fast.
 
 **Owner**: AI/LLM Team  
-**Timeline**: 2-3 dagar  
+**Timeline**: 2-3 days  
 **SLO Targets**:
 - Time to first token P95 <250ms
 - Context window 4K tokens
 - Memory usage <2GB
 
 **Definition of Done**:
-- [ ] Phi-3.5-Mini modell integrerad via Ollama
-- [ ] Svenska prompt engineering optimerad
-- [ ] Streaming responses implementerat
-- [ ] Context management fungerar
+- [ ] Phi-3.5-Mini model integrated via Ollama
+- [ ] Swedish prompt engineering optimized
+- [ ] Streaming responses implemented
+- [ ] Context management works
 - [ ] Guardian integration (brownout → model switch)
 
 **Checklist**:
-- [ ] Ollama server setup och health checks
+- [ ] Ollama server setup and health checks
 - [ ] Streaming response handling
-- [ ] Svenska prompt templates
+- [ ] Swedish prompt templates
 - [ ] Context window management
 - [ ] Brownout fallback logic
 
 ---
 
-### Step 6: Minne (Redis TTL session + FAISS user memory)
-**Varför**: Personalisering och kontext utan att spränga RAM.
+### Step 6: Memory (Redis TTL session + FAISS user memory)
+**Why**: Personalization and context without breaking RAM.
 
 **Owner**: Backend Team  
-**Timeline**: 3-4 dagar  
+**Timeline**: 3-4 days  
 **SLO Targets**:
 - RAG top-3 hit-rate ≥80%
 - Precision@1 ≥60%
 - "Forget me" operation <1s
 
 **Definition of Done**:
-- [ ] Redis session storage med TTL (7 dagar)
-- [ ] FAISS user memory med svenska embeddings
-- [ ] Consent management för memory operations
-- [ ] RAG retrieval med re-ranking
-- [ ] Memory cleanup/forgetting funktioner
+- [ ] Redis session storage with TTL (7 days)
+- [ ] FAISS user memory with Swedish embeddings
+- [ ] Consent management for memory operations
+- [ ] RAG retrieval with re-ranking
+- [ ] Memory cleanup/forgetting functions
 
 **Checklist**:
-- [ ] Redis clustering för HA
+- [ ] Redis clustering for HA
 - [ ] FAISS index management
 - [ ] Swedish sentence-transformers
 - [ ] Consent policy enforcement
@@ -185,13 +221,13 @@
 
 ---
 
-## Phase 3: Advanced Reasoning (Vecka 3-4)
+## Phase 3: Advanced Reasoning (Week 3-4)
 
-### Step 7: Planner-LLM (Qwen2.5-7B-MoE) + verktygslager (MCP) v1
-**Varför**: Multisteg/verktyg gör Alice nyttig på riktigt.
+### Step 7: Planner-LLM (Qwen2.5-7B-MoE) + tool layer (MCP) v1
+**Why**: Multistep/tool makes Alice useful in the real world.
 
 **Owner**: AI/Integration Team  
-**Timeline**: 5-6 dagar  
+**Timeline**: 5-6 days  
 **SLO Targets**:
 - Tool success rate ≥95%
 - Planning latency P95 <2s
@@ -199,121 +235,121 @@
 
 **Definition of Done**:
 - [ ] Qwen2.5-7B-MoE model deployment
-- [ ] MCP tool registry implementerat
-- [ ] 1-2 tool-calls per flow validerat
-- [ ] Schema-validerat tool execution
-- [ ] Tool fallback matrix implementerat
+- [ ] MCP tool registry implemented
+- [ ] 1-2 tool-calls per flow validated
+- [ ] Schema-validated tool execution
+- [ ] Tool fallback matrix implemented
 
 **Checklist**:
-- [ ] Tool registry med health monitoring
+- [ ] Tool registry with health monitoring
 - [ ] Email/calendar/weather tool implementations  
-- [ ] Tool call planning och execution
-- [ ] Error handling och retries
-- [ ] Tool analytics och monitoring
+- [ ] Tool call planning and execution
+- [ ] Error handling and retries
+- [ ] Tool analytics and monitoring
 
 ---
 
-### Step 8: Text E2E-hårdtest (snabb + planner) mot SLO
-**Varför**: Lås kvalitet innan röst/vision.
+### Step 8: Text E2E hard test (fast + planner) against SLO
+**Why**: Lock quality before voice/vision.
 
 **Owner**: QA/Test Team  
-**Timeline**: 2-3 dagar  
+**Timeline**: 2-3 days  
 **SLO Targets**:
-- Snabb route P95 ≤250ms first token
+- Fast route P95 ≤250ms first token
 - Planner route P95 ≤900ms first token / ≤1.5s full response
-- Success rate ≥98% för test scenarios
+- Success rate ≥98% for test scenarios
 
 **Definition of Done**:
 - [x] Comprehensive E2E test suite (✅ COMPLETED)
-- [x] Load testing för concurrent users (✅ COMPLETED)
-- [x] SLO monitoring och alerting (✅ COMPLETED)
+- [x] Load testing for concurrent users (✅ COMPLETED)
+- [x] SLO monitoring and alerting (✅ COMPLETED)
 - [x] Performance regression testing (✅ COMPLETED)
 - [ ] User acceptance criteria validated
 
 **Checklist**:
 - [x] 20+ E2E test scenarios (✅ COMPLETED)
-- [x] Load testing med brownout validation (✅ COMPLETED)
+- [x] Load testing with brownout validation (✅ COMPLETED)
 - [x] Performance monitoring dashboard (✅ COMPLETED)
 - [x] SLO breach alerting (✅ COMPLETED)
-- [x] Test automation i CI/CD (✅ COMPLETED)
+- [x] Test automation in CI/CD (✅ COMPLETED)
 
 ---
 
-## Phase 4: Voice Pipeline (Vecka 4-5)
+## Phase 4: Voice Pipeline (Week 4-5)
 
 ### Step 9: ASR (Whisper.cpp streaming + Silero-VAD)
-**Varför**: Lägg på röst in när textkedjan håller.
+**Why**: Put voice in when text chain holds.
 
 **Owner**: Voice Team  
-**Timeline**: 4-5 dagar  
+**Timeline**: 4-5 days  
 **SLO Targets**:
-- WER ≤7% rent audio / ≤11% background noise
+- WER ≤7% clean audio / ≤11% background noise
 - Partial transcription ≤300ms
-- Final transcription ≤800ms efter silence
+- Final transcription ≤800ms after silence
 
 **Definition of Done**:
 - [ ] Whisper.cpp streaming integration
-- [ ] Silero-VAD för voice activity detection
+- [ ] Silero-VAD for voice activity detection
 - [ ] WebSocket audio streaming (20ms chunks)
-- [ ] Svenska language model optimering
+- [ ] Swedish language model optimization
 - [ ] Real-time partial transcript delivery
 
 **Checklist**:
-- [ ] Whisper.cpp compilation och integration
-- [ ] WebSocket server för audio streaming
-- [ ] VAD threshold tuning för svenska
+- [ ] Whisper.cpp compilation and integration
+- [ ] WebSocket server for audio streaming
+- [ ] VAD threshold tuning for Swedish
 - [ ] Audio format conversion (PCM 16kHz)
 - [ ] Streaming transcript protocols
 
 ---
 
 ### Step 10: TTS (Piper/VITS) + cache + mood-hook
-**Varför**: Slut på röstkedjan, med persona-känsla.
+**Why**: End of voice chain, with persona-feeling.
 
 **Owner**: Voice Team  
-**Timeline**: 3-4 dagar  
+**Timeline**: 3-4 days  
 **SLO Targets**:
 - Cached response ≤120ms
 - Uncached response ≤800ms (≤40 characters)
 - 3 voice presets operational
 
 **Definition of Done**:
-- [ ] Piper/VITS svenska voices integrerade
-- [ ] Audio caching system implementerat
-- [ ] Mood-driven voice selection (neutral/glad/empatisk)
-- [ ] Audio streaming till frontend
+- [ ] Piper/VITS Swedish voices integrated
+- [ ] Audio caching system implemented
+- [ ] Mood-driven voice selection (neutral/happy/empathetic)
+- [ ] Audio streaming to frontend
 - [ ] Voice quality metrics tracking
 
 **Checklist**:
-- [ ] Svenska voice models (3 personas)
-- [ ] Redis audio cache med TTL
+- [ ] Swedish voice models (3 personas)
+- [ ] Redis audio cache with TTL
 - [ ] Mood score → voice mapping
 - [ ] Audio format optimization
 - [ ] Voice synthesis monitoring
 
 ---
 
-## Phase 5: Deep Reasoning (Vecka 5-6)
+## Phase 5: Deep Reasoning (Week 5-6)
 
 ### Step 11: Deep-LLM (Llama-3.1-8B via Ollama)
-**Varför**: Aktivera "djup" reasoning först när Guardian och SLO skyddar.
+**Why**: Activate "deep" reasoning first when Guardian and SLO protect.
 
 **Owner**: AI Team  
-**Timeline**: 3-4 dagar  
+**Timeline**: 3-4 days  
 **SLO Targets**:
 - Time to first token P95 ≤1.8s
 - Full response P95 ≤3.0s
 - Max 1 concurrent deep job
 
 **Definition of Done**:
-- [ ] Llama-3.1-8B deployment och tuning
+- [ ] Llama-3.1-8B deployment and tuning
 - [ ] Deep reasoning query classification
 - [ ] Resource isolation (1 job limit)
-- [ ] Guardian integration för memory protection
+- [ ] Guardian integration for memory protection
 - [ ] Quality benchmarking vs simpler models
 
 **Checklist**:
-- [ ] Model deployment med resource limits
+- [ ] Model deployment with resource limits
 - [ ] Deep vs shallow routing logic
 - [ ] Concurrent job management
 - [ ] Memory usage monitoring
@@ -322,21 +358,21 @@
 ---
 
 ### Step 12: Vision (YOLOv8-nano + SAM2-tiny, RTSP) on-demand
-**Varför**: Multimodal "wow" utan att störa basen.
+**Why**: Multimodal "wow" without disturbing the base.
 
 **Owner**: Vision Team  
-**Timeline**: 4-5 dagar  
+**Timeline**: 4-5 days  
 **SLO Targets**:
 - First detection ≤350ms stillbild
 - Stream reconnect ≤2s
-- Graceful degradation vid connection loss
+- Graceful degradation at connection loss
 
 **Definition of Done**:
 - [ ] YOLOv8-nano object detection
 - [ ] SAM2-tiny segmentation
 - [ ] RTSP stream handling
-- [ ] On-demand activation (ej continuous)
-- [ ] Vision results integration i chat
+- [ ] On-demand activation (not continuous)
+- [ ] Vision results integration in chat
 
 **Checklist**:
 - [ ] Vision model deployment
@@ -347,27 +383,27 @@
 
 ---
 
-## Phase 6: UX Polish & Intelligence (Vecka 6-7)
+## Phase 6: UX Polish & Intelligence (Week 6-7)
 
-### Step 13: Guardian+UX polish (mänskliga degraderingsbudskap)
-**Varför**: Användarupplevelse vid tryck är avgörande.
+### Step 13: Guardian+UX polish (human degradation messages)
+**Why**: User experience at press is decisive.
 
 **Owner**: Frontend/UX Team  
-**Timeline**: 2-3 dagar  
+**Timeline**: 2-3 days  
 **SLO Targets**:
 - State transition feedback ≤200ms
-- User comprehension ≥90% för messages
+- User comprehension ≥90% for messages
 - Zero confusion during brownouts
 
 **Definition of Done**:
-- [ ] Mänskliga degradation messages på svenska
-- [ ] UI feature gating vid brownout states
-- [ ] Smooth transitions mellan normal/degraded modes
-- [ ] User education om system states
+- [ ] Human degradation messages in Swedish
+- [ ] UI feature gating at brownout states
+- [ ] Smooth transitions between normal/degraded modes
+- [ ] User education on system states
 - [ ] Guardian status accessibility
 
 **Checklist**:
-- [ ] Svenska brownout messages
+- [ ] Swedish brownout messages
 - [ ] Feature disable/enable animations
 - [ ] Guardian state explanations
 - [ ] User feedback collection
@@ -375,22 +411,22 @@
 
 ---
 
-### Step 14: Reflektion (auto-critique) – actionables med explicit accept
-**Varför**: Självlärning utan "silent drift".
+### Step 14: Reflection (auto-critique) – actionables with explicit accept
+**Why**: Self-learning without "silent drift".
 
 **Owner**: AI/ML Team  
-**Timeline**: 3-4 dagar  
+**Timeline**: 3-4 days  
 **SLO Targets**:
 - Suggestion generation latency ≤500ms
-- User acceptance rate ≥30% för suggestions
+- User acceptance rate ≥30% for suggestions
 - Zero unauthorized system changes
 
 **Definition of Done**:
 - [ ] Automated performance analysis
 - [ ] Concrete optimization suggestions (cache, prewarm, RAG-K)
 - [ ] Explicit user acceptance required
-- [ ] Suggestion tracking och outcome measurement
-- [ ] Learning från accepted/rejected suggestions
+- [ ] Suggestion tracking and outcome measurement
+- [ ] Learning from accepted/rejected suggestions
 
 **Checklist**:
 - [ ] Performance analysis automation
@@ -401,11 +437,11 @@
 
 ---
 
-### Step 15: Proaktivitet (Prophet/goals) + energimedveten schemaläggning
-**Varför**: Gör Alice proaktiv och snäll mot batteri/termik.
+### Step 15: Proactivity (Prophet/goals) + energy-aware scheduling
+**Why**: Make Alice proactive and nice to battery/thermal.
 
 **Owner**: AI/Platform Team  
-**Timeline**: 4-5 dagar  
+**Timeline**: 4-5 days  
 **SLO Targets**:
 - Proactive suggestion accuracy ≥40%
 - Energy consumption reduction 15%
@@ -428,19 +464,19 @@
 ---
 
 ### Step 16: UI-milstolpar (HUD→Chat/Tools→Vision/Guardian) via SDK
-**Varför**: Flytta frontend stegvis utan att bryta kontrakt.
+**Why**: Move frontend steps incrementally without breaking contracts.
 
 **Owner**: Frontend Team  
-**Timeline**: 3-4 dagar per milstolpe  
+**Timeline**: 3-4 days per milestone  
 **SLO Targets**:
 - Lighthouse score ≥90
 - Playwright tests 100% pass rate
 - SLO compliance 99.9%
 
 **Definition of Done**:
-- [x] HUD: Status dashboard med real-time metrics (✅ COMPLETED)
-- [ ] Chat/Tools: Conversational interface med tool integration
-- [ ] Vision: Multimodal interface med image/video
+- [x] HUD: Status dashboard with real-time metrics (✅ COMPLETED)
+- [ ] Chat/Tools: Conversational interface with tool integration
+- [ ] Vision: Multimodal interface with image/video
 - [ ] Guardian: System health visualization
 - [ ] SDK: All interactions via TypeScript SDK
 
@@ -453,20 +489,20 @@
 
 ---
 
-## Phase 7: Scale & Advanced Features (Vecka 7-8)
+## Phase 7: Scale & Advanced Features (Week 7-8)
 
-### Step 17: vLLM (endast om throughput behövs) + Flower (för fler noder)
-**Varför**: Skala först när du bevisat behovet.
+### Step 17: vLLM (only if throughput needed) + Flower (for more nodes)
+**Why**: Scale first when you prove the need.
 
 **Owner**: Infrastructure Team  
-**Timeline**: 5-6 dagar  
+**Timeline**: 5-6 days  
 **SLO Targets**:
 - Tokens/second increase 3x
 - Multi-node deployment success
 - Zero RAM/SLO regression
 
 **Definition of Done**:
-- [ ] vLLM deployment och benchmarking
+- [ ] vLLM deployment and benchmarking
 - [ ] Flower federated learning setup (if needed)
 - [ ] Multi-node orchestration
 - [ ] Performance comparison vs Ollama
@@ -477,7 +513,7 @@
 - [ ] Load balancing configuration
 - [ ] Performance benchmarking
 - [ ] Resource scaling policies
-- [ ] Cost analysis för scaling options
+- [ ] Cost analysis for scaling options
 
 ---
 
@@ -509,9 +545,9 @@
 ## 🎯 Checkpoint Reviews
 
 ### Weekly Reviews
-- **Måndag**: Sprint planning och priority review
-- **Onsdag**: Mid-week progress check och blockers
-- **Fredag**: Demo och retrospective
+- **Monday**: Sprint planning and priority review
+- **Wednesday**: Mid-week progress check and blockers
+- **Friday**: Demo and retrospective
 
 ### Milestone Gates
 - **Phase 1**: Foundation stability gate ✅ COMPLETED
@@ -528,23 +564,23 @@
 ### **HIGH PRIORITY (Ready for Next AI Agent)**
 
 1. **🔌 Real LLM Integration** 
-   - **Current**: Orchestrator returnerar mock responses
-   - **Next**: Integrera faktiska LLM calls (OpenAI, Anthropic, lokala modeller)
+   - **Current**: Orchestrator returns mock responses
+   - **Next**: Integrate actual LLM calls (OpenAI, Anthropic, local models)
    - **Location**: `services/orchestrator/src/routers/orchestrator.py`
-   - **Validation**: Använd `./scripts/auto_verify.sh` för att validera integration
+   - **Validation**: Use `./scripts/auto_verify.sh` to validate integration
 
 2. **🎤 Voice Pipeline Implementation**
-   - **Current**: Arkitektur klar, services stubbed
-   - **Next**: ASR→NLU→TTS pipeline med WebSocket connections  
+   - **Current**: Architecture clear, services stubbed
+   - **Next**: ASR→NLU→TTS pipeline with WebSocket connections  
    - **Location**: `services/voice/` (needs implementation)
-   - **Swedish Focus**: Whisper ASR, svenska språkmodeller
-   - **Testing**: Utöka `services/eval/scenarios.json` med voice scenarios
+   - **Swedish Focus**: Whisper ASR, Swedish language models
+   - **Testing**: Extend `services/eval/scenarios.json` with voice scenarios
 
 3. **🌐 Web Frontend Integration**
-   - **Current**: Next.js app structure i `apps/web/`
-   - **Next**: Koppla frontend till Orchestrator API
+   - **Current**: Next.js app structure in `apps/web/`
+   - **Next**: Connect frontend to Orchestrator API
    - **Features**: Chat UI, Guardian status display, voice controls
-   - **Validation**: Integrera frontend i `auto_verify.sh` E2E test
+   - **Validation**: Integrate frontend in `auto_verify.sh` E2E test
 
 ---
 

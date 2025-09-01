@@ -41,8 +41,14 @@ cat >> "$TEMP_CRON" << EOF
 # Alice v2 Automated Testing Schedule
 # Generated on $(date)
 
-# Nightly validation suite - runs at 2:00 AM every day
-0 2 * * * cd "$PROJECT_ROOT" && ./scripts/nightly-validation.sh >> "$PROJECT_ROOT/test-results/cron.log" 2>&1
+# Daily auto-verify with docs update - runs at 14:00 every day
+0 14 * * * cd "$PROJECT_ROOT" && ./scripts/auto_verify.sh >> "$PROJECT_ROOT/test-results/auto_verify.log" 2>&1
+
+# Daily cleanup dry-run - runs at 14:30 every day
+30 14 * * * cd "$PROJECT_ROOT" && DRY_RUN=true CLEANUP_CONFIRM=false bash ./scripts/cleanup.sh >> "$PROJECT_ROOT/logs/cleanup.log" 2>&1
+
+# Weekly cleanup apply - runs at 03:30 on Sundays
+30 3 * * 0 cd "$PROJECT_ROOT" && DRY_RUN=false CLEANUP_CONFIRM=true bash ./scripts/cleanup.sh >> "$PROJECT_ROOT/logs/cleanup.log" 2>&1
 
 # Weekly comprehensive test - runs at 3:00 AM every Sunday  
 0 3 * * 0 cd "$PROJECT_ROOT" && ./scripts/run-real-tests.sh --all --start-services >> "$PROJECT_ROOT/test-results/weekly.log" 2>&1
@@ -73,7 +79,7 @@ echo ""
 echo "🔧 Setup complete!"
 echo ""
 echo "Cron jobs configured:"
-echo "  • Nightly validation: Every day at 2:00 AM"
+echo "  • Auto-verify: Every day at 14:00"
 echo "  • Weekly comprehensive test: Every Sunday at 3:00 AM"  
 echo "  • Health checks: Every 4 hours (business days)"
 echo ""

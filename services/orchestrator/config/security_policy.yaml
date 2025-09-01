@@ -1,0 +1,19 @@
+modes:
+  NORMAL:
+    tools_allowed: [read_weather, calendar.read, email.draft]
+    tools_requires_confirm: [email.send, home.operate, vision.open]
+    net_allowlist: [api.open-meteo.com, graph.microsoft.com]
+    max_fetch_mb: 5
+  STRICT:
+    tools_allowed: [read_weather, calendar.read]
+    tools_requires_confirm: [email.send]
+    net_allowlist: [api.open-meteo.com]
+    max_fetch_mb: 2
+  LOCKDOWN:
+    tools_allowed: []
+    net_allowlist: []
+    max_fetch_mb: 0
+risk:
+  high_risk_intents: [email.send, home.operate, vision.open, file.delete]
+  injection_threshold: 0.62
+

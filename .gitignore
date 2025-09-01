@@ -3,12 +3,30 @@ data/
 test-results/
 logs/
 
-# Local models
+# Allow .gitkeep files in ignored directories
+!data/.gitkeep
+!data/*/.gitkeep
+!models/.gitkeep
+
+# Local models & ML artifacts
 models/
+*.onnx
+*.safetensors
+*.bin
+*.gguf
+*.ggml
 
 # Virtual envs
 .venv/
 venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.envrc
+
+# AI Agent files (not for Git)
+AGENTS.md
 
 # OS / editor
 .DS_Store
@@ -42,9 +60,14 @@ var/
 wheels/
 share/python-wheels/
 *.egg-info/
-.installed.cfg
+.installed-cfg
 *.egg
 MANIFEST
+
+# Python virtual environments (all locations)
+**/.venv/
+**/venv/
+**/env/
 
 # Virtual Environments  
 .env

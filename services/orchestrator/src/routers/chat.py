@@ -14,6 +14,9 @@ import httpx
 from ..models.api import ChatRequest, ChatResponse, APIError, ModelType
 from ..services.guardian_client import GuardianClient
 from ..middleware.logging import get_logger_with_trace
+import os
+from ..security.sanitiser import detect_injection
+from ..security.metrics import injection_suspected_total, set_mode
 from ..utils.ram_peak import ram_peak_mb
 from ..utils.energy import EnergyMeter
 from .orchestrator import log_turn_event
@@ -51,6 +54,20 @@ async def chat_completion(
     )
     
     try:
+        # Security: injection detection (user-only for v1)
+        inj_score = detect_injection(chat_request.message, "")
+        policy = getattr(request.app.state, "security_policy", {}) or {}
+        threshold = float(((policy.get("risk") or {}).get("injection_threshold")) or 0.62)
+        high_risk = set(((policy.get("risk") or {}).get("high_risk_intents")) or [])
+        enforce = os.getenv("SECURITY_ENFORCE", "false").lower() == "true"
+        security_mode = "NORMAL"
+        if inj_score >= threshold:
+            injection_suspected_total.inc()
+            security_mode = "STRICT"
+            try:
+                set_mode("STRICT")
+            except Exception:
+                pass
         # --- NLU pre-parse (fail-open) ---
         route_hint = None
         try:
@@ -121,6 +138,50 @@ async def chat_completion(
             route = "planner"
             response.headers["X-Route"] = route
 
+        # Enforcement: block high-risk until confirmation
+        if enforce and inj_score >= threshold:
+            intent_label = response.headers.get("X-Intent")
+            if intent_label and intent_label in high_risk:
+                # Return intent card-style info in metadata
+                latency_ms = int((time.time() - start_time) * 1000)
+                ram = ram_peak_mb()
+                energy_wh = energy_meter.stop()
+                # Log event
+                try:
+                    log_turn_event(
+                        trace_id=getattr(request.state, "trace_id", None) or "unknown",
+                        session_id=chat_request.session_id,
+                        route=route,
+                        e2e_first_ms=latency_ms,
+                        e2e_full_ms=latency_ms,
+                        ram_peak=ram,
+                        tool_calls=[],
+                        energy_wh=energy_wh,
+                        guardian_state=guardian_state,
+                        input_text=chat_request.message,
+                        output_text="SECURITY: Intent requires confirmation",
+                        lang=getattr(chat_request, "lang", "sv"),
+                        
+                    )
+                except Exception:
+                    pass
+                return ChatResponse(
+                    session_id=chat_request.session_id,
+                    response="Säkerhet: Åtgärden kräver bekräftelse i UI (intent-card).",
+                    model_used=ModelType.MICRO,
+                    latency_ms=latency_ms,
+                    trace_id=getattr(request.state, "trace_id", None),
+                    metadata={
+                        "phase": "1",
+                        "mock_response": True,
+                        "guardian_state": guardian_state,
+                        "route": route,
+                        "type": "intent_card",
+                        "requires_confirmation": True,
+                        "security": {"mode": security_mode, "inj": round(inj_score,2)}
+                    }
+                )
+
         # Choose mock model based on route for metadata/latency
         actual_model = ModelType.PLANNER if route == "planner" else (ModelType.DEEP if route == "deep" else ModelType.MICRO)
         
@@ -189,7 +250,8 @@ async def chat_completion(
                 "phase": "1",
                 "mock_response": True,
                 "guardian_state": guardian_state,
-                "route": route
+                "route": route,
+                "security": {"mode": security_mode, "inj": round(inj_score,2)}
             }
         )
         

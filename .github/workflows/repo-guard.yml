@@ -1,0 +1,38 @@
+name: Repo Guard
+
+on:
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+  large-files:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Block large files outside models/
+        run: |
+          set -e
+          THRESH=10485760 # 10 MB
+          git diff --name-only origin/${{ github.base_ref }}... | while read -r f; do
+            [ -z "$f" ] && continue
+            [ -e "$f" ] || continue
+            size=$(stat -c%s "$f" 2>/dev/null || stat -f%z "$f" 2>/dev/null || echo 0)
+            if [ $size -gt $THRESH ] && [[ "$f" != models/* ]]; then
+              echo "❌ File too large: $f ($size bytes)"; exit 1
+            fi
+          done
+  block-archived-files:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Prevent reintroducing archived root docs
+        run: |
+          set -e
+          if git diff --name-only origin/${{ github.base_ref }}... | grep -E '^(DAILY_STATUS\.md|PORT_MANAGEMENT_ISSUE\.md|LOOSE_THREADS\.md|docs/README\.md)$'; then
+            echo "❌ Reintroduced archived docs at root. Use docs/archive/."; exit 1
+          fi
+

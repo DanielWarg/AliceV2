@@ -1,0 +1,51 @@
+name: Auto Verify
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 13 * * *'
+
+jobs:
+  auto-verify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install docker compose
+        uses: ndeloof/install-compose-action@v0.0.1
+      - name: Start stack (guardian orchestrator nlu dev-proxy)
+        run: |
+          docker compose up -d guardian orchestrator nlu dev-proxy
+          sleep 10
+      - name: Run auto_verify
+        run: |
+          ./scripts/auto_verify.sh || (cat data/tests/summary.json || true; exit 1)
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: auto-verify-artifacts
+          path: |
+            data/tests
+            data/telemetry
+      - name: Create PR with docs updates (README/ROADMAP/AGENTS)
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: chore/docs-sync
+          title: "chore(docs): sync status efter auto-verify"
+          body: |
+            Auto-genererad uppdatering av styrdokument efter lyckad auto-verify.
+            - Uppdaterade rader i README/ROADMAP/AGENTS
+            - Källa: data/tests/summary.json
+          commit-message: "chore(docs): update status via auto-verify"
+          delete-branch: true
+          add-paths: |
+            README.md
+            ROADMAP.md
+            AGENTS.md
+

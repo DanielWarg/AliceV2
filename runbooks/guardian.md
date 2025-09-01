@@ -1,47 +1,47 @@
-# Guardian incident runbook
+# Guardian Incident Runbook
 
 ## EMERGENCY (>10s)
-**Symptom**: /api/status/guardian -> state=EMERGENCY, users får 503/429.
+**Symptom**: /api/status/guardian -> state=EMERGENCY, users get 503/429.
 
 **Check**
-1. Se `/api/status/simple` P95 per route.
-2. Kolla `data/telemetry/*/guardian.jsonl` senaste 5 min.
+1. See `/api/status/simple` P95 per route.
+2. Check `data/telemetry/*/guardian.jsonl` last 5 min.
 
-**Åtgärd (i ordning)**
-- Stoppa Deep tillfälligt:
+**Action (in order)**
+- Stop Deep temporarily:
   `POST /api/guard/degrade { "profile":"heavy" }`
-- Sänk RAG-K: `POST /api/brain/rag/set { "top_k": 3 }`
-- Stäng Vision: `POST /api/brain/tools/disable ["vision.detect"]`
-- Starta om tunga workers (om RAM peak kvarstår).
+- Lower RAG-K: `POST /api/brain/rag/set { "top_k": 3 }`
+- Disable Vision: `POST /api/brain/tools/disable ["vision.detect"]`
+- Restart heavy workers (if RAM peak persists).
 
-**Återställning**
-- När RAM<75% i 60s: `POST /api/guard/resume-intake`
+**Recovery**
+- When RAM<75% for 60s: `POST /api/guard/resume-intake`
 - Re-enable tools: `POST /api/brain/tools/enable-all`
 
 **Post-mortem**
-- Exportera /data/telemetry och larma team.
+- Export /data/telemetry and alert team.
 
 ## BROWNOUT (>2m)
-**Symptom**: /api/status/guardian -> state=BROWNOUT, långsamma svar.
+**Symptom**: /api/status/guardian -> state=BROWNOUT, slow responses.
 
 **Check**
-1. Kolla RAM/CPU usage i Guardian logs.
-2. Verifiera att rate limiting fungerar.
+1. Check RAM/CPU usage in Guardian logs.
+2. Verify that rate limiting is working.
 
-**Åtgärd**
-- Aktivera aggressive caching.
-- Sänk concurrency för tunga operations.
-- Monitora recovery automatiskt.
+**Action**
+- Activate aggressive caching.
+- Lower concurrency for heavy operations.
+- Monitor recovery automatically.
 
 ## NORMAL -> BROWNOUT (frequent)
-**Symptom**: Systemet växlar mellan NORMAL och BROWNOUT.
+**Symptom**: System switches between NORMAL and BROWNOUT.
 
 **Check**
-1. Kolla för memory leaks.
-2. Verifiera resource cleanup.
-3. Analysera load patterns.
+1. Check for memory leaks.
+2. Verify resource cleanup.
+3. Analyze load patterns.
 
-**Åtgärd**
-- Optimera memory usage.
-- Implementera connection pooling.
+**Action**
+- Optimize memory usage.
+- Implement connection pooling.
 - Tune Guardian thresholds.

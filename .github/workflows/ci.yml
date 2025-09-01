@@ -1,3 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master, develop, feat/** ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+  lint-and-typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install linters
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff black mypy bandit
+      - name: Ruff (lint)
+        run: ruff check .
+      - name: Black (format check)
+        run: black --check .
+      - name: Mypy (type check, lenient)
+        run: mypy --ignore-missing-imports --install-types --non-interactive services || true
+      - name: Bandit (security scan)
+        run: bandit -q -r services || true
+
+  tests-guardian:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install guardian deps
+        working-directory: services/guardian
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r pyproject.toml || true
+          pip install . || true
+          pip install pytest
+      - name: Run guardian tests (if present)
+        working-directory: services/guardian
+        run: |
+          if [ -d "src/tests" ]; then pytest -q src/tests || true; else echo "No guardian tests"; fi
 name: ci
 on: [push]
 jobs:

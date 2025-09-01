@@ -1,73 +1,73 @@
-# SLO breach runbook
+# SLO Breach Runbook
 
 ## Deep P95 > 3000ms
-**Symptom**: Deep route svarar långsamt, P95 över 3000ms.
+**Symptom**: Deep route responds slowly, P95 over 3000ms.
 
 **Check**
-1. Kolla `/api/status/routes` för deep route metrics.
-2. Verifiera Guardian state.
-3. Analysera request patterns.
+1. Check `/api/status/routes` for deep route metrics.
+2. Verify Guardian state.
+3. Analyze request patterns.
 
-**Åtgärd**
-- Öka prompt-speculativ decoding (om vLLM i fas 2).
-- Tvinga planner-route för stora prompts tills last sjunker.
-- Minska max concurrency för Deep till 1.
-- Aktivera request queuing.
+**Action**
+- Increase prompt-speculative decoding (if vLLM in phase 2).
+- Force planner-route for large prompts until load decreases.
+- Reduce max concurrency for Deep to 1.
+- Activate request queuing.
 
-**Återställning**
-- När P95 < 2000ms: Återställ concurrency.
-- Monitora trend i 10 minuter.
+**Recovery**
+- When P95 < 2000ms: Restore concurrency.
+- Monitor trend for 10 minutes.
 
 ## Fast P95 > 250ms
-**Symptom**: Micro route svarar långsamt, P95 över 250ms.
+**Symptom**: Micro route responds slowly, P95 over 250ms.
 
 **Check**
-1. Kolla `/api/status/routes` för micro route metrics.
-2. Verifiera system load.
-3. Analysera request volume.
+1. Check `/api/status/routes` for micro route metrics.
+2. Verify system load.
+3. Analyze request volume.
 
-**Åtgärd**
-- Aktivera cache för NLU/översättningar.
+**Action**
+- Activate cache for NLU/translations.
 - Pre-warm Micro-LLM.
-- Optimera prompt processing.
-- Sänk batch size.
+- Optimize prompt processing.
+- Lower batch size.
 
-**Återställning**
-- När P95 < 150ms: Återställ optimizations.
-- Monitora trend i 5 minuter.
+**Recovery**
+- When P95 < 150ms: Restore optimizations.
+- Monitor trend for 5 minutes.
 
 ## Planner P95 > 1500ms
-**Symptom**: Planner route svarar långsamt, P95 över 1500ms.
+**Symptom**: Planner route responds slowly, P95 over 1500ms.
 
 **Check**
-1. Kolla `/api/status/routes` för planner route metrics.
-2. Verifiera tool availability.
-3. Analysera planning complexity.
+1. Check `/api/status/routes` for planner route metrics.
+2. Verify tool availability.
+3. Analyze planning complexity.
 
-**Åtgärd**
-- Optimera tool selection logic.
-- Implementera planning cache.
-- Sänk planning depth.
-- Aktivera fallback till micro.
+**Action**
+- Optimize tool selection logic.
+- Implement planning cache.
+- Lower planning depth.
+- Activate fallback to micro.
 
-**Återställning**
-- När P95 < 1000ms: Återställ planning depth.
-- Monitora trend i 5 minuter.
+**Recovery**
+- When P95 < 1000ms: Restore planning depth.
+- Monitor trend for 5 minutes.
 
 ## Error Rate > 2%
-**Symptom**: 5xx errors över 2% i 3 minuter.
+**Symptom**: 5xx errors over 2% for 3 minutes.
 
 **Check**
-1. Kolla `/api/status/simple` för error budget.
-2. Analysera error patterns.
-3. Verifiera dependencies.
+1. Check `/api/status/simple` for error budget.
+2. Analyze error patterns.
+3. Verify dependencies.
 
-**Åtgärd**
-- Aktivera circuit breakers.
-- Implementera graceful degradation.
-- Sänk request volume.
-- Checka external dependencies.
+**Action**
+- Activate circuit breakers.
+- Implement graceful degradation.
+- Lower request volume.
+- Check external dependencies.
 
-**Återställning**
-- När error rate < 0.5%: Återställ full functionality.
-- Monitora trend i 10 minuter.
+**Recovery**
+- When error rate < 0.5%: Restore full functionality.
+- Monitor trend for 10 minutes.

@@ -1,0 +1,14 @@
+version: 1
+allowlist:
+  - data/tests
+  - data/telemetry
+rules:
+  - path: data/tests
+    keep_days: 14
+    compress_after_days: 7
+    patterns: ["*.json", "*.jsonl"]
+  - path: data/telemetry
+    keep_days: 30
+    compress_after_days: 7
+    patterns: ["**/*.jsonl"]
+

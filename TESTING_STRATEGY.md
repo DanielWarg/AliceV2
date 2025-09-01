@@ -5,7 +5,7 @@
 
 Alice v2 implements a **RealOps testing approach** - no mocks, only real data flows through actual services. The testing system runs continuously, validates SLOs, detects regressions, applies safe remediation, and generates actionable reports.
 
-**🚀 CURRENT STATUS**: Complete observability + eval-harness v1 operational; NLU v1 live via proxy (`/api/nlu/parse`); `/api/chat` sätter `X-Route` och skriver turn-events (RAM/energi/guardian) till `data/telemetry/YYYY-MM-DD/`.
+**🚀 CURRENT STATUS**: Complete observability + eval-harness v1 operational; NLU v1 live via proxy (`/api/nlu/parse`); `/api/chat` sets `X-Route` and writes turn-events (RAM/energy/guardian) to `data/telemetry/YYYY-MM-DD/`.
 
 **Philosophy**: Test with real Swedish voice data, actual SMTP/CalDAV integration, live RTSP streams, and production-equivalent LLM workloads. When issues arise, automatically fix them or create detailed issue reports.
 
@@ -46,18 +46,18 @@ test-results/                     # ✅ Historical test data
 ### **🎯 NEW FEATURES COMPLETED**
 
 **🧪 Autonomous E2E Testing:**
-- **Self-contained validation**: `scripts/auto_verify.sh` kör komplett systemvalidering
-- **20 realistiska scenarier**: Svenska samtal som täcker micro/planner/deep routes
-- **SLO validation**: Automatisk P95 threshold checking med Node.js integration
-- **Failure detection**: Exit kode 1 vid SLO-brott eller <80% pass rate
-- **Artifact preservation**: Alla testresultat sparas till `data/tests/` och `test-results/`
+- **Self-contained validation**: `scripts/auto_verify.sh` runs complete system validation
+- **20 realistic scenarios**: Swedish conversations covering micro/planner/deep routes
+- **SLO validation**: Automatic P95 threshold checking with Node.js integration
+- **Failure detection**: Exit code 1 on SLO breach or <80% pass rate
+- **Artifact preservation**: All test results saved to `data/tests/` and `test-results/`
 
 **📊 Complete Observability:**
-- **RAM-peak per turn**: Process och system memory tracking i varje turn event
-- **Energy per turn (Wh)**: Energikonsumtion med konfigurerbar baseline
-- **Tool error classification**: Timeout/5xx/429/schema/other kategorisering med Prometheus metrics
-- **Structured turn events**: Komplett JSONL logging med alla metrics och metadata
-- **Real-time dashboard**: Streamlit HUD (proxat via /hud) visar RAM, energi, latens, tool-fel och Guardian status
+- **RAM-peak per turn**: Process and system memory tracking in every turn event
+- **Energy per turn (Wh)**: Energy consumption with configurable baseline
+- **Tool error classification**: Timeout/5xx/429/schema/other categorization with Prometheus metrics
+- **Structured turn events**: Complete JSONL logging with all metrics and metadata
+- **Real-time dashboard**: Streamlit HUD (proxied via /hud) shows RAM, energy, latency, tool errors and Guardian status
 
 ### Legacy Components (Replaced)
 ```
@@ -79,9 +79,9 @@ services/tester/                  # ❌ OBSOLETE - Replaced by services/eval/
 - **ASR Partial**: <300ms after speech detected
 - **ASR Final**: <800ms after silence
 - **Guardian Response**: <150ms state transitions ✅
-- **Micro LLM**: <250ms first token (modell-pull nästa steg)
-- **Planner LLM**: <900ms first token, <1500ms complete (modell-pull nästa steg)
-- **Deep LLM**: <1800ms first token, <3000ms complete (aktiveras efter Guardian-validering)
+- **Micro LLM**: <250ms first token (model pull next step)
+- **Planner LLM**: <900ms first token, <1500ms complete (model pull next step)
+- **Deep LLM**: <1800ms first token, <3000ms complete (activated after Guardian validation)
 - **TTS Cached**: <120ms audio generation
 - **TTS Uncached**: <800ms (≤40 characters)
 
@@ -100,8 +100,8 @@ services/tester/                  # ❌ OBSOLETE - Replaced by services/eval/
 
 ### **NEW: Observability SLO** ✅ IMPLEMENTED
 - **Metrics Collection**: <10ms overhead per turn ✅
-- **Dashboard Load**: <2s för komplett HUD ✅
-- **E2E Test Success**: ≥80% pass rate för 20 scenarier ✅
+- **Dashboard Load**: <2s for complete HUD ✅
+- **E2E Test Success**: ≥80% pass rate for 20 scenarios ✅
 - **SLO Validation**: Automatic P95 threshold checking ✅
 
 ## 🧪 Test Scenarios
@@ -946,7 +946,7 @@ Alice v2 collects comprehensive, structured data for continuous learning and imp
   {"id":"fast_time","kind":"chat","text":"Hej Alice, vad är klockan?","expect":{"route":"micro"}},
   {"id":"planner_meeting","kind":"chat","text":"Boka möte med Anna imorgon kl 14","expect":{"route":"planner"}},
   {"id":"weather_today","kind":"chat","text":"Vad är vädret idag?","expect":{"route":"planner"}},
-  {"id":"deep_summary","kind":"chat","text":"Sammanfatta följande text på 1500 ord: Lorem ipsum ...","expect":{"route":"deep"}}
+  {"id":"deep_summary","kind":"chat","text":"Summarize the following text in 1500 words: Lorem ipsum ...","expect":{"route":"deep"}}
 ]
 ```
 
