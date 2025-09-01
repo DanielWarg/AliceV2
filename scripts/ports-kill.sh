@@ -1,41 +1,41 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "🧹 Städar portar 8000, 8787, 8501..."
+PORTS=("8000" "8501" "8787" "11434" "18000")
+echo "🔪 Killing processes on ports: ${PORTS[*]}"
 
-PORTS=("8000" "8787" "8501")
 for p in "${PORTS[@]}"; do
-  echo "→ städar port $p"
-  
-  # döda lokala lyssnare
-  PIDS=$(lsof -t -iTCP:$p -sTCP:LISTEN 2>/dev/null || true)
-  if [ -n "${PIDS}" ]; then
-    echo "  - hittade PIDs: $PIDS"
-    kill -TERM $PIDS 2>/dev/null || true
-    sleep 1
-    PIDS=$(lsof -t -iTCP:$p -sTCP:LISTEN 2>/dev/null || true)
-    if [ -n "${PIDS}" ]; then
-      echo "  - tvingar kill på: $PIDS"
-      kill -KILL $PIDS 2>/dev/null || true
-    fi
+  if command -v lsof >/dev/null 2>&1; then
+    PIDS=$(lsof -ti tcp:"$p" 2>/dev/null || true)
   else
-    echo "  - inga processer på port $p"
+    # macOS fallback: netstat + awk
+    PIDS=$(netstat -vanp tcp 2>/dev/null | awk -v port=".$p" '$4 ~ port {print $9}' 2>/dev/null || true)
   fi
-  
-  # stoppa containers på porten
-  CIDS=$(docker ps --filter "publish=$p" -q 2>/dev/null || true)
-  if [ -n "${CIDS}" ]; then
-    echo "  - stoppar containers: $CIDS"
-    docker stop $CIDS >/dev/null 2>&1 || true
+
+  if [ -n "${PIDS}" ]; then
+    echo "  • Port $p → PIDs: $PIDS → SIGTERM"
+    echo "$PIDS" | xargs kill 2>/dev/null || true
+    sleep 0.5
+    # hard kill if still alive
+    for pid in $PIDS; do
+      if kill -0 "$pid" 2>/dev/null; then
+        echo "    ↳ still alive → SIGKILL"
+        kill -9 "$pid" 2>/dev/null || true
+      fi
+    done
+  else
+    echo "  • Port $p free"
   fi
 done
 
-# Stoppa alla compose services
-echo "→ stoppar docker compose"
-docker compose down --remove-orphans 2>/dev/null || true
+# Stop any remaining Docker containers (if Docker is available)
+if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
+    echo "🐳 Stopping remaining Docker containers..."
+    docker compose down --remove-orphans 2>/dev/null || true
+fi
 
-# Döda alla kvarhängande uvicorn/python processer
-echo "→ dödar kvarhängande processer"
+# Kill any remaining Python processes
+echo "🐍 Killing remaining Python processes..."
 pkill -f "uvicorn|gunicorn|streamlit|services\.orchestrator|services\.guardian" 2>/dev/null || true
 
-echo "✅ Klart! Alla portar är nu fria."
+echo "✅ Ports cleared."

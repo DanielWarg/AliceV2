@@ -1,4 +1,4 @@
-.PHONY: help venv clean clean-venv fetch-models up down test verify
+.PHONY: help venv clean clean-venv fetch-models up down force-down restart preflight docker-up docker-down test verify
 
 # Default target
 help: ## Show this help message
@@ -37,13 +37,43 @@ fetch-models: ## Download required models
 	@echo "📥 Fetching models..."
 	./scripts/fetch_models.sh
 
-up: ## Start development stack
-	@echo "🚀 Starting Alice v2 development stack..."
-	./scripts/dev_up.sh
+# --- Robust control targets ---------------------------------------------------
 
-down: ## Stop development stack
-	@echo "🛑 Stopping development stack..."
-	./scripts/dev-stop.sh
+preflight: ## Light checks (Docker + ports)
+	@echo "🔎 Preflight..."
+	@if docker info >/dev/null 2>&1; then echo "🐳 Docker: OK"; else echo "🐳 Docker: NOT RUNNING"; fi
+	@printf "🔌 Ports in use: "; (lsof -i :8000 -i :8501 -i :8787 2>/dev/null || true) | awk '{print $$9}' | sed 's/.*://g' | xargs -I{} echo -n "{} " ; echo
+
+up: ## Start development stack (safe)
+	@echo "🚀 Starting dev stack..."
+	@if docker info >/dev/null 2>&1; then \
+		./scripts/dev_up.sh; \
+	else \
+		echo "⚠️  Docker not running. Start Docker first or use local-only scripts."; \
+		exit 1; \
+	fi
+
+down: ## Stop development stack (with Docker fallback)
+	@echo "🛑 Stopping dev stack..."
+	@if docker info >/dev/null 2>&1; then \
+		./scripts/dev-stop.sh || true; \
+	else \
+		echo "🐳 Docker not running → using ports-kill fallback"; \
+		./scripts/ports-kill.sh || true; \
+	fi
+	@echo "✅ Down complete."
+
+force-down: ## Force stop (no Docker dependency)
+	@echo "💥 Force stop (no Docker)..."
+	@./scripts/ports-kill.sh || true
+	@echo "✅ Force-down complete."
+
+restart: ## Restart dev stack
+	@$(MAKE) down
+	@$(MAKE) up
+
+docker-down: ## Strict docker compose down (no fallback)
+	@docker compose down
 
 test: ## Run all tests
 	@echo "🧪 Running tests..."

@@ -5,6 +5,7 @@ pydantic==2.10.4
 
 # HTTP client
 httpx==0.28.1
+requests==2.31.0
 
 # Environment and logging
 python-dotenv==1.0.1

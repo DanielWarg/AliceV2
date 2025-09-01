@@ -23,6 +23,26 @@ from ..utils.tool_errors import record_tool_call, classify_tool_error
 from ..llm import get_micro_driver, get_planner_driver, get_deep_driver
 from ..router import get_router_policy
 from ..planner import get_planner_executor
+import hashlib
+import pathlib
+
+# Calculate system prompt hash directly
+def get_system_prompt_hash() -> str:
+    """Calculate SHA256 hash of system prompt"""
+    try:
+        prompt_path = pathlib.Path("config/system_prompt.txt")
+        if prompt_path.exists():
+            system_prompt = prompt_path.read_text(encoding="utf-8")
+            return hashlib.sha256(system_prompt.encode()).hexdigest()
+        else:
+            # Fallback to default prompt
+            default_prompt = "You are Alice, a helpful AI assistant."
+            return hashlib.sha256(default_prompt.encode()).hexdigest()
+    except Exception:
+        # Return hash of error state
+        return hashlib.sha256(b"error_reading_prompt").hexdigest()
+
+SYSTEM_PROMPT_SHA256 = get_system_prompt_hash()
 
 router = APIRouter()
 
@@ -73,6 +93,9 @@ def log_turn_event(
         "input_text": input_text,
         "output_text": output_text,
         "lang": lang or "sv",
+        "security": {
+            "system_prompt_sha256": SYSTEM_PROMPT_SHA256
+        }
     }
     
     # Skriv till JSONL fil
@@ -361,6 +384,9 @@ async def orchestrator_health(
                 "llm_integration": True,
                 "planner_execution": True,
                 "fallback_matrix": True
+            },
+            "security": {
+                "system_prompt_sha256": SYSTEM_PROMPT_SHA256
             }
         }
     except Exception as e:

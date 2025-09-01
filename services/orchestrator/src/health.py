@@ -9,6 +9,26 @@ from typing import Dict, Any
 from fastapi import HTTPException
 import structlog
 from .services.guardian_client import GuardianClient
+import hashlib
+import pathlib
+
+# Calculate system prompt hash directly
+def get_system_prompt_hash() -> str:
+    """Calculate SHA256 hash of system prompt"""
+    try:
+        prompt_path = pathlib.Path("config/system_prompt.txt")
+        if prompt_path.exists():
+            system_prompt = prompt_path.read_text(encoding="utf-8")
+            return hashlib.sha256(system_prompt.encode()).hexdigest()
+        else:
+            # Fallback to default prompt
+            default_prompt = "You are Alice, a helpful AI assistant."
+            return hashlib.sha256(default_prompt.encode()).hexdigest()
+    except Exception:
+        # Return hash of error state
+        return hashlib.sha256(b"error_reading_prompt").hexdigest()
+
+SYSTEM_PROMPT_SHA256 = get_system_prompt_hash()
 
 logger = structlog.get_logger(__name__)
 
@@ -90,7 +110,10 @@ def check_liveness() -> Dict[str, Any]:
     return {
         "alive": True,
         "pid": __import__("os").getpid(),
-        "uptime_s": time.time() - READINESS_STATE["startup_time"]
+        "uptime_s": time.time() - READINESS_STATE["startup_time"],
+        "security": {
+            "system_prompt_sha256": SYSTEM_PROMPT_SHA256
+        }
     }
 
 async def wait_for_readiness(timeout_s: float = 30.0) -> bool:

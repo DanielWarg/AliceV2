@@ -378,9 +378,11 @@ class SLOMonitor:
             
         # Guardian state evaluation with new states
         if not metrics.guardian_available:
-            issues.append("Critical: Guardian service unavailable")
-            recommendations.append("Restart Guardian service immediately")
-            status = SLOStatus.RED
+            issues.append("Warning: Guardian service unavailable")
+            recommendations.append("Guardian metrics unavailable - using cached data")
+            # Don't set status to RED for Guardian unavailability - allow degraded operation
+            if status == SLOStatus.GREEN:
+                status = SLOStatus.YELLOW
         elif metrics.guardian_state in ["EMERGENCY", "LOCKDOWN"]:
             issues.append(f"Critical: Guardian in {metrics.guardian_state} state")
             if metrics.brownout_reason:

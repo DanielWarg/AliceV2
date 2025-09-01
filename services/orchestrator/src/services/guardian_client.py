@@ -17,7 +17,7 @@ logger = structlog.get_logger(__name__)
 class GuardianClient:
     """Client for Guardian safety system integration"""
     
-    def __init__(self, base_url: str | None = None, timeout: float = 0.5):
+    def __init__(self, base_url: str | None = None, timeout: float = 2.0):
         # Prefer env configuration inside Docker network
         env_health = os.getenv("GUARDIAN_HEALTH_URL")  # e.g. http://guardian:8787/health
         env_base = os.getenv("GUARDIAN_BASE")  # e.g. http://guardian:8787
@@ -33,7 +33,7 @@ class GuardianClient:
         self.timeout = timeout
         self._client: Optional[httpx.AsyncClient] = None
         self._last_health: Optional[Dict[str, Any]] = None
-        self._health_cache_ttl = 1.0  # Cache for 1 second
+        self._health_cache_ttl = 90.0  # Cache for 90 seconds (production-ready)
         self._last_health_check = 0.0
         
     async def initialize(self) -> None:
@@ -53,7 +53,7 @@ class GuardianClient:
     
     async def get_health(self, use_cache: bool = True) -> Dict[str, Any]:
         """
-        Get Guardian health status with caching
+        Get Guardian health status with caching and retry logic
         
         Args:
             use_cache: Whether to use cached result if available
@@ -69,38 +69,56 @@ class GuardianClient:
             current_time - self._last_health_check < self._health_cache_ttl):
             return self._last_health
         
-        try:
-            if not self._client:
-                await self.initialize()
+        # Try up to 3 times with exponential backoff
+        for attempt in range(3):
+            try:
+                if not self._client:
+                    await self.initialize()
+                    
+                # If full health URL provided, use it; otherwise hit /health on base
+                url = self._health_url or "/health"
+                response = await self._client.get(url, timeout=self.timeout)
+                response.raise_for_status()
                 
-            # If full health URL provided, use it; otherwise hit /health on base
-            url = self._health_url or "/health"
-            response = await self._client.get(url)
-            response.raise_for_status()
-            
-            health_data = response.json()
-            
-            # Cache the result
-            self._last_health = health_data
-            self._last_health_check = current_time
-            
-            logger.debug("Guardian health check successful", 
-                        state=health_data.get("state"),
-                        response_time_ms=int(response.elapsed.total_seconds() * 1000))
-            
-            return health_data
-            
-        except httpx.TimeoutException:
-            logger.warning("Guardian health check timeout")
-            return {"state": "TIMEOUT", "available": False}
-            
-        except httpx.ConnectError:
-            logger.warning("Guardian connection failed")
-            return {"state": "UNREACHABLE", "available": False}
-            
-        except Exception as e:
-            logger.error("Guardian health check error", error=str(e))
-            return {"state": "ERROR", "available": False, "error": str(e)}
+                health_data = response.json()
+                
+                # Cache the result
+                self._last_health = health_data
+                self._last_health_check = current_time
+                
+                logger.debug("Guardian health check successful", 
+                            state=health_data.get("state"),
+                            response_time_ms=int(response.elapsed.total_seconds() * 1000))
+                
+                return health_data
+                
+            except httpx.TimeoutException:
+                logger.warning(f"Guardian health check timeout (attempt {attempt + 1}/3)")
+                if attempt < 2:  # Don't sleep on last attempt
+                    await asyncio.sleep(0.2 * (2 ** attempt))  # Exponential backoff
+                continue
+                
+            except httpx.ConnectError:
+                logger.warning(f"Guardian connection failed (attempt {attempt + 1}/3)")
+                if attempt < 2:
+                    await asyncio.sleep(0.2 * (2 ** attempt))
+                continue
+                
+            except Exception as e:
+                logger.error(f"Guardian health check error (attempt {attempt + 1}/3)", error=str(e))
+                if attempt < 2:
+                    await asyncio.sleep(0.2 * (2 ** attempt))
+                continue
+        
+        # All attempts failed - return cached value if available and not too old
+        if (self._last_health and 
+            current_time - self._last_health_check < self._health_cache_ttl):
+            logger.warning("Using cached Guardian health data due to connection failures")
+            return {**self._last_health, "stale": True, "available": False}
+        
+        # No cache available - return fallback
+        logger.error("All Guardian health check attempts failed, no cache available")
+        return {"state": "UNREACHABLE", "available": False, "error": "All connection attempts failed"}
     
     async def check_admission(self, request_data: Optional[Dict[str, Any]] = None) -> bool:
         """

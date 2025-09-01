@@ -2,7 +2,7 @@
 # Alice v2 Development Cleanup Script  
 # Graceful shutdown of all services with resource cleanup
 
-set -e
+set -euo pipefail
 
 # Color codes
 RED='\033[0;31m'
@@ -21,9 +21,31 @@ echo "==============================="
 stop_services() {
     echo -e "${YELLOW}📋 Stopping Alice v2 services...${NC}"
     
-    # Stop Docker services first
+    # Check Docker availability first
+    if ! command -v docker >/dev/null 2>&1; then
+        echo "🐳 Docker CLI not found. Falling back to ports-kill."
+        exec ./scripts/ports-kill.sh
+    fi
+
+    # Fail fast if daemon is down
+    if ! docker info >/dev/null 2>&1; then
+        echo "🐳 Docker daemon is not running. Falling back to ports-kill."
+        exec ./scripts/ports-kill.sh
+    fi
+
+    # Stop Docker services with timeout
     echo "  Stopping Docker containers..."
-    docker compose down 2>/dev/null || true
+    if command -v timeout >/dev/null 2>&1; then
+        timeout 25s docker compose down || {
+            echo "⏱️  docker compose down timed out → ports-kill fallback"
+            exec ./scripts/ports-kill.sh
+        }
+    else
+        docker compose down || {
+            echo "⚠️  docker compose down failed → ports-kill fallback"
+            exec ./scripts/ports-kill.sh
+        }
+    fi
     
     # Stop individual processes on our ports
     echo "  Stopping processes on ports: $PORTS"

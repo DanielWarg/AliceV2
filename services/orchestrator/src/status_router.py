@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+from datetime import datetime
 from .metrics import METRICS
 from .services.guardian_client import GuardianClient
 
@@ -17,8 +18,44 @@ async def poll_and_log():
 
 @router.get("/simple")
 async def simple():
-    s = METRICS.snapshot()
-    return {"ok": True, "metrics": s}
+    """Get system status with Guardian health check - always returns 200"""
+    try:
+        # Get metrics snapshot
+        s = METRICS.snapshot()
+        
+        # Get Guardian status (with fallback)
+        try:
+            guardian_health = await guardian_client.get_health()
+            guardian_ok = guardian_health.get("available", False)
+            guardian_state = guardian_health.get("state", "UNKNOWN")
+        except Exception as e:
+            guardian_ok = False
+            guardian_state = "ERROR"
+            guardian_health = {"state": "ERROR", "error": str(e)}
+        
+        # Always return 200 with status info
+        return {
+            "v": "1",
+            "ok": True,  # System is operational even if Guardian is down
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "metrics": s,
+            "guardian": {
+                "available": guardian_ok,
+                "state": guardian_state,
+                "details": guardian_health
+            },
+            "issues": [] if guardian_ok else ["guardian_unreachable"]
+        }
+    except Exception as e:
+        # Even if everything fails, return 200 with error info
+        return {
+            "v": "1", 
+            "ok": False,
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "error": str(e),
+            "guardian": {"available": False, "state": "ERROR"},
+            "issues": ["system_error"]
+        }
 
 @router.get("/guardian")
 async def guardian():
