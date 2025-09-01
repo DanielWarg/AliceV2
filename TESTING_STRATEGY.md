@@ -5,7 +5,7 @@
 
 Alice v2 implements a **RealOps testing approach** - no mocks, only real data flows through actual services. The testing system runs continuously, validates SLOs, detects regressions, applies safe remediation, and generates actionable reports.
 
-**🚀 CURRENT STATUS**: Complete observability + eval-harness v1 operational; NLU-service live via proxy; orchestrator/guardian behind dev-proxy; curator optional in nightly.
+**🚀 CURRENT STATUS**: Complete observability + eval-harness v1 operational; NLU v1 live via proxy (`/api/nlu/parse`); `/api/chat` sätter `X-Route` och skriver turn-events (RAM/energi/guardian) till `data/telemetry/YYYY-MM-DD/`.
 
 **Philosophy**: Test with real Swedish voice data, actual SMTP/CalDAV integration, live RTSP streams, and production-equivalent LLM workloads. When issues arise, automatically fix them or create detailed issue reports.
 
@@ -118,13 +118,12 @@ services/tester/                  # ❌ OBSOLETE - Replaced by services/eval/
 
 ### **NEW: Autonomous E2E Scenarios** ✅ IMPLEMENTED
 ```json
-// services/eval/scenarios.json - 20 realistic scenarios
+// services/eval/scenarios.json - 20 NLU/route scenarios (v1 fokus micro/planner)
 [
-  {"id":"fast_time","kind":"chat","text":"Hej Alice, vad är klockan?","expect":{"route":"micro"}},
-  {"id":"planner_meeting","kind":"chat","text":"Boka möte med Anna imorgon kl 14","expect":{"route":"planner"}},
-  {"id":"weather_today","kind":"chat","text":"Vad är vädret idag?","expect":{"route":"planner"}},
-  {"id":"deep_summary","kind":"chat","text":"Sammanfatta följande text på 1500 ord: Lorem ipsum ...","expect":{"route":"deep"}},
-  // ... 16 more scenarios covering all routes and edge cases
+  {"id":"nlu-1","text":"Hej Alice!","expect":{"route":"micro","intent":"greeting.hello"}},
+  {"id":"nlu-2","text":"Vad är klockan nu?","expect":{"route":"micro","intent":"smalltalk.time"}},
+  {"id":"nlu-3","text":"Boka möte med Anna imorgon klockan 14","expect":{"route":"planner","intent":"calendar.create"}},
+  // ... 17 more (se repo)
 ]
 ```
 

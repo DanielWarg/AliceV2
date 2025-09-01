@@ -147,8 +147,8 @@ async def cleanup_expired_data():
         raise HTTPException(status_code=500, detail=str(e))
 
 # Include API routers
-app.include_router(chat.router, prefix="/api", tags=["chat"])
-app.include_router(orchestrator.router, prefix="/api/orchestrator", tags=["orchestrator"])
+app.include_router(chat.router, prefix="/api", tags=["chat"])  # NLU‑aware chat mock
+app.include_router(orchestrator.router, prefix="/api/orchestrator", tags=["orchestrator"])  # full LLM v1
 app.include_router(status.router, prefix="/api/status", tags=["status"])
 app.include_router(feedback.router)
 

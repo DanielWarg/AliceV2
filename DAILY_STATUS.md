@@ -1,5 +1,5 @@
 # Alice v2 - Daily Status & Next Steps
-*Uppdaterad: 2025-08-31 - Kvällsrapport*
+*Uppdaterad: 2025-09-01 - Eftermiddagsrapport*
 
 ## 🎯 **DAGENS SLUTSTATUS**
 
@@ -32,8 +32,8 @@ Kort: Docker-only dev-proxy, Observability+HUD klart, `/metrics` exponerad, NLU-
 
 6. **📈 Observability & Metrics:**
    - `/metrics` endpoint i Orchestrator (Prometheus-format)
-   - P50/P95 per route via middleware; tool-felklass som counters
-   - Turn events inkluderar RAM-peak, energy Wh, input/output/lang
+   - P50/P95 per route via middleware; `/api/chat` sätter `X-Route` tidigt
+   - Turn events (JSONL) med RAM-peak, energy Wh, input/output/lang under `data/telemetry/YYYY-MM-DD/`
 
 7. **🧠 NLU-service (svenska) – v1 scaffold:**
    - `services/nlu/` (FastAPI) med `/api/nlu/parse`
@@ -43,6 +43,12 @@ Kort: Docker-only dev-proxy, Observability+HUD klart, `/metrics` exponerad, NLU-
 8. **🪄 Dataloop (curator):**
    - `services/curator/` + `ops/schedule.cron` (indexer commented)
    - `scripts/auto_verify.sh` kör curator och sparar summary
+
+9. **🧠 NLU v1 (svenska):**
+   - `/api/nlu/parse` aktiv; e5-embeddings + heuristik
+   - Orchestrator `/api/chat` sätter `X-Intent`/`X-Route-Hint` och `X-Route`
+   - Eval-svit utökad till 20 scenarier (micro/planner) – 100% pass
+   - Cron installerad: auto_verify kl 14:00 → `logs/auto_verify.log`
 
 ## 🚨 **AKTUELLT PROBLEM**
 

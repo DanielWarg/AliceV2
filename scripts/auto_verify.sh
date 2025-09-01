@@ -13,9 +13,10 @@ GUARD_TRIGGER_MS=${GUARD_TRIGGER_MS:-150}
 GUARD_RECOVER_S=${GUARD_RECOVER_S:-60}
 
 mkdir -p "$ART_DIR"
+> "$ART_DIR/results.jsonl"
 
 echo "▶️  Startar tjänster via docker compose (docker-only)…"
-docker compose up -d guardian orchestrator dev-proxy || true
+docker compose up -d guardian orchestrator nlu dev-proxy || true
 
 echo "⏳ Väntar på hälsa (via dev-proxy)…"
 for i in {1..40}; do
@@ -29,11 +30,12 @@ curl -fsS "$API_BASE/api/status/guardian" -o "$ART_DIR/pre_guardian.json" || tru
 
 echo "🗣️  Skapar realistisk trafik (svenska)…"
 for i in {1..10}; do
-  curl -fsS -X POST "$API_BASE/api/orchestrator/chat" -H 'Content-Type: application/json' -H 'Authorization: Bearer test-key-123' \
-    -d '{"session_id":"auto-test-'$i'","message":"Hej Alice, vad är klockan?"}' >/dev/null || true
+  curl -fsS -X POST "$API_BASE/api/chat" -H 'Content-Type: application/json' -H 'Authorization: Bearer test-key-123' \
+    -d '{"v":"1","session_id":"auto-test-'$i'","lang":"sv","message":"Hej Alice, vad är klockan?"}' >/dev/null || true
 done
 
 echo "🧪 Kör eval-harness v1 mot riktiga endpoints…"
+docker compose build eval >/dev/null 2>&1 || true
 docker compose run --rm eval || true
 test -f "$ART_DIR/results.jsonl" || touch "$ART_DIR/results.jsonl"
 

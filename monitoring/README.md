@@ -48,9 +48,11 @@ open http://localhost:8501
 - Real-time state transitions med timestamps
 - RAM/CPU/temp/battery metrics
 
-**Live Metrics:**
-- `http://localhost:8000/api/status/simple` - Route latencies + error budgets
-- `http://localhost:8787/health` - Guardian current state
+**Live Metrics via dev-proxy (18000):**
+- `http://localhost:18000/api/status/simple` - Route latencies + error budgets
+- `http://localhost:18000/api/status/routes` - P50/P95 per route (kräver X-Route i /api/chat)
+- `http://localhost:18000/metrics` - Prometheus exporter
+- `http://localhost:18000/guardian` - Guardian health proxy
 
 **Test Results:**
 - `/data/tests/results.jsonl` - Nightly validation outcomes

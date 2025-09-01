@@ -1,3 +1,20 @@
+# Runtime/data artifacts
+data/
+test-results/
+logs/
+
+# Local models
+models/
+
+# Virtual envs
+.venv/
+venv/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.log
 # Alice v2 .gitignore
 
 # Dependencies

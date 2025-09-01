@@ -16,8 +16,11 @@ check_port $PORT
 echo "🧹 Rensar gamla containers (om några)…"
 docker compose down --remove-orphans >/dev/null 2>&1 || true
 
-echo "🐳 Startar dev-proxy, guardian, orchestrator, dashboard…"
-docker compose up -d --build guardian orchestrator dashboard dev-proxy scheduler
+echo "🐳 Startar guardian, orchestrator, nlu, dashboard, dev-proxy…"
+docker compose up -d --build guardian orchestrator nlu dashboard dev-proxy || true
+
+echo "ℹ️  Startar scheduler (om bild finns)…"
+docker compose up -d scheduler || true
 
 echo "⏳ Väntar på dev-proxy på http://localhost:$PORT/health …"
 for i in {1..60}; do

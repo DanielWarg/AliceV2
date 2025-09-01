@@ -9,7 +9,8 @@ def run_chat(text, session="eval"):
     payload = {"session_id":f"{session}-{uuid.uuid4().hex[:6]}","message":text}
     t0 = time.perf_counter()
     with httpx.Client(timeout=10) as c:
-        r = c.post(f"{API}/api/orchestrator/chat", json=payload, headers={"Authorization": "Bearer test-key-123"})
+        # Use NLU-aware chat endpoint (mock-friendly)
+        r = c.post(f"{API}/api/chat", json=payload, headers={"Authorization": "Bearer test-key-123"})
         dt = (time.perf_counter()-t0)*1000
         return r, dt
 
@@ -22,10 +23,12 @@ def main():
             total += 1
             r, dt = run_chat(sc["text"], session=sc["id"])
             ok = r.status_code == 200
-            route = None
+            # Prefer route hint header (from NLU), fall back to model_used
+            route = r.headers.get("X-Route-Hint")
             try:
                 data = r.json()
-                route = data.get("model_used")
+                if not route:
+                    route = data.get("model_used")
             except Exception:
                 ok = False
             if "expect" in sc and "route" in sc["expect"]:

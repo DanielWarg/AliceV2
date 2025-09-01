@@ -83,7 +83,9 @@ def log_turn_event(
         os.makedirs(telemetry_dir, exist_ok=True)
         
         today = datetime.utcnow().strftime("%Y-%m-%d")
-        filename = os.path.join(telemetry_dir, f"events_{today}.jsonl")
+        daily_dir = os.path.join(telemetry_dir, today)
+        os.makedirs(daily_dir, exist_ok=True)
+        filename = os.path.join(daily_dir, f"events_{today}.jsonl")
         logger.info("Writing to file", filename=filename)
         
         with open(filename, "a", encoding="utf-8") as f:
@@ -425,6 +427,9 @@ async def orchestrator_chat(
                     nlu_slots = nlu_json.get("slots") or {}
                     if nlu_intent_label:
                         response.headers["X-Intent"] = nlu_intent_label
+                        conf = intent.get("confidence")
+                        if conf is not None:
+                            response.headers["X-Intent-Confidence"] = str(conf)
                     if nlu_route_hint:
                         response.headers["X-Route-Hint"] = nlu_route_hint
         except Exception as nlu_err:

@@ -93,9 +93,15 @@
 - [x] **RAM-peak per turn**: Process och system memory tracking
 - [x] **Energy per turn (Wh)**: Energikonsumtion med konfigurerbar baseline
 - [x] **Tool error classification**: Timeout/5xx/429/schema/other kategorisering
-- [x] **Autonomous E2E testing**: `scripts/auto_verify.sh` med 20 scenarier
+- [x] **Autonomous E2E testing**: `scripts/auto_verify.sh` med 20 scenarier (micro/planner v1)
 - [x] **SLO validation**: Automatisk P95 threshold checking med Node.js
 - [x] **Real-time HUD**: Streamlit dashboard med comprehensive metrics
+
+### Step 4: NLU v1 (svenska) – e5 + regex (✅ BASELINE LIVE)
+- [x] `/api/nlu/parse` aktiv, P95 <80ms (CPU)
+- [x] Orchestrator `/api/chat` sätter `X-Intent`/`X-Route-Hint` + `X-Route`
+- [x] 20 scenarier i eval (micro/planner); pass-rate ≥80% (nu 100%)
+- [ ] XNLI ONNX entailment vid låg marginal (nästa på tur)
 
 ---
 

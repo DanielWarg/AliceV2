@@ -135,7 +135,7 @@ elif route == "deep":
     llm_response = deep_driver.generate(chat_request.message)
 ```
 
-**Turn Event Logging (services/orchestrator/src/routers/orchestrator.py):**
+**Turn Event Logging (services/orchestrator/src/routers/orchestrator.py & chat.py):**
 ```python
 def log_turn_event(trace_id: str, session_id: str, route: str, 
                    e2e_first_ms: float, e2e_full_ms: float,
@@ -149,7 +149,7 @@ def log_turn_event(trace_id: str, session_id: str, route: str,
         "ram_peak_mb": ram_peak_mb, "energy_wh": energy_wh,
         "tool_calls": tool_calls, "guardian_state": guardian_state
     }
-    # Skriv till JSONL fil
+    # Skriv till JSONL fil under data/telemetry/YYYY-MM-DD/events_YYYY-MM-DD.jsonl
 ```
 
 **Autonomous E2E Testing (scripts/auto_verify.sh):**
@@ -170,7 +170,7 @@ def run_chat(text, session="eval"):
                "lang":"sv","text":text}
     t0 = time.perf_counter()
     with httpx.Client(timeout=10) as c:
-        r = c.post(f"{API}/api/chat", json=payload)
+        r = c.post(f"{API}/api/chat", json=payload)  # X-Route header sätts av /api/chat
     dt = (time.perf_counter()-t0)*1000
     return r, dt
 ```

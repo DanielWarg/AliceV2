@@ -1,5 +1,16 @@
 import os
 import numpy as np
+from typing import Optional
+
+try:
+    import onnxruntime as ort  # type: ignore
+except Exception:  # pragma: no cover
+    ort = None  # fallback
+
+try:
+    from tokenizers import Tokenizer  # type: ignore
+except Exception:  # pragma: no cover
+    Tokenizer = None  # type: ignore
 
 
 INTENT_LABELS = {
@@ -16,9 +27,11 @@ INTENT_LABELS = {
 
 class NLURegistry:
     def __init__(self):
-        # Placeholder: byt till verklig e5-ONNX encoder
         self.intent_labels = INTENT_LABELS
-        self.embeddings = {k: self._fake_embed(v) for k, v in self.intent_labels.items()}
+        # Optional ONNX encoder setup
+        self._encoder = self._init_onnx_encoder()
+        # Precompute label embeddings
+        self.embeddings = {k: self._encode_label(v) for k, v in self.intent_labels.items()}
 
     def _fake_embed(self, text: str) -> np.ndarray:
         # Enkel hashbaserad vektor (ersätts av riktig encoder)
@@ -27,7 +40,68 @@ class NLURegistry:
         v /= np.linalg.norm(v) + 1e-9
         return v
 
+    def _init_onnx_encoder(self):
+        """Init multilingual-e5-small ONNX session om tillgänglig via env.
+        Env:
+          E5_ONNX_PATH: sökväg till onnx-modell
+          E5_TOKENIZER_JSON: sökväg till tokenizer.json
+        """
+        onnx_path = os.getenv("E5_ONNX_PATH")
+        tok_path = os.getenv("E5_TOKENIZER_JSON")
+        if not onnx_path or not os.path.exists(onnx_path):
+            return None
+        if ort is None:
+            return None
+        try:
+            sess = ort.InferenceSession(onnx_path, providers=["CPUExecutionProvider"])
+            tok = None
+            if tok_path and os.path.exists(tok_path) and Tokenizer is not None:
+                tok = Tokenizer.from_file(tok_path)
+            return {"session": sess, "tokenizer": tok}
+        except Exception:
+            return None
+
+    def _encode_text(self, text: str, prefix: str | None = None) -> np.ndarray:
+        """Encode text with ONNX encoder if available, otherwise fake embedding."""
+        if prefix:
+            text = f"{prefix} {text}".strip()
+        if not self._encoder:
+            return self._fake_embed(text)
+        sess = self._encoder["session"]
+        tok: Optional[Tokenizer] = self._encoder.get("tokenizer")
+        try:
+            if tok is None:
+                # Minimal whitespace tokens → ids = hash-based fallback
+                return self._fake_embed(text)
+            enc = tok.encode(text)
+            input_ids = np.array([enc.ids], dtype=np.int64)
+            attention_mask = np.ones_like(input_ids, dtype=np.int64)
+            # Common E5 ONNX inputs (may vary per export)
+            inputs = {
+                "input_ids": input_ids,
+                "attention_mask": attention_mask,
+            }
+            # Some exports use token_type_ids
+            if any(n.name == "token_type_ids" for n in sess.get_inputs()):
+                inputs["token_type_ids"] = np.zeros_like(input_ids, dtype=np.int64)
+            outs = sess.run(None, inputs)
+            # Use first output; mean-pool if sequence
+            out = outs[0]
+            vec = out[0]
+            if vec.ndim == 2:  # [seq, hidden]
+                vec = vec.mean(axis=0)
+            vec = vec.astype(np.float32)
+            norm = np.linalg.norm(vec) + 1e-9
+            return vec / norm
+        except Exception:
+            return self._fake_embed(text)
+
     def encode(self, text: str) -> np.ndarray:
-        return self._fake_embed(text)
+        # E5 queries preprended with "query:"
+        return self._encode_text(text, prefix="query:")
+
+    def _encode_label(self, text: str) -> np.ndarray:
+        # E5 passages (labels) preprended with "passage:"
+        return self._encode_text(text, prefix="passage:")
 
 

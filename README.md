@@ -10,6 +10,7 @@ Alice v2 is a robust, production-ready AI assistant featuring:
 - **🛡️ Guardian Safety System** - Real-time health monitoring with NORMAL/BROWNOUT/EMERGENCY states
 - **📊 Complete Observability** - RAM-peak per turn, energy tracking, tool error classification, structured JSONL logging
 - **🧪 Autonomous E2E Testing** - Self-contained test suite with 20 scenarios, SLO validation, and automatic failure detection
+- **🧠 NLU v1 (svenska)** - e5-embeddings + heuristik, `/api/nlu/parse`, headers `X-Intent`/`X-Route-Hint`
 - **📈 Real-time Monitoring** - Streamlit HUD with comprehensive metrics visualization
 - **⚡ Brownout Load Testing** - Complete stress testing suite validating ≤150ms trigger, ≤60s recovery
 - **🐳 Docker Orchestration** - Complete deployment stack with health checks and monitoring
@@ -55,6 +56,14 @@ curl http://localhost:18000/api/status/simple
 open http://localhost:18000/hud
 ```
 
+### Daily Automation (14:00)
+```bash
+# Install cron job to run auto-verify daily at 14:00 and log to logs/auto_verify.log
+chmod +x scripts/setup-cron.sh
+./scripts/setup-cron.sh
+crontab -l | grep auto_verify
+```
+
 ## 📊 Production Features
 
 ### Complete Observability System
@@ -63,10 +72,11 @@ open http://localhost:18000/hud
 - **Tool error classification**: Timeout/5xx/429/schema/other categorization with Prometheus metrics
 - **Structured turn events**: Comprehensive JSONL logging with all metrics and metadata
 - **Real-time dashboard**: Streamlit HUD showing RAM, energy, latency, tool errors, and Guardian status
+  - Note: `/api/chat` sets `X-Route` early so per-route P50/P95 is accurate
 
 ### Autonomous E2E Testing
 - **Self-contained validation**: `scripts/auto_verify.sh` runs complete system validation
-- **20 realistic scenarios**: Swedish conversation patterns covering micro/planner/deep routes
+- **20 realistic scenarios**: Swedish conversation patterns (micro/planner emphasis in v1)
 - **SLO validation**: Automatic P95 threshold checking with Node.js integration
 - **Failure detection**: Exits with code 1 on SLO breaches or <80% pass rate
 - **Artifact preservation**: All test results saved to `data/tests/` and `test-results/`
@@ -134,7 +144,7 @@ cd monitoring && streamlit run mini_hud.py
 
 ### Production Endpoints
 - **Health**: `GET /health` - Service status
-- **Metrics**: `GET /api/status/simple` - Complete system snapshot
+- **Metrics**: `GET /api/status/simple` - Complete system snapshot (proxied via port 18000)
 - **Guardian**: `GET /api/status/guardian` - Current safety status
 - **Routes**: `GET /api/status/routes` - Latency breakdown by route
 

@@ -3,16 +3,20 @@ Chat API Router
 Handles chat completion requests with model routing
 """
 
-from fastapi import APIRouter, HTTPException, Request, Depends
+from fastapi import APIRouter, HTTPException, Request, Response, Depends
 from fastapi.responses import StreamingResponse
 import structlog
 import time
 import asyncio
 from typing import Dict, Any
+import httpx
 
 from ..models.api import ChatRequest, ChatResponse, APIError, ModelType
 from ..services.guardian_client import GuardianClient
 from ..middleware.logging import get_logger_with_trace
+from ..utils.ram_peak import ram_peak_mb
+from ..utils.energy import EnergyMeter
+from .orchestrator import log_turn_event
 
 router = APIRouter()
 
@@ -26,6 +30,7 @@ async def get_guardian_client() -> GuardianClient:
 @router.post("/chat", response_model=ChatResponse)
 async def chat_completion(
     request: Request,
+    response: Response,
     chat_request: ChatRequest,
     guardian: GuardianClient = Depends(get_guardian_client)
 ) -> ChatResponse:
@@ -36,6 +41,7 @@ async def chat_completion(
     """
     logger = get_logger_with_trace(request, __name__)
     start_time = time.time()
+    energy_meter = EnergyMeter(); energy_meter.start()
     
     logger.info(
         "Chat request received",
@@ -45,6 +51,32 @@ async def chat_completion(
     )
     
     try:
+        # --- NLU pre-parse (fail-open) ---
+        route_hint = None
+        try:
+            nlu_payload = {
+                "v": "1",
+                "text": chat_request.message,
+                "lang": getattr(chat_request, "lang", "sv"),
+                "session_id": chat_request.session_id,
+            }
+            with httpx.Client(timeout=0.08) as client:
+                nlu_resp = client.post("http://nlu:9002/api/nlu/parse", json=nlu_payload)
+                if nlu_resp.status_code == 200:
+                    nlu_json = nlu_resp.json()
+                    intent = (nlu_json.get("intent") or {})
+                    route_hint = nlu_json.get("route_hint")
+                    if intent.get("label"):
+                        response.headers["X-Intent"] = intent["label"]
+                        if intent.get("confidence") is not None:
+                            response.headers["X-Intent-Confidence"] = str(intent["confidence"])
+                    if route_hint:
+                        response.headers["X-Route-Hint"] = route_hint
+        except Exception:
+            pass
+        # Decide route early so middleware can capture per-route latency
+        route = route_hint if route_hint in {"micro", "planner", "deep"} else "micro"
+        response.headers["X-Route"] = route
         # Check Guardian admission control
         admitted = await guardian.check_admission({
             "type": "chat",
@@ -82,8 +114,15 @@ async def chat_completion(
             "session_id": chat_request.session_id
         })
         
-        # Override with request preference if valid (Phase 1: ignore for now)
-        actual_model = ModelType.MICRO  # Phase 1: Always use micro
+        # Degrade deep in brownout/emergency
+        guardian_state = (await guardian.get_health()).get("state", "UNKNOWN")
+        blocked_by_guardian = guardian_state in ["BROWNOUT", "EMERGENCY"] and route == "deep"
+        if blocked_by_guardian:
+            route = "planner"
+            response.headers["X-Route"] = route
+
+        # Choose mock model based on route for metadata/latency
+        actual_model = ModelType.PLANNER if route == "planner" else (ModelType.DEEP if route == "deep" else ModelType.MICRO)
         
         logger.info(
             "Model routing decision",
@@ -98,6 +137,8 @@ async def chat_completion(
         
         # Calculate latency
         latency_ms = int((time.time() - start_time) * 1000)
+        ram = ram_peak_mb()
+        energy_wh = energy_meter.stop()
         
         # Report metrics to Guardian
         await guardian.report_request_metrics({
@@ -114,8 +155,29 @@ async def chat_completion(
             session_id=chat_request.session_id,
             model_used=actual_model,
             latency_ms=latency_ms,
-            response_length=len(response_text)
+            response_length=len(response_text),
+            ram_peak_mb=ram,
+            energy_wh=energy_wh
         )
+
+        # Turn event logging (observability JSONL)
+        try:
+            log_turn_event(
+                trace_id=getattr(request.state, "trace_id", None) or "unknown",
+                session_id=chat_request.session_id,
+                route=route,
+                e2e_first_ms=latency_ms,
+                e2e_full_ms=latency_ms,
+                ram_peak=ram,
+                tool_calls=[],
+                energy_wh=energy_wh,
+                guardian_state=guardian_state,
+                input_text=chat_request.message,
+                output_text=response_text,
+                lang=getattr(chat_request, "lang", "sv"),
+            )
+        except Exception:
+            pass
         
         return ChatResponse(
             session_id=chat_request.session_id,
@@ -126,7 +188,8 @@ async def chat_completion(
             metadata={
                 "phase": "1",
                 "mock_response": True,
-                "guardian_state": guardian_health.get("state", "unknown")
+                "guardian_state": guardian_state,
+                "route": route
             }
         )
         

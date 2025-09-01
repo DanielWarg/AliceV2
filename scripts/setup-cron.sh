@@ -1,3 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Repo-rot
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+mkdir -p "${REPO_DIR}/logs"
+
+LINE="0 14 * * * cd ${REPO_DIR} && ./scripts/auto_verify.sh >> logs/auto_verify.log 2>&1"
+
+# Installera cron-rad (ersätt ev. tidigare auto_verify-rader)
+( crontab -l 2>/dev/null | grep -v "auto_verify.sh" ; echo "$LINE" ) | crontab -
+
+echo "✅ Cron installerad: dagligen 14:00"
+echo "   Kommandot: $LINE"
 #!/bin/bash
 # Setup script for Alice v2 automated testing cron jobs
 
