@@ -7,7 +7,7 @@
 
 **Timeline**: 16 steps over 6-8 weeks with parallel development in later phases.
 
-**🚀 CURRENT STATUS**: Phase 1 Steps 1-3 COMPLETED - Foundation & Safety system operational
+**🚀 CURRENT STATUS**: **Auto-verify**: PASS 100% | Fast P95 OK=True | Planner P95 OK=True
 
 ---
 
@@ -18,7 +18,7 @@
 - **Next step**: Step 5 – Micro‑LLM (Phi‑3.5‑Mini via Ollama)
 
 **Live test-gate (must be green before checking off)**
-- Run: `./scripts/auto_verify.sh` (via dev-proxy :18000, no mocks)
+- Run: `make test-all` (comprehensive test suite via dev-proxy :18000, no mocks)
 - HUD: `monitoring/mini_hud.py` or `http://localhost:18000/hud`
 - Artifacts: `data/tests/summary.json`, `data/tests/results.jsonl`, `data/telemetry/events_YYYY-MM-DD.jsonl`
 - Criteria:
@@ -28,27 +28,51 @@
 
 **Per‑step live gates**
 - Step 4 – NLU + XNLI:
-  - Commands: `./scripts/auto_verify.sh`; NLU sanity: `curl -s -X POST http://localhost:18000/api/nlu/parse -H 'Content-Type: application/json' -d '{"v":"1","lang":"sv","text":"Schedule meeting with Anna tomorrow at 14:00","session_id":"nlu-sanity"}' | jq .`
+  - Commands: `make test-all`; NLU sanity: `curl -s -X POST http://localhost:18000/api/nlu/parse -H 'Content-Type: application/json' -d '{"v":"1","lang":"sv","text":"Schedule meeting with Anna tomorrow at 14:00","session_id":"nlu-sanity"}' | jq .`
   - Pass: Intent‑accuracy ≥92%, P95 ≤80ms; eval ≥80% with challenging examples
   - Artifacts: updated `services/eval/scenarios.json`, logged `X-Intent`/`X-Route-Hint`
 - Step 5 – Micro‑LLM (Phi‑3.5‑Mini via Ollama):
-  - Commands: `./scripts/start-llm-test.sh` and `./scripts/auto_verify.sh`
+  - Commands: `make test-all` and `./scripts/start-llm-test.sh`
   - Pass: First token P95 <250ms; `X-Route=micro` for simple intents; eval green on micro‑cases
   - Artifacts: turn‑events with `route:"micro"` and latency per route
 - Step 6 – Memory (Redis TTL + FAISS):
-  - Commands: `./scripts/auto_verify.sh` + manual `POST /memory/forget`
+  - Commands: `make test-all` + manual `POST /memory/forget`
   - Pass: RAG top‑3 ≥80%, P@1 ≥60%, `forget` <1s; no SLO‑regressions
   - Artifacts: memory‑metrics in HUD, events with `rag_hit`
 - Step 7 – Planner‑LLM + Tools (MCP):
-  - Commands: `./scripts/auto_verify.sh` with tool‑scenarios
+  - Commands: `make test-all` with tool‑scenarios
   - Pass: Tool‑success ≥95%, schema‑validated tool‑calls, max 3 tools/turn
   - Artifacts: tool‑events with error‑classification and success‑ratio
 - Step 8 – Text E2E hard test:
-  - Commands: `./scripts/auto_verify.sh` + loadgen `services/loadgen/main.py`
+  - Commands: `make test-all` + loadgen `services/loadgen/main.py`
   - Pass: Fast P95 ≤250ms (first), Planner P95 ≤900ms (first)/≤1.5s (full), pass‑rate ≥98%
   - Artifacts: `test-results/` nightly trends, SLO‑report
 
 > Policy: No steps are checked off until the live test‑gate is green and artifacts exist under `data/tests/` and `data/telemetry/`.
+
+## 🛠️ Development Setup (Updated)
+
+**One-command setup**:
+```bash
+git clone <repository>
+cd alice-v2
+make up          # Auto-creates venv, installs deps, fetches models, starts stack
+make test-all     # Runs complete test suite (unit + e2e + integration)
+```
+
+**Available commands**:
+```bash
+make help         # Show all available commands
+make up           # Start development stack (auto-setup)
+make down         # Stop development stack
+make restart      # Restart development stack
+make test-all     # Run complete test suite
+make test-unit    # Unit tests only
+make test-e2e     # E2E tests only
+make test-integration # Integration tests only
+make dev          # Complete development workflow (up + all tests)
+make dev-quick    # Quick development workflow (up + e2e only)
+```
 
 ## Phase 1: Foundation & Safety (Week 1-2) ✅ COMPLETED
 

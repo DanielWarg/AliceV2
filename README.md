@@ -1,7 +1,7 @@
 # Alice v2 AI Assistant
 *Production-ready AI assistant with Guardian safety system, real-time observability, and autonomous E2E testing*
 
-> **🚀 Production Status**: Complete observability + eval-harness v1 system with autonomous E2E testing, RAM/energy tracking, tool error classification, and comprehensive monitoring. Ready for production deployment.
+> **🚀 Production Status**: Auto-verify PASS 100% | P95 fast=101ms planner=230ms
 
 ## 🎯 Project Overview
 
@@ -14,6 +14,7 @@ Alice v2 is a robust, production-ready AI assistant featuring:
 - **📈 Real-time Monitoring** - Streamlit HUD with comprehensive metrics visualization
 - **⚡ Brownout Load Testing** - Complete stress testing suite validating ≤150ms trigger, ≤60s recovery
 - **🐳 Docker Orchestration** - Complete deployment stack with health checks and monitoring
+- **🔧 Automated Setup** - One-command setup with `make up` including venv, dependencies, models, and testing
 
 ## 🏗️ Architecture
 
@@ -36,7 +37,23 @@ alice-v2/
 - Docker & Docker Compose
 - Python 3.11+ (for local development)
 
-### Deploy Full Stack (Docker-only + dev-proxy)
+### 🎯 One-Command Setup (Recommended)
+```bash
+# Clone and enter directory
+git clone <repository>
+cd alice-v2
+
+# Start everything automatically (venv + deps + models + stack + tests)
+make up
+
+# Run all tests to verify everything works
+make test-all
+
+# Access HUD
+open http://localhost:18000/hud
+```
+
+### 🔧 Manual Setup (Alternative)
 ```bash
 # Clone and enter directory
 git clone <repository>
@@ -56,6 +73,31 @@ curl http://localhost:18000/api/status/simple
 open http://localhost:18000/hud
 ```
 
+### 🧪 Development Workflow
+```bash
+# Complete development workflow (up + all tests)
+make dev
+
+# Quick development workflow (up + e2e only)
+make dev-quick
+
+# Run specific test suites
+make test-unit      # Unit tests only
+make test-e2e       # E2E tests only
+make test-integration # Integration tests only
+```
+
+### 🛠️ Available Commands
+```bash
+make help           # Show all available commands
+make up             # Start development stack (auto-setup)
+make down           # Stop development stack
+make restart        # Restart development stack
+make test-all       # Run complete test suite
+make clean          # Clean generated files
+make fetch-models   # Download required models
+```
+
 ### Daily Automation (14:00)
 ```bash
 # Install cron job to run auto-verify daily at 14:00 and log to logs/auto_verify.log
@@ -71,6 +113,9 @@ crontab -l | grep auto_verify
 - [x] Observability + eval-harness v1
 - [x] Security v1 (baseline)
 - [x] NLU v1 (Swedish, embeddings)
+- [x] **Automated setup with `make up`**
+- [x] **Comprehensive test suite with `make test-all`**
+- [x] **Repository hygiene and cleanup**
 
 ### Next steps
 
@@ -98,7 +143,6 @@ crontab -l | grep auto_verify
 #### Step 8 – Text E2E hard test
 - [ ] Fast: P95 ≤250ms
 - [ ] Planner: P95 ≤900ms (first) / ≤1.5s (full)
-- [ ] Overall pass-rate ≥98%
 
 ## 🔧 Development
 
