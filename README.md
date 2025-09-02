@@ -16,6 +16,13 @@ Alice v2 is a robust, production-ready AI assistant featuring:
 - **🐳 Docker Orchestration** - Complete deployment stack with health checks and monitoring
 - **🔧 Automated Setup** - One-command setup with `make up` including venv, dependencies, models, and testing
 
+## 📚 Index (Solo Edition)
+- Solo Quickstart – see below
+- Demo Guide – see below
+- Roadmap – `ROADMAP.md`
+- Architecture – `ALICE_SYSTEM_BLUEPRINT.md`
+- Rules/specs – `.cursor/rules/` (PRD, ADR, workflow, types, structured-outputs, toolselector, n8n)
+
 ## 🏗️ Architecture
 
 ```
@@ -30,6 +37,12 @@ alice-v2/
 ├── scripts/            # ✅ Autonomous E2E test automation
 └── test-results/       # ✅ Nightly validation & trends
 ```
+
+### Architecture at a glance (Solo Edition)
+- Fast-route for time/weather/memory/smalltalk (utan LLM i loopen)
+- ToolSelector (3B) → enum + reason (strikt JSON); args byggs deterministiskt i kod
+- n8n för tunga/asynkrona jobb via säkrade webhooks
+- Guardian skyddar med brownout/circuit‑breakers; dev‑proxy exponerar /api, /ollama, /webhook
 
 ## 🚀 Quick Start
 
@@ -51,6 +64,29 @@ make test-all
 
 # Access HUD
 open http://localhost:18000/hud
+```
+
+## ⚡ Solo Quickstart (Local Lite)
+```bash
+# 1) Start kärnorna
+docker compose up -d guardian orchestrator nlu dev-proxy ollama n8n-db n8n
+
+# 2) Sanity via proxy
+curl -s http://localhost:18000/health | jq .
+curl -s http://localhost:18000/api/status/routes | jq .
+
+# 3) N8N UI (aktivera flöden: email_draft, calendar_draft, batch_rag)
+open http://localhost:5678
+
+# 4) Snabb test (fast-route)
+curl -s -X POST http://localhost:18000/api/chat \
+  -H 'Content-Type: application/json' -H 'Authorization: Bearer test-key-123' \
+  -d '{"v":"1","session_id":"fast-1","lang":"sv","message":"Vad är klockan?"}' | jq .
+
+# 5) Email draft via webhook (efter att flow aktiverats)
+curl -s -u alice:secret -H 'Content-Type: application/json' \
+  -d '{"request_id":"t1","subject":"Demo","to":["anna@example.com"]}' \
+  http://localhost:18000/webhook/email_draft | jq .
 ```
 
 ### 🔧 Manual Setup (Alternative)
@@ -105,6 +141,14 @@ make fetch-models   # Download required models
 - n8n för tunga jobb (email_draft, calendar_draft, scrape_and_summarize, batch_rag) via säkrade webhooks
 - Röst: Whisper.cpp (STT) + Piper (sv‑SE) för TTS
 - SLO (solo): fast-route p95 ≤ 250 ms; selector p95 ≤ 900 ms; n8n email_draft p95 ≤ 10 s
+
+## 🎬 Demo Guide (3 scenarier)
+1) Boka möte i morgon 14:00
+   - Förväntan: confirmation‑kort (JSON‑plan), därefter n8n `calendar_draft` svar
+2) Vad sa vi om leveransen?
+   - Förväntan: memory.query + kort RAG‑citat i svaret
+3) Läs upp det
+   - Förväntan: TTS via Piper (svenska)
 
 ### Daily Automation (14:00)
 ```bash
