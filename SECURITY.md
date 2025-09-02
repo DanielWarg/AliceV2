@@ -47,6 +47,30 @@ def evaluate_system_state(metrics: SystemMetrics) -> GuardianState:
 - State persistence: Survives restarts
 - Admission control: 429/503 responses during protection
 
+### Webhook Security (n8n)
+
+All webhook calls must be authenticated and signed.
+
+Headers:
+- `X-Alice-Timestamp`: UNIX seconds (server time)
+- `X-Alice-Signature`: `sha256=` + hex(HMAC_SHA256(secret, `${timestamp}.${raw_body}`))
+
+Policy:
+- Allowed drift: ±300s between server time and `X-Alice-Timestamp`
+- Replay protection: Redis SETNX(`sig:${signature}`, 1) with TTL 600s; reject if present
+- Secret: `ALICE_WEBHOOK_HMAC_SECRET` (env), rotated periodically
+- Optional: Basic Auth on the dev‑proxy for /webhook/*
+
+Verification (pseudocode):
+```python
+def verify_webhook(ts: int, sig: str, body: bytes, secret: str) -> bool:
+    if abs(now() - ts) > 300: return False
+    expected = 'sha256=' + hmac_hex(secret, f"{ts}.{body}")
+    if not hmac_compare(sig, expected): return False
+    if not redis.setnx(f"sig:{sig}", 1, ex=600): return False
+    return True
+```
+
 ### Data Privacy & Protection
 
 #### User Data Classification

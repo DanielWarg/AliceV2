@@ -48,6 +48,13 @@
   - Pass: Fast P95 ≤250ms (first), Planner P95 ≤900ms (first)/≤1.5s (full), pass‑rate ≥98%
   - Artifacts: `test-results/` nightly trends, SLO‑report
 
+### Solo Edition vNext (Local Lite)
+- ToolSelector (enum‑only, strict JSON), budgets 600/400/150 ms
+- Router: fast‑route for time/weather/memory/smalltalk
+- n8n integration for heavy flows (email_draft, calendar_draft, scrape_and_summarize, batch_rag)
+- Voice: Whisper.cpp + Piper (sv‑SE)
+- SLO: fast ≤250 ms, selector ≤900 ms, n8n email_draft ≤10 s (p95)
+
 > Policy: No steps are checked off until the live test‑gate is green and artifacts exist under `data/tests/` and `data/telemetry/`.
 
 ## 🛠️ Development Setup (Updated)
