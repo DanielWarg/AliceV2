@@ -37,6 +37,12 @@ handle_path /ollama/* {
   reverse_proxy ollama:11434
 }
 
+# n8n webhooks
+@n8nweb path /webhook/*
+handle_path /webhook/* {
+  reverse_proxy n8n:5678
+}
+
 # NLU proxy
 
 

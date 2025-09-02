@@ -1,0 +1,35 @@
+{
+  "name": "alice_batch_rag",
+  "active": true,
+  "nodes": [
+    {
+      "parameters": {
+        "path": "batch_rag",
+        "options": { "responseMode": "lastNode" },
+        "methods": ["POST"]
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            { "name": "status", "value": "accepted" },
+            { "name": "job_id", "value": "={{$json.request_id || $now}}" }
+          ]
+        }
+      },
+      "name": "Set",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [520, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": { "main": [[{ "node": "Set", "type": "main", "index": 0 }]] }
+  }
+}
+
