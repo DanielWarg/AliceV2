@@ -340,45 +340,18 @@ export default function AliceHUD() {
           <Pane title="Diagnostics">
             <div className="h-48 overflow-hidden rounded-xl border border-cyan-500/20 bg-black/20 font-mono text-xs">
               <div className="h-full overflow-y-auto p-3 space-y-1 scrollbar-thin scrollbar-thumb-cyan-500/30 scrollbar-track-transparent">
-                <div className="text-green-400">[OK] System boot sequence initiated...</div>
-                <div className="text-green-400">[OK] Guardian module loaded successfully</div>
-                <div className="text-green-400">[OK] Memory service operational</div>
-                <div className="text-green-400">[OK] Voice pipeline initialized</div>
-                <div className="text-green-400">[OK] NLU engine ready</div>
-                <div className="text-green-400">[OK] LLM routing active</div>
                 <div className="text-cyan-400">[INFO] Guardian Status: {guardianStatus}</div>
                 <div className="text-cyan-400">[INFO] Safety Level: {guardianStatus === 'NORMAL' ? '5/5' : guardianStatus === 'BROWNOUT' ? '3/5' : '1/5'}</div>
-                <div className="text-cyan-400">[INFO] Memory TTL: 7 days</div>
-                <div className="text-cyan-400">[INFO] Voice Mode: Local</div>
-                <div className="text-yellow-400">[WARN] System updates available</div>
-                <div className="text-yellow-400">[WARN] Backup scheduled for 02:00</div>
                 <div className="text-blue-400">[DEBUG] Last health check: {now}</div>
-                <div className="text-blue-400">[DEBUG] Active sessions: 1</div>
-                <div className="text-blue-400">[DEBUG] Cache hit rate: 87%</div>
-                <div className="text-blue-400">[DEBUG] API response time: 45ms</div>
-                <div className="text-green-400">[OK] All systems operational</div>
-                <div className="text-green-400">[OK] Ready for user interaction</div>
                 <div className="text-blue-400">[DEBUG] Memory usage: {systemDiagnostics?.ram_pct || 0}%</div>
                 <div className="text-blue-400">[DEBUG] CPU usage: {systemDiagnostics?.cpu_pct || 0}%</div>
                 {systemDiagnostics?.temp_c && (
                   <div className="text-blue-400">[DEBUG] CPU temperature: {systemDiagnostics.temp_c}°C</div>
                 )}
-                <div className="text-blue-400">[DEBUG] Network latency: 12ms</div>
-                <div className="text-blue-400">[DEBUG] Disk usage: 67%</div>
-                <div className="text-blue-400">[DEBUG] GPU utilization: 23%</div>
                 {systemDiagnostics?.battery_pct && (
                   <div className="text-blue-400">[DEBUG] Battery level: {systemDiagnostics.battery_pct}%</div>
                 )}
-                <div className="text-blue-400">[DEBUG] WiFi signal: -45dBm</div>
-                <div className="text-blue-400">[DEBUG] Bluetooth: Connected</div>
-                <div className="text-blue-400">[DEBUG] USB devices: 3 connected</div>
-                <div className="text-blue-400">[DEBUG] Audio output: Built-in speakers</div>
-                <div className="text-blue-400">[DEBUG] Camera: Available</div>
-                <div className="text-blue-400">[DEBUG] Microphone: Active</div>
-                <div className="text-blue-400">[DEBUG] Security: Firewall enabled</div>
-                <div className="text-blue-400">[DEBUG] Encryption: AES-256</div>
                 <div className="text-blue-400">[DEBUG] Uptime: {Math.floor((systemDiagnostics?.uptime_s || 0) / 60)}m {Math.floor((systemDiagnostics?.uptime_s || 0) % 60)}s</div>
-                <div className="text-green-400">[OK] All diagnostics complete</div>
                 <div className="text-green-400">[OK] System ready for operation</div>
               </div>
             </div>
