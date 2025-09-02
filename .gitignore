@@ -157,3 +157,6 @@ services/*/temp/
 *.key
 *.pem
 secrets/
+
+# Local CV summary (do not commit)
+cv.md
