@@ -28,6 +28,60 @@ Alice v2 is a robust, production‑ready platform with complete safety, observab
 
 ---
 
+## 🔧 CIRCUIT BREAKER + TIMEOUT POLICY
+
+### **Planner LLM Robustness (Step 7)**
+
+**Timeout Budgeting:**
+- **Total Request Budget**: 1500ms
+- **Planner Generation**: 600ms (40%)
+- **Tool Execution**: 400ms (27%)
+- **JSON Repair**: 150ms (10%)
+- **Buffer**: 350ms (23%)
+
+**Circuit Breaker Settings:**
+- **Planner Failures**: 5 failures / 30s window → Open circuit
+- **Tool Failures**: 3 failures / 30s window → Open circuit
+- **Recovery**: Automatic reset after window expires
+
+**Fallback Behavior:**
+- **JSON Parse Fail**: 1 repair attempt (150ms) → Fallback
+- **Schema Validation Fail**: Immediate fallback
+- **Timeout Exceeded**: Immediate fallback
+- **Circuit Open**: Immediate fallback
+
+**Acceptance Criteria:**
+- `planner_schema_ok ≥ 99%`
+- `fallback_used ≤ 1%`
+- No requests > 3s
+- No P95 spikes from fallback
+
+### **Enhanced Validation (Step 8)**
+
+**Minimum Sample Requirements:**
+- **Per Route**: ≥500 requests before percentiles calculated
+- **Cold Start**: First 20 requests excluded from steady-state
+- **Bimodality Check**: Flag if ≥3% > 5×p50
+
+**Distribution Analysis:**
+- **Tail Metrics**: Max 1% of requests > 1.5s
+- **P50/P90/P95/P99**: All percentiles reported per route
+- **Histogram**: Latency distribution visualization
+
+**CI Gates:**
+- Fail if `p95(planner) > 1500ms`
+- Fail if `tail>1.5s ≥ 1%`
+- Fail if `planner_schema_ok < 99%`
+- Fail if `fallback_used > 1%`
+
+**Artefacts:**
+- Raw latency per request with route tags
+- Schema success/failure reasons
+- Fallback usage and reasons
+- JSON + HTML reports
+
+---
+
 ## 📋 WHAT WE BUILT – Technical Deep Dive
 
 ### Core Services Architecture

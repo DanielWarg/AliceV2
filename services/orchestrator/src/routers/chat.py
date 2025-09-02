@@ -203,8 +203,19 @@ async def chat_completion(
             actual_model=actual_model
         )
         
-        # Generate mock response (Phase 1 implementation)
-        response_text = await generate_mock_response(chat_request.message, actual_model)
+        # Call orchestrator for real LLM processing
+        try:
+            logger.info("Attempting to call orchestrator", session_id=chat_request.session_id)
+            from .orchestrator import orchestrator_chat
+            logger.info("Import successful, calling orchestrator", session_id=chat_request.session_id)
+            orchestrator_response = await orchestrator_chat(chat_request, request)
+            logger.info("Orchestrator call successful", session_id=chat_request.session_id)
+            response_text = orchestrator_response.response
+            actual_model = orchestrator_response.model_used
+        except Exception as e:
+            logger.warning("Orchestrator call failed, falling back to mock", error=str(e), session_id=chat_request.session_id)
+            # Fallback to mock response
+            response_text = await generate_mock_response(chat_request.message, actual_model)
         
         # Calculate latency
         latency_ms = int((time.time() - start_time) * 1000)
@@ -248,7 +259,7 @@ async def chat_completion(
                 rag_data={
                     "top_k": 0,
                     "hits": 0,
-                    "llm_model": "mock",
+                    "llm_model": actual_model,
                     "planner_schema_ok": False,
                     "fallback_used": False,
                     "blocked_by_guardian": False,
@@ -268,8 +279,8 @@ async def chat_completion(
             latency_ms=latency_ms,
             trace_id=getattr(request.state, "trace_id", None),
             metadata={
-                "phase": "1",
-                "mock_response": True,
+                "phase": "2",
+                "mock_response": False,
                 "guardian_state": guardian_state,
                 "route": route,
                 "security": {"mode": security_mode, "inj": round(inj_score,2)}

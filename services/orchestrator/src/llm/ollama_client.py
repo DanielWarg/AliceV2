@@ -15,7 +15,7 @@ logger = structlog.get_logger(__name__)
 class OllamaConfig:
     """Configuration for Ollama client"""
     host: str = "http://ollama:11434"
-    timeout_ms: int = 1800
+    timeout_ms: int = 1500  # Reduced from 1800ms to 1500ms for SLO compliance
     keep_alive: int = 120
     max_retries: int = 2
     retry_delay: float = 0.5
@@ -54,7 +54,7 @@ class OllamaClient:
             except Exception as e:
                 logger.error(f"Ollama request failed", endpoint=endpoint, error=str(e))
                 raise
-    
+        
     def generate(self, model: str, prompt: str, **kwargs) -> Dict[str, Any]:
         """Generate text using Ollama model"""
         data = {
@@ -75,6 +75,10 @@ class OllamaClient:
             data["max_tokens"] = kwargs["max_tokens"]
         if "system" in kwargs:
             data["system"] = kwargs["system"]
+        if "format" in kwargs:
+            data["format"] = kwargs["format"]
+        if "stop" in kwargs:
+            data["stop"] = kwargs["stop"]
             
         return self._make_request("/api/generate", data)
     
@@ -114,13 +118,17 @@ _ollama_client: Optional[OllamaClient] = None
 def get_ollama_client() -> OllamaClient:
     """Get or create global Ollama client instance"""
     global _ollama_client
-    if _ollama_client is None:
-        config = OllamaConfig(
-            host=os.getenv("OLLAMA_HOST", "http://dev-proxy:80/ollama"),
-            timeout_ms=int(os.getenv("LLM_TIMEOUT_MS", "1800")),
-            keep_alive=int(os.getenv("LLM_KEEP_ALIVE", "120"))
-        )
-        _ollama_client = OllamaClient(config)
+    # Always create new client to ensure fresh config
+    if _ollama_client is not None:
+        _ollama_client.close()
+        _ollama_client = None
+    
+    config = OllamaConfig(
+        host=os.getenv("OLLAMA_HOST", "http://dev-proxy:80/ollama"),
+        timeout_ms=int(os.getenv("LLM_TIMEOUT_MS", "1500")),  # Reduced to 1500ms for SLO compliance
+        keep_alive=int(os.getenv("LLM_KEEP_ALIVE", "120"))
+    )
+    _ollama_client = OllamaClient(config)
     return _ollama_client
 
 def reset_ollama_client():
