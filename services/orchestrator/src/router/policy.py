@@ -25,9 +25,11 @@ class RouterPolicy:
         self.micro_patterns = [
             r"hej|hello|hi|tjena|hallå",  # Greetings
             r"vad är klockan|hur mycket är klockan|tid",  # Time
+            r"vad är vädret|väder|weather",  # Weather fast-route
             r"tack|thanks",  # Thanks
             r"vem är du|vad kan du|kan du",  # Capability questions
             r"ja|nej|ok|okej",  # Simple responses
+            r"minne|kom ihåg|påminn|memory|note",  # Simple memory ops
         ]
         
         # Planner route patterns (actions, tools, planning)
@@ -41,7 +43,6 @@ class RouterPolicy:
             r"skapa|create|new",  # Creation
             r"ta bort|delete|remove",  # Deletion
             r"ändra|change|modify|update",  # Modification
-            r"vad är vädret|väder|weather",  # Weather (tool-based)
         ]
         
         # Deep route patterns (complex reasoning, analysis)

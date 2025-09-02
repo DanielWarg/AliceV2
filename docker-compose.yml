@@ -46,8 +46,8 @@ services:
       - MICRO_MODEL=llama2:7b
       - MICRO_DRIVER_VERSION=2
       - LLM_PLANNER=qwen2.5:3b
-      - PLANNER_TIMEOUT_MS=3000
-      - PLANNER_REPAIR_TIMEOUT_MS=200
+      - PLANNER_TIMEOUT_MS=1200
+      - PLANNER_REPAIR_TIMEOUT_MS=150
       - LLM_TIMEOUT_MS=16000
       - PLANNER_NUM_CTX=768
       - PLANNER_NUM_PREDICT=100
@@ -165,6 +165,40 @@ services:
       - "18000:80"
     volumes:
       - ./ops/Caddyfile:/etc/caddy/Caddyfile:ro
+    restart: unless-stopped
+
+  n8n-db:
+    image: postgres:15-alpine
+    container_name: alice-n8n-db
+    environment:
+      - POSTGRES_USER=n8n
+      - POSTGRES_PASSWORD=${N8N_DB_PASSWORD:-n8npass}
+      - POSTGRES_DB=n8n
+    volumes:
+      - ./data/n8n_db:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: alice-n8n
+    depends_on:
+      - n8n-db
+    environment:
+      - N8N_HOST=alice-n8n
+      - N8N_PORT=5678
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY:-change-me}
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=${N8N_USER:-alice}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_PASS:-secret}
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=n8n-db
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=n8n
+      - DB_POSTGRESDB_USER=n8n
+      - DB_POSTGRESDB_PASSWORD=${N8N_DB_PASSWORD:-n8npass}
+      - N8N_WEBHOOK_URL=http://dev-proxy/webhook
+    volumes:
+      - ./data/n8n:/home/node/.n8n
     restart: unless-stopped
 
   ollama:
