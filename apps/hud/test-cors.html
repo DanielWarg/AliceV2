@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CORS Test</title>
+</head>
+<body>
+    <h1>CORS Test for Alice HUD</h1>
+    <button onclick="testAPI()">Test API Connection</button>
+    <div id="result"></div>
+
+    <script>
+        async function testAPI() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing...';
+            
+            try {
+                const response = await fetch('http://localhost:18000/api/status/simple');
+                const data = await response.json();
+                resultDiv.innerHTML = `
+                    <h3>✅ Success!</h3>
+                    <p>Status: ${data.status}</p>
+                    <p>Score: ${data.score}/100</p>
+                    <p>Message: ${data.message}</p>
+                    <p>Emoji: ${data.emoji}</p>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <h3>❌ Error</h3>
+                    <p>${error.message}</p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

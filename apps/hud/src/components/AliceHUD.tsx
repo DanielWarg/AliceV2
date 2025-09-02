@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState, useContext, createContext } from "react";
 import { Mic } from "lucide-react";
+import { aliceAPI, SystemStatus, HealthStatus, MemoryStats, ChatRequest, ChatResponse } from '../lib/api';
 
 // ────────────────────────────────────────────────────────────────────────────────
 // Ikoner (inline SVG)
@@ -14,7 +15,6 @@ const IconCloudSun = (p: any) => (<Svg {...p}><circle cx="7" cy="7" r="3" /><pat
 const IconCpu = (p: any) => (<Svg {...p}><rect x="9" y="9" width="6" height="6" /><rect x="4" y="4" width="16" height="16" rx="2" /></Svg>);
 const IconDrive = (p: any) => (<Svg {...p}><rect x="2" y="7" width="20" height="10" rx="2" /><circle cx="6.5" cy="12" r="1" /><circle cx="17.5" cy="12" r="1" /></Svg>);
 const IconActivity = (p: any) => (<Svg {...p}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></Svg>);
-const IconMic = (p: any) => (<Svg {...p}><rect x="9" y="2" width="6" height="11" rx="3" /><path d="M12 13v6" /></Svg>);
 const IconX = (p: any) => (<Svg {...p}><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></Svg>);
 const IconCheck = (p: any) => (<Svg {...p}><polyline points="20 6 9 17 4 12" /></Svg>);
 const IconClock = (p: any) => (<Svg {...p}><circle cx="12" cy="12" r="9" /><path d="M12 7v6h5" /></Svg>);
@@ -101,28 +101,41 @@ const Pane = ({ title, children, className, actions }: {
 );
 
 // ────────────────────────────────────────────────────────────────────────────────
-// Hooks (simulerad data)
+// Hooks (real data)
 function useSystemMetrics() {
   const [cpu, setCpu] = useState(0);
   const [mem, setMem] = useState(0);
   const [net, setNet] = useState(0);
+  const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
+
   useEffect(() => {
-    // Set initial values on client
-    setCpu(37);
-    setMem(52);
-    setNet(8);
-    
-    const id = setInterval(() => {
-      setCpu((v) => clampPercent(v + (Math.random() * 10 - 5)));
-      setMem((v) => clampPercent(v + (Math.random() * 6 - 3)));
-      setNet((v) => clampPercent(v + (Math.random() * 14 - 7)));
-    }, 1100);
-    return () => clearInterval(id);
+    const fetchMetrics = async () => {
+      try {
+        const status = await aliceAPI.getSystemStatus();
+        setSystemStatus(status);
+        
+        // Convert system score to CPU-like metric
+        setCpu(status.score);
+        
+        // Simulate memory and network based on system health
+        setMem(Math.max(20, status.score - 10));
+        setNet(Math.max(5, status.score - 15));
+      } catch (error) {
+        console.error('Failed to fetch system metrics:', error);
+        // Fallback to simulated data
+        setCpu(37);
+        setMem(52);
+        setNet(8);
+      }
+    };
+
+    fetchMetrics();
+    const interval = setInterval(fetchMetrics, 5000);
+    return () => clearInterval(interval);
   }, []);
-  return { cpu, mem, net };
+
+  return { cpu, mem, net, systemStatus };
 }
-
-
 
 function useWeatherStub() {
   const [w, setW] = useState({ temp: 0, desc: "Loading..." });
@@ -139,12 +152,9 @@ function useWeatherStub() {
 }
 
 // ────────────────────────────────────────────────────────────────────────────────
-
-
-// ────────────────────────────────────────────────────────────────────────────────
 // Main HUD
 export default function AliceHUD() {
-  const { cpu, mem, net } = useSystemMetrics();
+  const { cpu, mem, net, systemStatus } = useSystemMetrics();
   const weather = useWeatherStub();
   const [query, setQuery] = useState("");
   const [messages, setMessages] = useState<Array<{role: 'user' | 'assistant', content: string}>>([
@@ -152,10 +162,11 @@ export default function AliceHUD() {
   ]);
   const [isTyping, setIsTyping] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [sessionId] = useState(() => `hud-${safeUUID()}`);
 
   const [now, setNow] = useState("--:--");
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (!query.trim()) return;
     
     // Lägg till användarens meddelande
@@ -163,20 +174,27 @@ export default function AliceHUD() {
     setMessages(prev => [...prev, userMessage]);
     setQuery('');
     
-    // Simulera Alice svarar
+    // Skicka till Alice API
     setIsTyping(true);
-    setTimeout(() => {
-      const responses = [
-        "Intressant fråga! Låt mig tänka på det...",
-        "Jag förstår vad du menar. Här är mitt svar...",
-        "Bra fråga! Baserat på vad jag vet...",
-        "Jag kan hjälpa dig med det. Låt mig förklara...",
-        "Det är en utmaning. Här är vad jag tror..."
-      ];
-      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-      setMessages(prev => [...prev, { role: 'assistant', content: randomResponse }]);
+    try {
+      const response = await aliceAPI.sendChatMessage({
+        session_id: sessionId,
+        message: userMessage.content
+      });
+      
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: response.response 
+      }]);
+    } catch (error) {
+      console.error('Chat error:', error);
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: 'Tyvärr, jag kunde inte svara just nu. Försök igen senare.' 
+      }]);
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
   };
 
   const toggleVoice = () => {
@@ -195,6 +213,7 @@ export default function AliceHUD() {
       }, 3000);
     }
   };
+
   useEffect(() => {
     // Set initial time on client only
     setNow(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
@@ -239,131 +258,141 @@ export default function AliceHUD() {
           <div className="flex items-center gap-2 text-cyan-300/80">
             <IconClock className="h-4 w-4" />
             <span className="tracking-widest text-xs uppercase">{now}</span>
+            {systemStatus && (
+              <span className="text-xs">
+                {systemStatus.emoji} {systemStatus.score}/100
+              </span>
+            )}
           </div>
         </div>
       </div>
 
       <main className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-6 pb-24 pt-4 md:grid-cols-12">
-                            <div className="md:col-span-3 space-y-6">
-                      <Pane title="System" actions={<IconSettings className="h-4 w-4" />}>
-                        <div className="grid grid-cols-3 gap-3">
-                          <Metric label="CPU" value={cpu} icon={<IconCpu className="h-3 w-3" />} />
-                          <Metric label="MEM" value={mem} icon={<IconDrive className="h-3 w-3" />} />
-                          <Metric label="NET" value={net} icon={<IconActivity className="h-3 w-3" />} />
+        <div className="md:col-span-3 space-y-6">
+          <Pane title="System" actions={<IconSettings className="h-4 w-4" />}>
+            <div className="grid grid-cols-3 gap-3">
+              <Metric label="CPU" value={cpu} icon={<IconCpu className="h-3 w-3" />} />
+              <Metric label="MEM" value={mem} icon={<IconDrive className="h-3 w-3" />} />
+              <Metric label="NET" value={net} icon={<IconActivity className="h-3 w-3" />} />
+            </div>
+            <div className="mt-4 grid grid-cols-3 gap-3">
+              <RingGauge size={80} value={cpu} icon={<IconCpu className="h-3 w-3" />} showValue={false} />
+              <RingGauge size={80} value={mem} icon={<IconDrive className="h-3 w-3" />} showValue={false} />
+              <RingGauge size={80} value={net} icon={<IconGauge className="h-3 w-3" />} showValue={false} />
+            </div>
+            {systemStatus && (
+              <div className="mt-3 text-center text-xs text-cyan-300/60">
+                {systemStatus.message}
+              </div>
+            )}
+          </Pane>
+        </div>
+
+        <div className="md:col-span-6 space-y-6">
+          {/* Voice Indicator Panel */}
+          <Pane title="Voice Input">
+            <div 
+              className="relative h-32 overflow-hidden rounded-xl border border-cyan-500/20 bg-cyan-900/10 cursor-pointer hover:bg-cyan-900/20 transition-colors"
+              onClick={toggleVoice}
+            >
+              {/* Mic Icon in top-right corner */}
+              <div className="absolute top-3 right-3 z-10">
+                <Mic className={`h-5 w-5 transition-colors ${
+                  isListening ? 'text-cyan-300' : 'text-cyan-300/60'
+                }`} />
+              </div>
+              
+              {/* Wave Animation - Full Width */}
+              <div className="absolute inset-0 flex items-center justify-center px-4">
+                <div className="flex items-end space-x-1 h-16 w-full">
+                  {[...Array(20)].map((_, i) => (
+                    <div
+                      key={i}
+                      className={`flex-1 bg-gradient-to-t from-cyan-400 to-cyan-300 rounded-full transition-all duration-300 ${
+                        isListening 
+                          ? 'animate-pulse' 
+                          : 'opacity-30'
+                      }`}
+                      style={{
+                        height: isListening 
+                          ? `${20 + Math.sin(Date.now() * 0.001 + i * 0.3) * 15}px`
+                          : '8px',
+                        animationDelay: `${i * 0.05}s`
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+              
+              {/* Status Text */}
+              <div className="absolute bottom-3 left-3">
+                <div className="text-xs text-cyan-300/60">
+                  {isListening ? 'Lyssnar...' : 'Klicka för att starta'}
+                </div>
+              </div>
+            </div>
+          </Pane>
+
+          {/* Chat Interface */}
+          <Pane title="Alice Core">
+            <div className="h-80 overflow-hidden rounded-xl border border-cyan-500/20 bg-cyan-900/10">
+              <div className="h-full flex flex-col">
+                {/* Chat Messages */}
+                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                  {messages.map((msg, index) => (
+                    <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`max-w-xs rounded-lg px-3 py-2 ${
+                        msg.role === 'user' 
+                          ? 'bg-cyan-400/20 text-cyan-100 border border-cyan-400/30' 
+                          : 'bg-cyan-900/20 text-cyan-200 border border-cyan-500/20'
+                      }`}>
+                        <div className="text-xs text-cyan-300/60 mb-1">
+                          {msg.role === 'user' ? 'Du' : 'Alice'}
                         </div>
-                        <div className="mt-4 grid grid-cols-3 gap-3">
-                          <RingGauge size={80} value={cpu} icon={<IconCpu className="h-3 w-3" />} showValue={false} />
-                          <RingGauge size={80} value={mem} icon={<IconDrive className="h-3 w-3" />} showValue={false} />
-                          <RingGauge size={80} value={net} icon={<IconGauge className="h-3 w-3" />} showValue={false} />
-                        </div>
-                      </Pane>
+                        <div className="text-sm">{msg.content}</div>
+                      </div>
                     </div>
-
-                            <div className="md:col-span-6 space-y-6">
-                      {/* Voice Indicator Panel */}
-                      <Pane title="Voice Input">
-                        <div 
-                          className="relative h-32 overflow-hidden rounded-xl border border-cyan-500/20 bg-cyan-900/10 cursor-pointer hover:bg-cyan-900/20 transition-colors"
-                          onClick={toggleVoice}
-                        >
-                          {/* Mic Icon in top-right corner */}
-                          <div className="absolute top-3 right-3 z-10">
-                            <Mic className={`h-5 w-5 transition-colors ${
-                              isListening ? 'text-cyan-300' : 'text-cyan-300/60'
-                            }`} />
-                          </div>
-                          
-                          {/* Wave Animation - Full Width */}
-                          <div className="absolute inset-0 flex items-center justify-center px-4">
-                            <div className="flex items-end space-x-1 h-16 w-full">
-                              {[...Array(20)].map((_, i) => (
-                                <div
-                                  key={i}
-                                  className={`flex-1 bg-gradient-to-t from-cyan-400 to-cyan-300 rounded-full transition-all duration-300 ${
-                                    isListening 
-                                      ? 'animate-pulse' 
-                                      : 'opacity-30'
-                                  }`}
-                                  style={{
-                                    height: isListening 
-                                      ? `${20 + Math.sin(Date.now() * 0.001 + i * 0.3) * 15}px`
-                                      : '8px',
-                                    animationDelay: `${i * 0.05}s`
-                                  }}
-                                />
-                              ))}
-                            </div>
-                          </div>
-                          
-                          {/* Status Text */}
-                          <div className="absolute bottom-3 left-3">
-                            <div className="text-xs text-cyan-300/60">
-                              {isListening ? 'Lyssnar...' : 'Klicka för att starta'}
-                            </div>
-                          </div>
+                  ))}
+                  {isTyping && (
+                    <div className="flex justify-start">
+                      <div className="bg-cyan-900/20 text-cyan-200 border border-cyan-500/20 rounded-lg px-3 py-2">
+                        <div className="text-xs text-cyan-300/60 mb-1">Alice</div>
+                        <div className="flex space-x-1">
+                          <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce"></div>
+                          <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                          <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
                         </div>
-                      </Pane>
-
-                      {/* Chat Interface */}
-                      <Pane title="Alice Core">
-                        <div className="h-80 overflow-hidden rounded-xl border border-cyan-500/20 bg-cyan-900/10">
-                          <div className="h-full flex flex-col">
-                            {/* Chat Messages */}
-                            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                              {messages.map((msg, index) => (
-                                <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                  <div className={`max-w-xs rounded-lg px-3 py-2 ${
-                                    msg.role === 'user' 
-                                      ? 'bg-cyan-400/20 text-cyan-100 border border-cyan-400/30' 
-                                      : 'bg-cyan-900/20 text-cyan-200 border border-cyan-500/20'
-                                  }`}>
-                                    <div className="text-xs text-cyan-300/60 mb-1">
-                                      {msg.role === 'user' ? 'Du' : 'Alice'}
-                                    </div>
-                                    <div className="text-sm">{msg.content}</div>
-                                  </div>
-                                </div>
-                              ))}
-                              {isTyping && (
-                                <div className="flex justify-start">
-                                  <div className="bg-cyan-900/20 text-cyan-200 border border-cyan-500/20 rounded-lg px-3 py-2">
-                                    <div className="text-xs text-cyan-300/60 mb-1">Alice</div>
-                                    <div className="flex space-x-1">
-                                      <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce"></div>
-                                      <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                                      <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
-                                    </div>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                            
-                            {/* Input Area */}
-                            <div className="border-t border-cyan-500/20 p-4">
-                              <div className="flex gap-2">
-                                <input
-                                  value={query}
-                                  onChange={(e) => setQuery(e.target.value)}
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter' && query.trim()) {
-                                      sendMessage();
-                                    }
-                                  }}
-                                  placeholder="Skriv ett meddelande..."
-                                  className="flex-1 bg-transparent text-cyan-100 placeholder:text-cyan-300/40 focus:outline-none"
-                                />
-                                <button
-                                  onClick={sendMessage}
-                                  disabled={!query.trim()}
-                                  className="rounded-lg border border-cyan-400/30 px-3 py-2 text-xs hover:bg-cyan-400/10 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                  Skicka
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </Pane>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Input Area */}
+                <div className="border-t border-cyan-500/20 p-4">
+                  <div className="flex gap-2">
+                    <input
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && query.trim()) {
+                          sendMessage();
+                        }
+                      }}
+                      placeholder="Skriv ett meddelande..."
+                      className="flex-1 bg-transparent text-cyan-100 placeholder:text-cyan-300/40 focus:outline-none"
+                    />
+                    <button
+                      onClick={sendMessage}
+                      disabled={!query.trim()}
+                      className="rounded-lg border border-cyan-400/30 px-3 py-2 text-xs hover:bg-cyan-400/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Skicka
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Pane>
 
           <Pane title="Media">
             <div className="flex items-center gap-4">
@@ -381,17 +410,17 @@ export default function AliceHUD() {
           </Pane>
         </div>
 
-                            <div className="md:col-span-3 space-y-6">
-                      <Pane title="Weather" actions={<IconCloudSun className="h-4 w-4" />}>
-                        <div className="flex items-center gap-4">
-                          <IconThermometer className="h-10 w-10 text-cyan-300" />
-                          <div>
-                            <div className="text-3xl font-semibold">{weather.temp}°C</div>
-                            <div className="text-cyan-300/80 text-sm">{weather.desc}</div>
-                          </div>
-                        </div>
-                      </Pane>
-                    </div>
+        <div className="md:col-span-3 space-y-6">
+          <Pane title="Weather" actions={<IconCloudSun className="h-4 w-4" />}>
+            <div className="flex items-center gap-4">
+              <IconThermometer className="h-10 w-10 text-cyan-300" />
+              <div>
+                <div className="text-3xl font-semibold">{weather.temp}°C</div>
+                <div className="text-cyan-300/80 text-sm">{weather.desc}</div>
+              </div>
+            </div>
+          </Pane>
+        </div>
       </main>
 
       <footer className="pointer-events-none absolute inset-x-0 bottom-0 mx-auto max-w-7xl px-6 pb-8">

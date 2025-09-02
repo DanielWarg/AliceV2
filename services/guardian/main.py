@@ -1,9 +1,19 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import psutil, time, os
 from collections import deque
 
 app = FastAPI()
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://localhost:3001"],  # Web frontend + HUD
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_headers=["*"],
+)
 class State(BaseModel):
     state: str = "NORMAL"  # NORMAL|BROWNOUT|EMERGENCY|LOCKDOWN
     brownout_level: str = "NONE"  # NONE|LIGHT|MODERATE|HEAVY
