@@ -18,7 +18,7 @@ const IconActivity = (p: any) => (<Svg {...p}><polyline points="22 12 18 12 15 2
 const IconX = (p: any) => (<Svg {...p}><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></Svg>);
 const IconCheck = (p: any) => (<Svg {...p}><polyline points="20 6 9 17 4 12" /></Svg>);
 const IconClock = (p: any) => (<Svg {...p}><circle cx="12" cy="12" r="9" /><path d="M12 7v6h5" /></Svg>);
-const IconSettings = (p: any) => (<Svg {...p}><circle cx="12" cy="12" r="3" /></Svg>);
+const IconSettings = (p: any) => (<Svg {...p}><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" /></Svg>);
 const IconBell = (p: any) => (<Svg {...p}><path d="M6 8a6 6 0 1 1 12 0v6H6z" /></Svg>);
 const IconSearch = (p: any) => (<Svg {...p}><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></Svg>);
 const IconWifi = (p: any) => (<Svg {...p}><path d="M2 8c6-5 14-5 20 0" /><path d="M5 12c4-3 10-3 14 0" /><path d="M8.5 15.5c2-1.5 5-1.5 7 0" /><circle cx="12" cy="19" r="1" /></Svg>);
@@ -164,6 +164,7 @@ export default function AliceHUD() {
   ]);
   const [isTyping, setIsTyping] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [sessionId] = useState(() => `hud-${safeUUID()}`);
 
   const [now, setNow] = useState("--:--");
@@ -258,6 +259,10 @@ export default function AliceHUD() {
             <IconBell className="h-4 w-4" />
           </div>
           <div className="flex items-center gap-2 text-cyan-300/80">
+            <IconSettings 
+              className="h-4 w-4 cursor-pointer hover:text-cyan-200 transition-colors" 
+              onClick={() => setIsSettingsOpen(true)}
+            />
             <IconClock className="h-4 w-4" />
             <span className="tracking-widest text-xs uppercase">{now}</span>
             <span className="text-xs font-mono">
@@ -286,11 +291,7 @@ export default function AliceHUD() {
               <RingGauge size={80} value={mem} icon={<IconDrive className="h-3 w-3" />} showValue={false} />
               <RingGauge size={80} value={net} icon={<IconGauge className="h-3 w-3" />} showValue={false} />
             </div>
-            {systemStatus && (
-              <div className="mt-3 text-center text-xs text-cyan-300/60">
-                {systemStatus.message}
-              </div>
-            )}
+
           </Pane>
 
           <Pane title="Diagnostics">
@@ -481,6 +482,107 @@ export default function AliceHUD() {
           ))}
         </div>
       </footer>
+
+      {/* Settings Modal */}
+      {isSettingsOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="relative w-full max-w-2xl mx-4 rounded-2xl border border-cyan-500/20 bg-cyan-950/20 p-6 shadow-[0_0_60px_-20px_rgba(34,211,238,.5)]">
+            {/* Background effects */}
+            <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-transparent to-blue-900/10 rounded-2xl" />
+            <div className="pointer-events-none absolute inset-0 [background:radial-gradient(ellipse_at_top,rgba(13,148,136,.15),transparent_60%),radial-gradient(ellipse_at_bottom,rgba(3,105,161,.12),transparent_60%)] rounded-2xl" />
+            <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(#0e7490_1px,transparent_1px),linear-gradient(90deg,#0e7490_1px,transparent_1px)] bg-[size:40px_40px] opacity-10 rounded-2xl" />
+            
+            <div className="relative z-10">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2">
+                  <GlowDot className="h-3 w-3" />
+                  <h2 className="text-cyan-200/90 text-lg uppercase tracking-widest">Inställningar</h2>
+                </div>
+                <button 
+                  onClick={() => setIsSettingsOpen(false)}
+                  className="text-cyan-300/60 hover:text-cyan-200 transition-colors"
+                >
+                  <IconX className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Settings Content */}
+              <div className="space-y-6">
+                {/* Voice Settings */}
+                <div className="space-y-3">
+                  <h3 className="text-cyan-300/80 text-sm uppercase tracking-widest">Röst</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex items-center justify-between p-3 rounded-xl border border-cyan-400/30 bg-cyan-900/10">
+                      <span className="text-sm text-cyan-200">Mikrofon</span>
+                      <div className="w-8 h-4 bg-cyan-400/30 rounded-full relative">
+                        <div className="w-4 h-4 bg-cyan-400 rounded-full absolute left-0 top-0 transition-all"></div>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between p-3 rounded-xl border border-cyan-400/30 bg-cyan-900/10">
+                      <span className="text-sm text-cyan-200">Högtalare</span>
+                      <div className="w-8 h-4 bg-cyan-400/30 rounded-full relative">
+                        <div className="w-4 h-4 bg-cyan-400 rounded-full absolute right-0 top-0 transition-all"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Display Settings */}
+                <div className="space-y-3">
+                  <h3 className="text-cyan-300/80 text-sm uppercase tracking-widest">Visning</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex items-center justify-between p-3 rounded-xl border border-cyan-400/30 bg-cyan-900/10">
+                      <span className="text-sm text-cyan-200">Mörkt läge</span>
+                      <div className="w-8 h-4 bg-cyan-400/30 rounded-full relative">
+                        <div className="w-4 h-4 bg-cyan-400 rounded-full absolute right-0 top-0 transition-all"></div>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between p-3 rounded-xl border border-cyan-400/30 bg-cyan-900/10">
+                      <span className="text-sm text-cyan-200">Animeringar</span>
+                      <div className="w-8 h-4 bg-cyan-400/30 rounded-full relative">
+                        <div className="w-4 h-4 bg-cyan-400 rounded-full absolute left-0 top-0 transition-all"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* System Settings */}
+                <div className="space-y-3">
+                  <h3 className="text-cyan-300/80 text-sm uppercase tracking-widest">System</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-3 rounded-xl border border-cyan-400/30 bg-cyan-900/10">
+                      <span className="text-sm text-cyan-200">Auto-spara</span>
+                      <div className="w-8 h-4 bg-cyan-400/30 rounded-full relative">
+                        <div className="w-4 h-4 bg-cyan-400 rounded-full absolute left-0 top-0 transition-all"></div>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between p-3 rounded-xl border border-cyan-400/30 bg-cyan-900/10">
+                      <span className="text-sm text-cyan-200">Diagnostik</span>
+                      <div className="w-8 h-4 bg-cyan-400/30 rounded-full relative">
+                        <div className="w-4 h-4 bg-cyan-400 rounded-full absolute left-0 top-0 transition-all"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-cyan-500/20">
+                <button 
+                  onClick={() => setIsSettingsOpen(false)}
+                  className="px-4 py-2 text-sm text-cyan-300/60 hover:text-cyan-200 transition-colors"
+                >
+                  Avbryt
+                </button>
+                <button className="px-4 py-2 text-sm bg-cyan-400/20 text-cyan-200 border border-cyan-400/30 rounded-lg hover:bg-cyan-400/30 transition-colors">
+                  Spara
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
