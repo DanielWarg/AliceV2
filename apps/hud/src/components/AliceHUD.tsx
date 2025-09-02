@@ -167,6 +167,7 @@ export default function AliceHUD() {
   const [isListening, setIsListening] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [guardianStatus, setGuardianStatus] = useState<string>('NORMAL');
+  const [systemDiagnostics, setSystemDiagnostics] = useState<any>(null);
   const [sessionId] = useState(() => `hud-${safeUUID()}`);
 
   const [now, setNow] = useState("--:--");
@@ -235,22 +236,32 @@ export default function AliceHUD() {
     return () => clearInterval(id);
   }, []);
 
-  // Fetch Guardian status
+  // Fetch Guardian status and system diagnostics
   useEffect(() => {
-    const fetchGuardianStatus = async () => {
+    const fetchSystemData = async () => {
       try {
-        const response = await fetch('http://localhost:18000/guardian/health');
-        if (response.ok) {
-          const data = await response.json();
-          setGuardianStatus(data.state || 'NORMAL');
+        // Fetch Guardian status
+        const guardianResponse = await fetch('http://localhost:18000/guardian/health');
+        if (guardianResponse.ok) {
+          const guardianData = await guardianResponse.json();
+          setGuardianStatus(guardianData.state || 'NORMAL');
+          
+          // Use Guardian data for system diagnostics
+          setSystemDiagnostics({
+            ram_pct: guardianData.ram_pct || 0,
+            cpu_pct: guardianData.cpu_pct || 0,
+            temp_c: guardianData.temp_c || null,
+            battery_pct: guardianData.battery_pct || null,
+            uptime_s: guardianData.since_s || 0
+          });
         }
       } catch (error) {
-        console.error('Failed to fetch Guardian status:', error);
+        console.error('Failed to fetch system data:', error);
       }
     };
 
-    fetchGuardianStatus();
-    const interval = setInterval(fetchGuardianStatus, 5000);
+    fetchSystemData();
+    const interval = setInterval(fetchSystemData, 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -347,12 +358,17 @@ export default function AliceHUD() {
                 <div className="text-blue-400">[DEBUG] API response time: 45ms</div>
                 <div className="text-green-400">[OK] All systems operational</div>
                 <div className="text-green-400">[OK] Ready for user interaction</div>
-                <div className="text-blue-400">[DEBUG] Memory usage: 2.1GB / 8GB</div>
-                <div className="text-blue-400">[DEBUG] CPU temperature: 45°C</div>
+                <div className="text-blue-400">[DEBUG] Memory usage: {systemDiagnostics?.ram_pct || 0}%</div>
+                <div className="text-blue-400">[DEBUG] CPU usage: {systemDiagnostics?.cpu_pct || 0}%</div>
+                {systemDiagnostics?.temp_c && (
+                  <div className="text-blue-400">[DEBUG] CPU temperature: {systemDiagnostics.temp_c}°C</div>
+                )}
                 <div className="text-blue-400">[DEBUG] Network latency: 12ms</div>
                 <div className="text-blue-400">[DEBUG] Disk usage: 67%</div>
                 <div className="text-blue-400">[DEBUG] GPU utilization: 23%</div>
-                <div className="text-blue-400">[DEBUG] Battery level: 87%</div>
+                {systemDiagnostics?.battery_pct && (
+                  <div className="text-blue-400">[DEBUG] Battery level: {systemDiagnostics.battery_pct}%</div>
+                )}
                 <div className="text-blue-400">[DEBUG] WiFi signal: -45dBm</div>
                 <div className="text-blue-400">[DEBUG] Bluetooth: Connected</div>
                 <div className="text-blue-400">[DEBUG] USB devices: 3 connected</div>
@@ -361,6 +377,7 @@ export default function AliceHUD() {
                 <div className="text-blue-400">[DEBUG] Microphone: Active</div>
                 <div className="text-blue-400">[DEBUG] Security: Firewall enabled</div>
                 <div className="text-blue-400">[DEBUG] Encryption: AES-256</div>
+                <div className="text-blue-400">[DEBUG] Uptime: {Math.floor((systemDiagnostics?.uptime_s || 0) / 60)}m {Math.floor((systemDiagnostics?.uptime_s || 0) % 60)}s</div>
                 <div className="text-green-400">[OK] All diagnostics complete</div>
                 <div className="text-green-400">[OK] System ready for operation</div>
               </div>
