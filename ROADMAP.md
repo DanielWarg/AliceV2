@@ -286,6 +286,10 @@ make dev-quick    # Quick development workflow (up + e2e only)
 - [ ] Error handling and retries
 - [ ] Tool analytics and monitoring
 
+**Release note (tagged):**
+- Tag: `v2.7.0-planner-hardening`
+- Summary: Deterministic JSON planner via Ollama (format=json), strict latency budgets (600/400/150/1500ms), circuit breakers, fast fallback, enhanced telemetry gating and per-route SLO validation in auto_verify. Docs updated from artifacts.
+
 ---
 
 ### Step 8: Text E2E hard test (fast + planner) against SLO

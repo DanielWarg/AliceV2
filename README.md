@@ -145,6 +145,10 @@ crontab -l | grep auto_verify
 - [ ] Planner: P95 ≤900ms (first) / ≤1.5s (full)
 
 ## 🔧 Development
+## 📦 Release Tags
+
+- `v2.7.0-planner-hardening`: Deterministic JSON planner via Ollama (format=json), strict budgets (600/400/150/1500ms), circuit breakers, fast fallback; telemetry gating and per-route SLOs added to auto_verify; docs updated from artifacts.
+
 
 ### Local Development
 ```bash
