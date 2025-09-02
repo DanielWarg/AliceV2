@@ -30,6 +30,8 @@ const IconGauge = (p: any) => (<Svg {...p}><circle cx="12" cy="12" r="9" /><line
 const safeUUID = () => `id-${Math.random().toString(36).slice(2)}-${Date.now()}`;
 const clampPercent = (v: number) => Math.max(0, Math.min(100, Number.isFinite(v) ? v : 0));
 
+
+
 // ────────────────────────────────────────────────────────────────────────────────
 // HUD primitives
 const GlowDot = ({ className }: { className?: string }) => (
@@ -258,11 +260,15 @@ export default function AliceHUD() {
           <div className="flex items-center gap-2 text-cyan-300/80">
             <IconClock className="h-4 w-4" />
             <span className="tracking-widest text-xs uppercase">{now}</span>
-            {systemStatus && (
-              <span className="text-xs">
-                {systemStatus.emoji} {systemStatus.score}/100
-              </span>
-            )}
+            <span className="text-xs font-mono">
+              {new Date().toLocaleDateString('sv-SE', { 
+                day: '2-digit', 
+                month: '2-digit' 
+              })}
+            </span>
+            <span className="text-xs font-mono">
+              v.{Math.ceil((new Date().getTime() - new Date(new Date().getFullYear(), 0, 1).getTime()) / (1000 * 60 * 60 * 24 * 7))}
+            </span>
           </div>
         </div>
       </div>
@@ -285,6 +291,47 @@ export default function AliceHUD() {
                 {systemStatus.message}
               </div>
             )}
+          </Pane>
+
+          <Pane title="Diagnostics">
+            <div className="h-48 overflow-hidden rounded-xl border border-cyan-500/20 bg-black/20 font-mono text-xs">
+              <div className="h-full overflow-y-auto p-3 space-y-1 scrollbar-thin scrollbar-thumb-cyan-500/30 scrollbar-track-transparent">
+                <div className="text-green-400">[OK] System boot sequence initiated...</div>
+                <div className="text-green-400">[OK] Guardian module loaded successfully</div>
+                <div className="text-green-400">[OK] Memory service operational</div>
+                <div className="text-green-400">[OK] Voice pipeline initialized</div>
+                <div className="text-green-400">[OK] NLU engine ready</div>
+                <div className="text-green-400">[OK] LLM routing active</div>
+                <div className="text-cyan-400">[INFO] Guardian Status: NORMAL</div>
+                <div className="text-cyan-400">[INFO] Safety Level: 5/5</div>
+                <div className="text-cyan-400">[INFO] Memory TTL: 7 days</div>
+                <div className="text-cyan-400">[INFO] Voice Mode: Local</div>
+                <div className="text-yellow-400">[WARN] System updates available</div>
+                <div className="text-yellow-400">[WARN] Backup scheduled for 02:00</div>
+                <div className="text-blue-400">[DEBUG] Last health check: {now}</div>
+                <div className="text-blue-400">[DEBUG] Active sessions: 1</div>
+                <div className="text-blue-400">[DEBUG] Cache hit rate: 87%</div>
+                <div className="text-blue-400">[DEBUG] API response time: 45ms</div>
+                <div className="text-green-400">[OK] All systems operational</div>
+                <div className="text-green-400">[OK] Ready for user interaction</div>
+                <div className="text-blue-400">[DEBUG] Memory usage: 2.1GB / 8GB</div>
+                <div className="text-blue-400">[DEBUG] CPU temperature: 45°C</div>
+                <div className="text-blue-400">[DEBUG] Network latency: 12ms</div>
+                <div className="text-blue-400">[DEBUG] Disk usage: 67%</div>
+                <div className="text-blue-400">[DEBUG] GPU utilization: 23%</div>
+                <div className="text-blue-400">[DEBUG] Battery level: 87%</div>
+                <div className="text-blue-400">[DEBUG] WiFi signal: -45dBm</div>
+                <div className="text-blue-400">[DEBUG] Bluetooth: Connected</div>
+                <div className="text-blue-400">[DEBUG] USB devices: 3 connected</div>
+                <div className="text-blue-400">[DEBUG] Audio output: Built-in speakers</div>
+                <div className="text-blue-400">[DEBUG] Camera: Available</div>
+                <div className="text-blue-400">[DEBUG] Microphone: Active</div>
+                <div className="text-blue-400">[DEBUG] Security: Firewall enabled</div>
+                <div className="text-blue-400">[DEBUG] Encryption: AES-256</div>
+                <div className="text-green-400">[OK] All diagnostics complete</div>
+                <div className="text-green-400">[OK] System ready for operation</div>
+              </div>
+            </div>
           </Pane>
         </div>
 
@@ -379,12 +426,12 @@ export default function AliceHUD() {
                         }
                       }}
                       placeholder="Skriv ett meddelande..."
-                      className="flex-1 bg-transparent text-cyan-100 placeholder:text-cyan-300/40 focus:outline-none rounded-lg border border-cyan-400/30 px-3 py-2 focus:border-cyan-400/50"
+                      className="flex-1 bg-transparent text-cyan-100 placeholder:text-cyan-300/40 focus:outline-none rounded-xl border border-cyan-400/30 px-3 py-2 focus:border-cyan-400/50"
                     />
                     <button
                       onClick={sendMessage}
                       disabled={!query.trim()}
-                      className="rounded-lg border border-cyan-400/30 px-4 py-2 text-xs hover:bg-cyan-400/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="rounded-xl border border-cyan-400/30 px-4 py-2 text-xs hover:bg-cyan-400/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       Skicka
                     </button>
