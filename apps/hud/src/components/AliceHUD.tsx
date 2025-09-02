@@ -312,7 +312,7 @@ export default function AliceHUD() {
 
       <main className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-6 pb-24 pt-4 md:grid-cols-12">
         <div className="md:col-span-3 space-y-6">
-          <Pane title="System" actions={<IconSettings className="h-4 w-4" />}>
+          <Pane title="System">
             <div className="grid grid-cols-3 gap-3">
               <Metric label="CPU" value={cpu} icon={<IconCpu className="h-3 w-3" />} />
               <Metric label="MEM" value={mem} icon={<IconDrive className="h-3 w-3" />} />
