@@ -1,7 +1,7 @@
 # Alice v2 AI Assistant
 *Production-ready AI assistant with Guardian safety system, real-time observability, and autonomous E2E testing*
 
-> **🚀 Production Status**: Auto-verify PASS 100% | P95 fast=79ms planner=229ms
+> **🚀 Production Status**: Auto-verify PASS 100% | P95 fast=84ms planner=232ms
 
 ## 🎯 Project Overview
 
