@@ -259,10 +259,12 @@ export default function AliceHUD() {
             <IconBell className="h-4 w-4" />
           </div>
           <div className="flex items-center gap-2 text-cyan-300/80">
-            <IconSettings 
-              className="h-4 w-4 cursor-pointer hover:text-cyan-200 transition-colors" 
+            <div 
               onClick={() => setIsSettingsOpen(true)}
-            />
+              className="text-cyan-300/80 hover:text-cyan-200 transition-colors cursor-pointer select-none pointer-events-auto relative z-10"
+            >
+              <IconSettings className="h-4 w-4" />
+            </div>
             <IconClock className="h-4 w-4" />
             <span className="tracking-widest text-xs uppercase">{now}</span>
             <span className="text-xs font-mono">
@@ -485,8 +487,8 @@ export default function AliceHUD() {
 
       {/* Settings Modal */}
       {isSettingsOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="relative w-full max-w-2xl mx-4 rounded-2xl border border-cyan-500/20 bg-cyan-950/20 p-6 shadow-[0_0_60px_-20px_rgba(34,211,238,.5)]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="relative w-full max-w-2xl mx-4 rounded-2xl border border-cyan-500/20 bg-cyan-950/40 p-6 shadow-[0_0_60px_-20px_rgba(34,211,238,.5)]">
             {/* Background effects */}
             <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-transparent to-blue-900/10 rounded-2xl" />
             <div className="pointer-events-none absolute inset-0 [background:radial-gradient(ellipse_at_top,rgba(13,148,136,.15),transparent_60%),radial-gradient(ellipse_at_bottom,rgba(3,105,161,.12),transparent_60%)] rounded-2xl" />
