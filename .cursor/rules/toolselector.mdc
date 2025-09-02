@@ -1,0 +1,42 @@
+---
+description: "ToolSelector – enum-only JSON tool choice for Solo-Alice"
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# ToolSelector – Spec
+
+## Purpose
+Fast, deterministic tool choice with strict JSON. The model only selects a tool enum and a short Swedish reason. Arguments are constructed deterministically in code.
+
+## JSON Contract (Output)
+```
+{
+  "tool": "none|time.now|weather.get|memory.query|email.create_draft|calendar.create_draft|scrape_and_summarize|batch_rag",
+  "reason": "Kort motivering på svenska"
+}
+```
+
+Rules:
+- No extra fields. No prose outside JSON.
+- Temperature 0.0, format=json (or grammar), stop at "}".
+
+## Prompt (system)
+"""
+Du är ToolSelector. Svara ENDAST med giltig JSON enligt:
+{"tool":"…","reason":"…"}
+Tillåtna verktyg: none, time.now, weather.get, memory.query, email.create_draft, calendar.create_draft, scrape_and_summarize, batch_rag.
+Inga argument; de byggs i koden. Svenska i reason. Avsluta direkt efter }.
+"""
+
+## Mapping Heuristics (pre-filter)
+- Fast-route (skip ToolSelector): time|weather|smalltalk|enkla minnesfrågor
+- Otherwise → ToolSelector
+
+## Timeout & Circuit Breaker
+- selector_timeout_ms: 600
+- breaker: open after 5 parse/schema errors in 30s → bypass 30s
+
+## Success Criteria
+- schema_ok ≥ 99% (20+ req)
+- p95 ≤ 900 ms

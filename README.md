@@ -98,6 +98,14 @@ make clean          # Clean generated files
 make fetch-models   # Download required models
 ```
 
+## 🎯 Solo Edition (Local Lite)
+
+- Fast-route: time/weather/memory/smalltalk utan LLM i loopen
+- ToolSelector (3B): strikt JSON (enum + reason), args byggs i kod
+- n8n för tunga jobb (email_draft, calendar_draft, scrape_and_summarize, batch_rag) via säkrade webhooks
+- Röst: Whisper.cpp (STT) + Piper (sv‑SE) för TTS
+- SLO (solo): fast-route p95 ≤ 250 ms; selector p95 ≤ 900 ms; n8n email_draft p95 ≤ 10 s
+
 ### Daily Automation (14:00)
 ```bash
 # Install cron job to run auto-verify daily at 14:00 and log to logs/auto_verify.log

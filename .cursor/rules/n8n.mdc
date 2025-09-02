@@ -1,0 +1,34 @@
+---
+description: "n8n integration – Solo-Alice local job engine"
+globs: ["**/*"]
+alwaysApply: false
+---
+
+# n8n Integration – Spec
+
+## Purpose
+Offload slow/heavy tasks from the realtime loop. Use webhook triggers with Basic Auth + HMAC.
+
+## Webhooks
+- Execute: POST /webhook/<flow>
+- Callback: POST /api/n8n/callback/<flow>
+
+## Flows & Payloads
+- email_draft
+  - input: {request_id, subject, to[], body, ttl_s, callback_url}
+  - output: {status, job_id, result:{path_md, path_json}}
+- calendar_draft
+  - input: {request_id, title, start, end, callback_url}
+  - output: {status, job_id, result:{path_json}}
+- batch_rag
+  - input: {request_id, sources[], max_tokens, callback_url}
+  - output: {status, job_id, result:{path_json, snippets[]}}
+
+## Policy
+- Retries: 3 (exponential backoff)
+- Max exec time: 60s/job
+- Tags: draft, scrape, rag
+- Security: Basic Auth + HMAC(X-Signature)
+
+## SLO
+- email_draft p95 ≤ 10s (door-to-door)
