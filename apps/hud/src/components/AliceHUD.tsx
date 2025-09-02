@@ -116,10 +116,11 @@ function useSystemMetrics() {
         const status = await aliceAPI.getSystemStatus();
         setSystemStatus(status);
         
-        // Convert system score to CPU-like metric
+        // Use real system score for CPU
         setCpu(status.score);
         
-        // Simulate memory and network based on system health
+        // Use real system score for CPU and simulate other metrics
+        setCpu(status.score);
         setMem(Math.max(20, status.score - 10));
         setNet(Math.max(5, status.score - 15));
       } catch (error) {
@@ -165,6 +166,7 @@ export default function AliceHUD() {
   const [isTyping, setIsTyping] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [guardianStatus, setGuardianStatus] = useState<string>('NORMAL');
   const [sessionId] = useState(() => `hud-${safeUUID()}`);
 
   const [now, setNow] = useState("--:--");
@@ -183,6 +185,15 @@ export default function AliceHUD() {
       const response = await aliceAPI.sendChatMessage({
         session_id: sessionId,
         message: userMessage.content
+      });
+      
+      // Log real response data
+      console.log('Alice response:', {
+        model: response.model_used,
+        route: response.metadata.route,
+        latency: response.latency_ms,
+        guardian: response.metadata.guardian_state,
+        security: response.metadata.security.mode
       });
       
       setMessages(prev => [...prev, { 
@@ -222,6 +233,25 @@ export default function AliceHUD() {
     setNow(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
     const id = setInterval(() => setNow(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })), 1000);
     return () => clearInterval(id);
+  }, []);
+
+  // Fetch Guardian status
+  useEffect(() => {
+    const fetchGuardianStatus = async () => {
+      try {
+        const response = await fetch('http://localhost:18000/guardian/health');
+        if (response.ok) {
+          const data = await response.json();
+          setGuardianStatus(data.state || 'NORMAL');
+        }
+      } catch (error) {
+        console.error('Failed to fetch Guardian status:', error);
+      }
+    };
+
+    fetchGuardianStatus();
+    const interval = setInterval(fetchGuardianStatus, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   // Auto-scroll to bottom when new messages arrive
@@ -305,8 +335,8 @@ export default function AliceHUD() {
                 <div className="text-green-400">[OK] Voice pipeline initialized</div>
                 <div className="text-green-400">[OK] NLU engine ready</div>
                 <div className="text-green-400">[OK] LLM routing active</div>
-                <div className="text-cyan-400">[INFO] Guardian Status: NORMAL</div>
-                <div className="text-cyan-400">[INFO] Safety Level: 5/5</div>
+                <div className="text-cyan-400">[INFO] Guardian Status: {guardianStatus}</div>
+                <div className="text-cyan-400">[INFO] Safety Level: {guardianStatus === 'NORMAL' ? '5/5' : guardianStatus === 'BROWNOUT' ? '3/5' : '1/5'}</div>
                 <div className="text-cyan-400">[INFO] Memory TTL: 7 days</div>
                 <div className="text-cyan-400">[INFO] Voice Mode: Local</div>
                 <div className="text-yellow-400">[WARN] System updates available</div>
