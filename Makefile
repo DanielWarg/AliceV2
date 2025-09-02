@@ -8,9 +8,10 @@ help: ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "Quick Start:"
-	@echo "  make up          # Start development stack (auto-creates venv + installs deps)"
+	@echo "  make up          # Start development stack + frontend (auto-creates venv + installs deps)"
+	@echo "  make frontend    # Start frontend only (HUD on http://localhost:3001)"
 	@echo "  make test-all    # Run all tests (unit + e2e + integration)"
-	@echo "  make down        # Stop development stack"
+	@echo "  make down        # Stop development stack + frontend"
 
 venv: ## Create/update root virtual environment
 	@echo "🔧 Setting up virtual environment..."
@@ -61,9 +62,13 @@ up: install-requirements fetch-models ## Start development stack (auto-setup)
 		echo "⚠️  Docker not running. Start Docker first or use local-only scripts."; \
 		exit 1; \
 	fi
+	@echo "🎨 Starting frontend..."
+	@$(MAKE) frontend
 
 down: ## Stop development stack (with Docker fallback)
 	@echo "🛑 Stopping dev stack..."
+	@echo "🎨 Stopping frontend..."
+	@pkill -f "pnpm dev" || true
 	@if docker info >/dev/null 2>&1; then \
 		echo "🐳 Docker running → using docker compose down"; \
 		if command -v timeout >/dev/null 2>&1; then \
@@ -83,8 +88,20 @@ down: ## Stop development stack (with Docker fallback)
 	fi
 	@echo "✅ Down complete."
 
+frontend: ## Start frontend development server
+	@echo "🎨 Starting frontend..."
+	@if [ -d "apps/hud" ]; then \
+		echo "📱 Starting HUD on http://localhost:3001..."; \
+		cd apps/hud && pnpm dev > /dev/null 2>&1 & \
+		echo "✅ HUD started in background"; \
+	else \
+		echo "⚠️  HUD app not found in apps/hud"; \
+	fi
+
 force-down: ## Force stop (no Docker dependency)
 	@echo "💥 Force stop (no Docker)..."
+	@echo "🎨 Stopping frontend..."
+	@pkill -f "pnpm dev" || true
 	@./scripts/ports-kill.sh || true
 	@echo "✅ Force-down complete."
 
