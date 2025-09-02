@@ -158,10 +158,20 @@ async def chat_completion(
                         tool_calls=[],
                         energy_wh=energy_wh,
                         guardian_state=guardian_state,
+                        pii_masked=True,
+                        consent_scopes=["basic_logging"],
+                        rag_data={
+                            "top_k": 0,
+                            "hits": 0,
+                            "llm_model": "mock",
+                            "planner_schema_ok": False,
+                            "fallback_used": False,
+                            "blocked_by_guardian": False,
+                            "tokens_used": 0
+                        },
                         input_text=chat_request.message,
                         output_text="SECURITY: Intent requires confirmation",
                         lang=getattr(chat_request, "lang", "sv"),
-                        
                     )
                 except Exception:
                     pass
@@ -233,6 +243,17 @@ async def chat_completion(
                 tool_calls=[],
                 energy_wh=energy_wh,
                 guardian_state=guardian_state,
+                pii_masked=True,
+                consent_scopes=["basic_logging"],
+                rag_data={
+                    "top_k": 0,
+                    "hits": 0,
+                    "llm_model": "mock",
+                    "planner_schema_ok": False,
+                    "fallback_used": False,
+                    "blocked_by_guardian": False,
+                    "tokens_used": 0
+                },
                 input_text=chat_request.message,
                 output_text=response_text,
                 lang=getattr(chat_request, "lang", "sv"),

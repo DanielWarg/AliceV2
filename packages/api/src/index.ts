@@ -4,12 +4,20 @@
  */
 
 // Re-export types from @alice/types
-export * from '@alice/types';
+// Note: This creates a circular dependency, so we'll export specific types instead
+export type { 
+  ChatRequest, 
+  ChatResponse, 
+  ASREvent, 
+  ASRWebSocketMessage, 
+  VoiceSession 
+} from '@alice/types';
 
 // Export clients
 export { BaseClient, BaseClientOptions, RequestOptions, AliceAPIError } from './clients/base-client';
 export { OrchestratorClient, OrchestratorClientOptions } from './clients/orchestrator-client';
 export { GuardianClient, GuardianClientOptions } from './clients/guardian-client';
+export { AliceAPIClient, type AliceAPIConfig } from './clients/alice-api-client';
 
 // Export utilities
 export {
@@ -26,8 +34,9 @@ export {
 
 // Convenience exports for common use cases
 export const AliceSDK = {
-  OrchestratorClient,
-  GuardianClient,
+  OrchestratorClient: OrchestratorClient,
+  GuardianClient: GuardianClient,
+  AliceAPIClient: AliceAPIClient,
 };
 
 // Package metadata

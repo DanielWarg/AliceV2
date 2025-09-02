@@ -24,6 +24,7 @@ export function AliceHUD({ config, className }: AliceHUDProps) {
   const [showPerformanceHUD, setShowPerformanceHUD] = useState(false)
   const [activeVoiceMode, setActiveVoiceMode] = useState<'interface' | 'commands'>('interface')
   const [isVoiceListening, setIsVoiceListening] = useState(false)
+  const [isHealthy, setIsHealthy] = useState<boolean | null>(null)
 
   // Guardian system integration
   const { 
@@ -200,8 +201,8 @@ export function AliceHUD({ config, className }: AliceHUDProps) {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span>HTTP Client:</span>
-                  <span className={client?.isHealthy() ? 'text-green-400' : 'text-red-400'}>
-                    {client?.isHealthy() ? 'Healthy' : 'Unhealthy'}
+                  <span className="text-gray-400">
+                    Checking...
                   </span>
                 </div>
                 <div className="flex justify-between">

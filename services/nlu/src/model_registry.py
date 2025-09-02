@@ -14,14 +14,14 @@ except Exception:  # pragma: no cover
 
 
 INTENT_LABELS = {
-    "greeting.hello": "hälsa, hej, god morgon, tja",
-    "smalltalk.time": "vad är klockan, aktuell tid, nuvarande tid",
-    "calendar.create": "boka möte, skapa kalenderhändelse, tid, datum",
-    "calendar.move": "flytta möte, ändra tid, omboka",
-    "email.send": "skicka e-post, maila, sänd brev",
-    "weather.today": "väder idag, prognos idag, temperatur",
-    "system.lights": "tända lampor, släcka lampor, ljus i rummet",
-    "info.query": "faktafråga, fråga information, sök uppgifter",
+    "greeting.hello": "hälsa, hej, god morgon, tja, hallå",
+    "smalltalk.time": "vad är klockan, aktuell tid, nuvarande tid, vilken tid",
+    "calendar.create": "boka möte, skapa kalenderhändelse, tid, datum, schedule meeting, book appointment",
+    "calendar.move": "flytta möte, ändra tid, omboka, reschedule, change appointment",
+    "email.send": "skicka e-post, maila, sänd brev, send email",
+    "weather.today": "väder idag, prognos idag, temperatur, weather today",
+    "system.lights": "tända lampor, släcka lampor, ljus i rummet, lights on, lights off",
+    "info.query": "faktafråga, fråga information, sök uppgifter, what is, how to",
 }
 
 
@@ -34,9 +34,47 @@ class NLURegistry:
         self.embeddings = {k: self._encode_label(v) for k, v in self.intent_labels.items()}
 
     def _fake_embed(self, text: str) -> np.ndarray:
-        # Enkel hashbaserad vektor (ersätts av riktig encoder)
+        # Förbättrad hashbaserad vektor med keyword-matching
+        text_lower = text.lower()
+        
+        # Keyword weights för bättre intent-matching
+        keywords = {
+            "calendar.create": ["möte", "meeting", "boka", "book", "schedule", "appointment", "tid", "time", "datum", "date"],
+            "calendar.move": ["flytta", "move", "ändra", "change", "omboka", "reschedule"],
+            "email.send": ["e-post", "email", "mail", "skicka", "send", "brev", "letter"],
+            "weather.today": ["väder", "weather", "temperatur", "temperature", "prognos", "forecast", "vad är vädret", "vädret idag", "vad är vädret idag", "vad är vädret idag"],
+            "system.lights": ["lampa", "light", "tända", "turn on", "släcka", "turn off", "ljus"],
+            "greeting.hello": ["hej", "hello", "hälsa", "god morgon", "good morning", "tja", "hi"],
+            "smalltalk.time": ["klockan", "clock", "tid", "time", "nu", "now", "aktuell", "current", "vad är klockan", "hur mycket är klockan"],
+            "info.query": ["vad är", "what is", "hur", "how", "när", "when", "var", "where", "vem", "who"]
+        }
+        
+        # Beräkna intent-vektor baserat på keywords med längre fraser först
+        intent_scores = np.zeros(len(self.intent_labels))
+        for i, (intent, keywords_list) in enumerate(keywords.items()):
+            score = 0
+            # Sortera keywords efter längd (längre först) för bättre matching
+            sorted_keywords = sorted(keywords_list, key=len, reverse=True)
+            for keyword in sorted_keywords:
+                if keyword in text_lower:
+                    # Ge högre vikt till längre keywords
+                    score += len(keyword) * 0.1
+            intent_scores[i] = score
+        
+        # Normalisera och konvertera till embedding
+        if np.sum(intent_scores) > 0:
+            intent_scores = intent_scores / np.sum(intent_scores)
+        else:
+            intent_scores = np.ones(len(intent_scores)) / len(intent_scores)
+        
+        # Skapa 384-dimensionell vektor (paddar med hash-baserad data)
+        v = np.zeros(384, dtype=np.float32)
+        v[:len(intent_scores)] = intent_scores
+        
+        # Fyll resten med hash-baserad data för variation
         rng = np.random.default_rng(abs(hash(text)) % (2**32))
-        v = rng.normal(size=(384,)).astype(np.float32)
+        v[len(intent_scores):] = rng.normal(size=(384-len(intent_scores))).astype(np.float32)
+        
         v /= np.linalg.norm(v) + 1e-9
         return v
 

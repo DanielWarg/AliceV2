@@ -10,6 +10,20 @@ class SlidingStats:
         self.lat = defaultdict(lambda: deque())
         # errors -> deque[(ts, code_class)]
         self.codes = deque()  # store (ts, status_code)
+        
+        # Learning metrics
+        self.learn_ingest_total = 0
+        self.learn_ingest_errors = 0
+        self.learn_snapshot_total = 0
+        self.learn_snapshot_errors = 0
+        self.learn_forget_total = 0
+        self.learn_forget_errors = 0
+        self.learn_rows_raw = 0
+        self.learn_rows_learnable = 0
+        self.learn_hard_intent = 0
+        self.learn_tool_fail = 0
+        self.learn_rag_miss = 0
+        self.learn_snapshot_rows = 0
 
     def observe_latency(self, route: str, ms: float):
         now = time()
@@ -57,6 +71,20 @@ class SlidingStats:
                 "r5xx": r5xx,
                 "r429_rate": (r429/tot) if tot else 0.0,
                 "r5xx_rate": (r5xx/tot) if tot else 0.0
+            },
+            "learning": {
+                "ingest_total": self.learn_ingest_total,
+                "ingest_errors": self.learn_ingest_errors,
+                "snapshot_total": self.learn_snapshot_total,
+                "snapshot_errors": self.learn_snapshot_errors,
+                "forget_total": self.learn_forget_total,
+                "forget_errors": self.learn_forget_errors,
+                "rows_raw": self.learn_rows_raw,
+                "rows_learnable": self.learn_rows_learnable,
+                "hard_intent": self.learn_hard_intent,
+                "tool_fail": self.learn_tool_fail,
+                "rag_miss": self.learn_rag_miss,
+                "snapshot_rows": self.learn_snapshot_rows
             }
         }
 

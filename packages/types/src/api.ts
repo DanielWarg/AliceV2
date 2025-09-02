@@ -110,6 +110,30 @@ export type GuardianHealth = z.infer<typeof GuardianHealthSchema>;
 // Utility type for HTTP responses
 export type ApiResponse<T> = T | APIError;
 
+// WebSocket Types
+export interface ASREvent {
+  event: string;
+  data: any;
+  timestamp: number;
+}
+
+export interface ASRWebSocketMessage {
+  type: string;
+  audio?: string;
+  timestamp?: number;
+  config?: {
+    language?: string;
+    model?: string;
+  };
+}
+
+export interface VoiceSession {
+  id: string;
+  language: string;
+  model: string;
+  startTime: number;
+}
+
 // Helper functions for type guards
 export function isApiError(response: unknown): response is APIError {
   return APIErrorSchema.safeParse(response).success;

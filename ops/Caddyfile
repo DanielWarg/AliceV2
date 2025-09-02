@@ -10,6 +10,14 @@ redir @hudroot /hud/
 @nlu path /api/nlu/*
 reverse_proxy @nlu nlu:9002
 
+# Voice service proxy
+@voice path /api/voice/*
+reverse_proxy @voice voice:8001
+
+# Memory service proxy (before generic /api/*)
+@memory path /api/memory/*
+reverse_proxy @memory memory:8300
+
 # API and health routed to orchestrator
 @api path /api/* /health /metrics
 reverse_proxy @api orchestrator:8000
@@ -21,6 +29,12 @@ reverse_proxy @guardian guardian:8787
 # HUD (dashboard) via /hud (automatiskt strip via handle_path)
 handle_path /hud* {
   reverse_proxy dashboard:8501
+}
+
+# Ollama proxy (direct access)
+@ollama path /ollama/*
+handle_path /ollama/* {
+  reverse_proxy ollama:11434
 }
 
 # NLU proxy

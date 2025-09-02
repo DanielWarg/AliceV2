@@ -49,8 +49,8 @@ docker compose down --remove-orphans >/dev/null 2>&1 || true
 log_info "Starting guardian, orchestrator, nlu, dashboard, dev-proxy..."
 docker compose up -d --build guardian orchestrator nlu dashboard dev-proxy || true
 
-log_info "Starting scheduler (if image exists)..."
-docker compose up -d scheduler || true
+log_info "Scheduler disabled - use host cron for scheduled tasks"
+# docker compose up -d scheduler || true
 
 log_info "Waiting for dev-proxy at http://localhost:$PORT/health..."
 for i in {1..60}; do

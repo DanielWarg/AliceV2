@@ -34,6 +34,7 @@ class OllamaClient:
     def _make_request(self, endpoint: str, data: Dict[str, Any]) -> Dict[str, Any]:
         """Make request to Ollama API with retry logic"""
         url = f"{self._base_url}{endpoint}"
+        logger.info("Making Ollama request", url=url, endpoint=endpoint, base_url=self._base_url)
         
         for attempt in range(self.config.max_retries + 1):
             try:
@@ -115,9 +116,16 @@ def get_ollama_client() -> OllamaClient:
     global _ollama_client
     if _ollama_client is None:
         config = OllamaConfig(
-            host=os.getenv("OLLAMA_HOST", "http://ollama:11434"),
+            host=os.getenv("OLLAMA_HOST", "http://dev-proxy:80/ollama"),
             timeout_ms=int(os.getenv("LLM_TIMEOUT_MS", "1800")),
             keep_alive=int(os.getenv("LLM_KEEP_ALIVE", "120"))
         )
         _ollama_client = OllamaClient(config)
     return _ollama_client
+
+def reset_ollama_client():
+    """Reset the global Ollama client instance (for testing/config changes)"""
+    global _ollama_client
+    if _ollama_client is not None:
+        _ollama_client.close()
+        _ollama_client = None

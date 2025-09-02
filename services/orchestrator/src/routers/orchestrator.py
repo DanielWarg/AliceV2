@@ -596,7 +596,7 @@ async def orchestrator_chat(
             route=route,
             e2e_first_ms=response_latency_ms,
             e2e_full_ms=response_latency_ms,
-            ram_peak_mb=ram_peak,
+            ram_peak=ram_peak,
             tool_calls=tool_calls,
             energy_wh=energy_wh,
             guardian_state=guardian_state,
@@ -643,7 +643,7 @@ async def orchestrator_chat(
             timestamp=int(time.time() * 1000),
             trace_id=trace_id,
             response=response_text,
-            model_used=model_used,
+            model_used=route,  # Use route as enum value instead of actual model name
             latency_ms=response_latency_ms,
             metadata=metadata
         )
@@ -674,10 +674,24 @@ async def orchestrator_chat(
                 route="error",
                 e2e_first_ms=response_latency_ms,
                 e2e_full_ms=response_latency_ms,
-                ram_peak_mb=ram_peak_mb(),
+                ram_peak=ram_peak_mb(),
                 tool_calls=tool_calls,
                 energy_wh=energy_wh,
-                guardian_state=guardian_state
+                guardian_state=guardian_state,
+                pii_masked=True,
+                consent_scopes=["basic_logging"],
+                rag_data={
+                    "top_k": 0,
+                    "hits": 0,
+                    "llm_model": "error",
+                    "planner_schema_ok": False,
+                    "fallback_used": False,
+                    "blocked_by_guardian": False,
+                    "tokens_used": 0
+                },
+                input_text=chat_request.message,
+                output_text="",
+                lang=(getattr(chat_request, "lang", None) or "sv"),
             )
         except Exception as log_error:
             logger.error("Failed to log turn event on error", error=str(log_error))

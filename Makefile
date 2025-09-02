@@ -65,7 +65,18 @@ up: install-requirements fetch-models ## Start development stack (auto-setup)
 down: ## Stop development stack (with Docker fallback)
 	@echo "🛑 Stopping dev stack..."
 	@if docker info >/dev/null 2>&1; then \
-		./scripts/dev-stop.sh || true; \
+		echo "🐳 Docker running → using docker compose down"; \
+		if command -v timeout >/dev/null 2>&1; then \
+			timeout 25s docker compose down || { \
+				echo "⏱️  docker compose down timed out → using ports-kill fallback"; \
+				./scripts/ports-kill.sh || true; \
+			}; \
+		else \
+			docker compose down || { \
+				echo "⚠️  docker compose down failed → using ports-kill fallback"; \
+				./scripts/ports-kill.sh || true; \
+			}; \
+		fi; \
 	else \
 		echo "🐳 Docker not running → using ports-kill fallback"; \
 		./scripts/ports-kill.sh || true; \
@@ -133,7 +144,33 @@ test-integration: ## Run integration tests
 	@curl -s http://localhost:18000/api/status/simple | jq . || echo "⚠️  Status endpoint test failed"
 	@echo "🔍 Testing Guardian integration..."
 	@curl -s http://localhost:8787/health | jq . || echo "⚠️  Guardian health test failed"
+	@echo "🔍 Testing Learning API..."
+	@curl -s http://localhost:18000/api/learn/stats | jq . || echo "⚠️  Learning stats test failed"
 	@echo "✅ Integration tests completed!"
+
+learn: ## Run learning ingestion pipeline
+	@echo "🧠 Running learning ingestion..."
+	@python services/ingest/run_ingest.py \
+		--input $(LEARN_INPUT_DIR) \
+		--tests $(LEARN_TESTS_FILE) \
+		--parquet_out $(LEARN_OUT_PARQUET) \
+		--snapshot_out $(LEARN_OUT_SNAPSHOT) \
+		--log_out $(LEARN_LOG)
+
+learn-daily: ## Create daily learning snapshot
+	@echo "📊 Creating daily learning snapshot..."
+	@curl -s -X POST http://localhost:18000/api/learn/snapshot | jq .
+
+learn-stats: ## Get learning statistics
+	@echo "📈 Getting learning statistics..."
+	@curl -s http://localhost:18000/api/learn/stats | jq .
+
+# Learning environment variables
+LEARN_INPUT_DIR ?= data/telemetry
+LEARN_TESTS_FILE ?= data/tests/results.jsonl
+LEARN_OUT_PARQUET ?= data/learn/parquet
+LEARN_OUT_SNAPSHOT ?= data/learn/snapshots
+LEARN_LOG ?= data/learn/logs/learn.jsonl
 
 verify: ## Run system verification (alias for test-e2e)
 	@$(MAKE) test-e2e

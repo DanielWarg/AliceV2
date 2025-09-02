@@ -11,7 +11,7 @@ import structlog
 import httpx
 from typing import AsyncGenerator
 
-from src.routers import chat, orchestrator, status, feedback
+from src.routers import chat, orchestrator, status, feedback, learn, memory
 from src.security.router import router as security_router
 from src.middleware.logging import setup_logging, LoggingMiddleware
 from src.services.guardian_client import GuardianClient
@@ -164,6 +164,8 @@ app.include_router(orchestrator.router, prefix="/api/orchestrator", tags=["orche
 app.include_router(security_router, tags=["security"])  # /api/security/state
 app.include_router(status.router, prefix="/api/status", tags=["status"])
 app.include_router(feedback.router)
+app.include_router(learn.router, tags=["learning"])  # Learning API endpoints
+app.include_router(memory.router, tags=["memory"])  # Memory service endpoints
 
 # Include Fix Pack v1 status router with real metrics
 app.include_router(fix_status_router)

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { AliceAPIClient, type AliceAPIConfig } from '@alice/api'
+import type { ChatRequest } from '@alice/types'
 
 interface UseAliceAPIOptions {
   config: AliceAPIConfig
@@ -70,7 +71,14 @@ export function useAliceAPI({
       throw new Error('Not connected to Alice API')
     }
 
-    return await client.sendChatMessage({ message })
+    const chatRequest: ChatRequest = {
+      v: '1',
+      session_id: 'web-session',
+      message: message,
+      timestamp: Date.now()
+    }
+
+    return await client.sendChatMessage(chatRequest)
   }, [client, isConnected])
 
   // Auto-connect on mount
