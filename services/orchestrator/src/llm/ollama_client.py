@@ -79,6 +79,23 @@ class OllamaClient:
             data["format"] = kwargs["format"]
         if "stop" in kwargs:
             data["stop"] = kwargs["stop"]
+        
+        # Collect advanced options into Ollama "options" map
+        options: Dict[str, Any] = {}
+        # Common low-footprint settings
+        if "num_ctx" in kwargs:
+            options["num_ctx"] = kwargs["num_ctx"]
+        if "num_predict" in kwargs:
+            options["num_predict"] = kwargs["num_predict"]
+        # Duplicate core sampling into options for maximum compatibility
+        if "temperature" in kwargs:
+            options["temperature"] = kwargs["temperature"]
+        if "top_p" in kwargs:
+            options["top_p"] = kwargs["top_p"]
+        if "top_k" in kwargs:
+            options["top_k"] = kwargs["top_k"]
+        if options:
+            data["options"] = options
             
         return self._make_request("/api/generate", data)
     

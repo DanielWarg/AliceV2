@@ -1,0 +1,48 @@
+---
+title: "PRD – Alice v2 Planner Route (Text)"
+version: "1.0"
+date: "2025-09-02"
+owners: ["Platform Team", "AI/Integration Team"]
+description: "Product requirements for the text-based planner route with tools (MCP)"
+contextFiles:
+  - "README.md"
+  - "ROADMAP.md"
+  - "AGENTS.md"
+---
+
+## Overview & Goals
+Deliver a reliable planner route that produces actionable tool plans with JSON output, measured and gated by autonomous tests. Maintain Swedish UX, safety (Guardian), and strict SLOs.
+
+## Success Metrics
+- Tool success rate ≥ 95%
+- Planner P95 (first) < 900ms, P95 (full) ≤ 1.5s
+- planner_schema_ok ≥ 99%, fallback_used ≤ 1%
+- ≥500 samples per route before gating; tails ≤1% >1.5s
+
+## Functional Requirements (Use Cases)
+- Parse user intents (NLU v1) → route hint
+- Generate planner JSON conforming to schema (steps, args, response)
+- Execute 0–3 tools with retries and error taxonomy
+- Log turn events with metrics (ram, energy, tool_calls, schema_ok)
+
+## Non-Functional Requirements
+- Observability: JSONL logs, P50/P95 per route, HUD
+- Safety: Guardian admission, fast fallback, injection awareness
+- Performance: meet SLO budgets; no requests >3s
+- Language: Swedish prompt/UX; docs in English (repo policy)
+
+## Assumptions / Constraints / Dependencies
+- Ollama provides local models (planner/micro/deep)
+- Dev-proxy exposes /api and /ollama
+- Scripts enforce gates via auto_verify.sh
+
+## Personas
+- Developer: needs deterministic CI gates and clear telemetry
+- End-user (svenska): wants helpful, correct action planning fast
+
+## Release Criteria
+- Auto-verify PASS with above thresholds; artifacts written
+- HUD shows per-route metrics without spikes; no EMERGENCY state
+
+## Change Log
+- 2025-09-02: Initial PRD for Step 7 planner route

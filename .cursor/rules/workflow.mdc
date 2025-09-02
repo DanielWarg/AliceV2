@@ -1,0 +1,35 @@
+---
+description: "Architecture-First workflow for Alice v2 Planner (Cursor rules)"
+globs: ["**/*"]
+alwaysApply: true
+contextFiles:
+  - "AGENTS.md"
+  - "ROADMAP.md"
+  - "README.md"
+  - ".cursor/rules/PRD.mdc"
+  - ".cursor/rules/ADR.mdc"
+  - ".cursor/rules/folder-structure.mdc"
+---
+
+1) Blueprint (Plan First)
+- Read PRD.mdc and ADR.mdc; confirm success metrics and constraints
+- Identify impacted components and env variables
+- Propose edits; no code until owner confirms plan if unclear
+
+2) Construct (Implement Safely)
+- Small, isolated edits; strict typing and error handling
+- Instrumentation: ensure telemetry fields present (schema_ok, fallback_used)
+- Env-driven config only; no hard-coded endpoints
+
+3) Validate (Test & Gate)
+- Run ./scripts/auto_verify.sh with route focus before scaling
+- Check artifacts in data/tests and telemetry JSONL
+- Gate on planner_schema_ok, tails, P95
+
+4) Document (Update Records)
+- Update ADR status and add follow-up if decisions evolved
+- Summarize changes in PRD/README if user-facing
+
+5) Operate (Monitor)
+- Start HUD and validate no spikes
+- Ensure Guardian stays NORMAL during steady-state

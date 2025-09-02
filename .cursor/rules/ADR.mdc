@@ -1,0 +1,66 @@
+---
+title: "ADR-0001 – Planner LLM via Ollama with strict JSON + fallbacks"
+status: "proposed"
+date: "2025-09-02"
+description: "Select planner model integration pattern (Ollama), JSON contract, circuit breakers, and fallbacks."
+globs: ["**/*.py", "**/*.sh", "**/*.md", "**/*.mdc"]
+alwaysApply: false
+contextFiles:
+  - "README.md"
+  - "AGENTS.md"
+  - "ROADMAP.md"
+  - "services/orchestrator/src/llm/planner_qwen.py"
+  - "services/orchestrator/src/routers/orchestrator.py"
+  - "services/orchestrator/src/routers/chat.py"
+  - "scripts/auto_verify.sh"
+---
+
+## Context / Problem Statement
+We need a production-ready planner route that outputs tool plans as valid JSON, at low latency, with high schema conformance and safe fallbacks. The system must be observable, respect strict budgets, and degrade safely under failures. Models are hosted locally via Ollama and accessed through the dev-proxy and/or direct host.
+
+Constraints:
+- Planner schema_ok ≥ 99%, fallback_used ≤ 1%, P95 full ≤ 1.5s (AC in AGENTS.md / ROADMAP.md)
+- No mocks in production routes; real integration; structured telemetry
+- Circuit breaker and timeout budgets per Step 7 policy
+
+## Decision
+- Use Ollama-hosted models for the planner (initially Qwen-family or Phi-family) behind a strict JSON contract.
+- Enforce deterministic JSON via model "format=json" and a Swedish system prompt that defines an explicit schema.
+- Apply short timeouts (env-configurable): PLANNER_TIMEOUT_MS, PLANNER_REPAIR_TIMEOUT_MS.
+- One-shot JSON repair attempt under tight budget; otherwise fast fallback to micro.
+- Log turn-events with planner_schema_ok and fallback_used; gate SLOs in auto_verify.
+
+## Alternatives Considered
+1) Cloud LLM with JSON mode
+   - Pros: likely stronger reasoning; managed infra
+   - Cons: network variance, cost, privacy; slows local CI gates
+
+2) Local vLLM server
+   - Pros: high throughput; scaling
+   - Cons: added complexity; not necessary for current SLO/sample sizes
+
+3) Direct tool execution without LLM planning
+   - Pros: predictable; simple
+   - Cons: limited generality; poor scalability to new tasks
+
+## Consequences
+Positive:
+- Local, reproducible, observable pipeline with strict contracts
+- Fast repair/fallback ensures low tail risk
+- Clear SLO gates and metrics tie back to turn events
+
+Negative/Trade-offs:
+- Tighter JSON constraints may reduce creativity
+- Model curation and warm-up required (pulls, tags, quant levels)
+- Planner responses must stay within token/time budgets
+
+## Status & Follow-ups
+- Status: proposed → adopt once schema_ok ≥99% on 500+ samples
+- Follow-up ADRs:
+  - ADR-0002: Finalize model choice (exact tag, quant)
+  - ADR-0003: Tool registry & MCP error taxonomy
+
+## References
+- AGENTS.md – Step 7 acceptance criteria
+- ROADMAP.md – Live gates & SLOs
+- scripts/auto_verify.sh – Enhanced validation

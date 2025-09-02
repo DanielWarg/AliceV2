@@ -35,9 +35,9 @@ class PlannerQwenDriver:
         self.max_tokens = 300   # Reduced for faster response
         self.top_p = 0.8       # Focused sampling for structured output
         
-        # Timeout settings
-        self.planner_timeout_ms = 600  # 600ms for planner generation
-        self.repair_timeout_ms = 150   # 150ms for JSON repair
+        # Timeout settings (env-configurable, respecting overall budget)
+        self.planner_timeout_ms = int(os.getenv("PLANNER_TIMEOUT_MS", "1200"))  # default 1200ms
+        self.repair_timeout_ms = int(os.getenv("PLANNER_REPAIR_TIMEOUT_MS", "200"))  # default 200ms
         
         # Circuit breaker settings
         self.max_failures = 5
@@ -84,13 +84,20 @@ VIKTIGT:
                 return self._fallback_response("circuit_breaker_open")
             
             # Override with planner-specific settings
+            # Defaults, can be overridden via kwargs or env
+            num_ctx_default = int(os.getenv("PLANNER_NUM_CTX", "1024"))
+            num_predict_default = int(os.getenv("PLANNER_NUM_PREDICT", "200"))
+
             planner_kwargs = {
                 "temperature": kwargs.get("temperature", self.temperature),
                 "max_tokens": kwargs.get("max_tokens", self.max_tokens),
                 "top_p": kwargs.get("top_p", self.top_p),
                 "system": kwargs.get("system", self.system_prompt),
                 "format": "json",  # Enforce JSON mode in Ollama
-                "stop": ["```", "Human:", "Assistant:"]  # Stop tokens
+                "stop": ["```", "Human:", "Assistant:"],  # Stop tokens
+                # Low-footprint options for Ollama
+                "num_ctx": kwargs.get("num_ctx", num_ctx_default),
+                "num_predict": kwargs.get("num_predict", num_predict_default),
             }
             
             logger.info("Generating planner response", model=self.model, prompt_length=len(prompt))

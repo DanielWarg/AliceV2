@@ -1,0 +1,28 @@
+---
+description: "Project layout guide for Alice v2 (Cursor)"
+globs: ["**/*"]
+alwaysApply: false
+---
+
+## Repository Structure (high level)
+alice-v2/
+- services/
+  - orchestrator/        # LLM routing, planner, observability
+  - guardian/            # Safety gate and state machine
+  - eval/                # Autonomous E2E harness
+  - loadgen/             # Brownout/load tests
+- monitoring/            # HUD and dashboards
+- scripts/               # Auto-verify, helpers
+- data/                  # telemetry/ and tests/
+- test-results/          # nightly trends
+- .cursor/rules/         # Architecture-first rules (PRD/ADR/workflow/structure)
+
+## Conventions
+- Python services: FastAPI + Pydantic, structlog, env-driven config
+- Telemetry: JSONL under data/telemetry/YYYY-MM-DD/
+- Tests: artifacts under data/tests/
+- Security: Guardian enforced; security policy via config/security_policy.yaml
+
+## Editing Guidance for AI (Cursor)
+- Respect this structure; do not introduce new top-level dirs without ADR
+- Keep edits small and observable; update ADR/PRD when decisions change

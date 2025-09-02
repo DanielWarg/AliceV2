@@ -1,0 +1,49 @@
+---
+description: "Types Definition Guide – enforce consistent request/response/component/db types"
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# Types Definition Guide
+
+## Purpose
+Ensure all request, response, component, and database structures are defined early and used consistently across the project. This serves as a reference and rule set for AI and developers.
+
+## 1. Request Types
+Checklist:
+- Name using `<Action>Request` (e.g., `CreateUserRequest`).
+- Include all required fields; mark optional fields explicitly.
+- Document primitive types (string, int, boolean) and enums.
+- Provide minimal examples in JSON-like blocks when helpful.
+
+## 2. Response Types
+Checklist:
+- Name using `<Action>Response` (e.g., `CreateUserResponse`).
+- Always include `status` (success|error).
+- Always include `message` for human-readable feedback.
+- Encapsulate result data under a `data` object.
+
+## 3. Component Types
+Checklist:
+- Define `<ComponentName>Props` and (if needed) `<ComponentName>State`.
+- Only documented props are allowed.
+- Prefer stateless components; manage state via explicit types.
+- Document components here or link to a catalog.
+
+## 4. Database Types
+Checklist:
+- Use entity names (e.g., `User`, `Order`).
+- List fields, datatypes, relations.
+- Specify constraints (unique, not null, foreign keys).
+- Define indexes where needed.
+
+## 5. Structured Outputs
+- Document types in JSON-like format where possible.
+- The AI must reference defined types before writing code.
+- If a new type is needed, add it here before implementation.
+
+## 6. Checks per Phase
+1) Blueprint: verify all needed types are defined.
+2) Construct: code uses only defined types.
+3) Validate: run type/schema validation.
+4) Document: update this file for any new/changed types.

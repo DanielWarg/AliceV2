@@ -1,0 +1,90 @@
+---
+description: "Structured Outputs policy – schemas, validation, phase gates, CI rules"
+globs: ["**/*"]
+alwaysApply: true
+contextFiles:
+  - ".cursor/rules/PRD.mdc"
+  - ".cursor/rules/ADR.mdc"
+  - ".cursor/rules/types.mdc"
+  - ".cursor/rules/workflow.mdc"
+---
+
+# Structured Outputs – Policy
+
+## 1. Principles
+- All AI outputs must be strictly structured (JSON/YAML/TS types) per defined schemas.
+- Each phase has explicit exit criteria (quality gates).
+- No code or merge unless tests and checklists pass.
+- Deviations must be documented; decisions logged in ADR.
+
+## 2. Standard for Structured Outputs
+- Schema must exist before generation (see types.mdc).
+- Required fields: `version`, `timestamp`, `actor` (ai|human), `intent`, `payload`, `meta` (trace, sources).
+- Mandatory: valid JSON (no pre/post text), no comments, no extra fields beyond schema.
+- Error handling: if output fails validation, emit `{ "status": "error", "reason": "...", "suggestions": ["..."] }` and retry max 2 times.
+
+## 3. Validation
+- Syntactic: JSON parse must succeed.
+- Schematic: validate against JSON Schema / type definitions.
+- Semantic: domain rules (ID formats, enums, relations) must hold.
+- Security: no secrets/PII in logs; payload sanitized.
+- Traceability: `meta.trace` links to issue/commit/model/config.
+
+## 4. Phases, Tests and Checkpoints
+
+### A. Blueprint (Planning)
+Goal: Requirements and types finalized.
+Checklist: PRD approved; ADR decided; types.mdc complete (request/response/component/database); folder-structure.mdc ready; workflow.mdc updated.
+Tests: Schema lint (jsonschema/tsc), ADR conflict checks (supersedes noted).
+Exit: Types versioned (vX.Y), minimal example payloads per type, documented risks/assumptions.
+
+### B. Construct (Implementation)
+Goal: Code only from defined types.
+Checklist: Generated code references existing types; no `any`/unspecified fields; error paths implemented.
+Tests: Unit per use case; snapshot of structured outputs; contract tests (request/response); static analysis.
+Exit: ≥90% critical coverage on contract tests; all contracts green in CI; no blocking TODOs.
+
+### C. Validate (Quality)
+Goal: System/integration tests.
+Checklist: E2E scenarios with real payloads; back/forward compat against previous schema versions; load tests; security (input sanitization).
+Tests: E2E; backward compatibility; performance vs PRD targets; security scan.
+Exit: All PRD goals met; SLO/latency within limits; no critical vulns; rollback plan documented.
+
+### D. Document/Release
+Goal: Traceable, repeatable delivery.
+Checklist: ADR updated; PRD marks achieved goals; changelog; migration plan; dashboards.
+Tests: Release dry-run; restore/rollback test; alerts verified.
+Exit: Tagged release; signed artifacts; ops checklist signed; ownership and on-call assigned.
+
+## 5. Quality Gates (must be green)
+- Schema validation for all AI outputs.
+- Contract tests for every public function/endpoint.
+- Backward compatibility for at least one prior schema version or ADR exemption.
+- Security/privacy checks passed.
+- Documentation (README/PRD/ADR) updated within the same PR.
+
+## 6. Failure and Deviation Handling
+- On failed validation: auto-retry up to 2 times with reason and suggestions.
+- Recurrent failures: create ADR or bug ticket with root cause and action plan.
+- Incompatible change: requires ADR with migration steps and deprecation window.
+
+## 7. Traceability & Logging
+- All structured outputs include `meta.trace` (issue ID, commit, model tag, temperature).
+- Logs must mask sensitive data; stored per policy; surfaced in dashboards.
+
+## 8. Roles & Responsibilities
+- Senior Planner/Architect: owns schemas, gates, ADRs.
+- Tech Lead: owns CI rules, contract tests, compatibility.
+- QA: owns E2E and release verification.
+- Devs/AI: follow types and pass gates before merge.
+
+## 9. CI Rules (minimum)
+Pipeline: schema-lint → build → unit → contract → e2e (mock) → security scan → report.
+PR blocked on any red gate; only Architect may override with ADR reference.
+
+## 10. Maintenance
+- Semantic versioning for types; breaking changes need migration plan.
+- Quarterly review of types vs real usage and PRD targets.
+- Archive deprecated types; mark deprecations in changelog.
+
+This document is normative. If conflict arises between code and this policy, this policy prevails unless superseded by an ADR.

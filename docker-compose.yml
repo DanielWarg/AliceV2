@@ -42,8 +42,15 @@ services:
       - GUARDIAN_HEALTH_URL=http://guardian:8787/health
       - LOG_DIR=/data/telemetry
       - OLLAMA_BASE_URL=http://dev-proxy:80/ollama/api
+      - OLLAMA_HOST=http://ollama:11434
       - MICRO_MODEL=llama2:7b
       - MICRO_DRIVER_VERSION=2
+      - LLM_PLANNER=qwen2.5:3b
+      - PLANNER_TIMEOUT_MS=3000
+      - PLANNER_REPAIR_TIMEOUT_MS=200
+      - LLM_TIMEOUT_MS=16000
+      - PLANNER_NUM_CTX=768
+      - PLANNER_NUM_PREDICT=100
       - SECURITY_ENFORCE=true
     volumes:
       - ./data/telemetry:/data/telemetry
@@ -166,6 +173,10 @@ services:
     restart: unless-stopped
     volumes:
       - ollama:/root/.ollama
+    environment:
+      - OLLAMA_NUM_PARALLEL=1
+      - OLLAMA_KEEP_ALIVE=30
+      - OMP_NUM_THREADS=2
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:11434/api/tags"]
       interval: 10s

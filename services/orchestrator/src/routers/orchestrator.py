@@ -588,12 +588,17 @@ async def orchestrator_chat(
             guardian_state=guardian_state
         )
         
+        # Determine final route (honor planner fallback)
+        route_final = route
+        if llm_response and llm_response.get("route") == "fallback":
+            route_final = "fallback"
+
         # Log turn event for observability with LLM integration data
         logger.info("About to log turn event", session_id=chat_request.session_id)
         log_turn_event(
             trace_id=trace_id,
             session_id=chat_request.session_id,
-            route=route,
+            route=route_final,
             e2e_first_ms=response_latency_ms,
             e2e_full_ms=response_latency_ms,
             ram_peak=ram_peak,
@@ -621,7 +626,7 @@ async def orchestrator_chat(
         logger.info("Turn event logged successfully", trace_id=trace_id)
         
         # Set route header for metrics middleware
-        response.headers["X-Route"] = route
+        response.headers["X-Route"] = route_final
         
         # Build response with LLM integration
         if llm_response:
@@ -631,7 +636,7 @@ async def orchestrator_chat(
         
         # Add metadata for observability
         metadata = {
-            "route": route,
+            "route": route_final,
             "llm_model": model_used,
             "planner_schema_ok": llm_response.get("schema_ok", False) if llm_response else False,
             "repair_used": llm_response.get("repair_used", False) if llm_response else False,

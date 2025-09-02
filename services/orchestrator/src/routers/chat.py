@@ -208,7 +208,8 @@ async def chat_completion(
             logger.info("Attempting to call orchestrator", session_id=chat_request.session_id)
             from .orchestrator import orchestrator_chat
             logger.info("Import successful, calling orchestrator", session_id=chat_request.session_id)
-            orchestrator_response = await orchestrator_chat(chat_request, request)
+            # Call orchestrator endpoint directly with correct signature
+            orchestrator_response = await orchestrator_chat(request, response, chat_request, guardian)
             logger.info("Orchestrator call successful", session_id=chat_request.session_id)
             response_text = orchestrator_response.response
             actual_model = orchestrator_response.model_used
