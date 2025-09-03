@@ -260,7 +260,7 @@ services:
       - NLU_LANG=sv
       - NLU_SIM_THRESH=0.62
       - NLU_MARGIN_MIN=0.06
-      - NLU_XNLI_ENABLE=false
+      - NLU_XNLI_ENABLE=true
       - E5_ONNX_PATH=/models/e5-small.onnx
       - E5_TOKENIZER_JSON=/models/e5-tokenizer.json
       # XNLI avstängt tills ONNX finns

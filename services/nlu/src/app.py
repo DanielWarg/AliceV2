@@ -5,12 +5,16 @@ from .intent_embedder import IntentEmbedder
 from .intent_validator import IntentValidator
 from .slot_sv import extract_slots_sv
 import time
+import structlog
 
 app = FastAPI(title="Alice NLU v1", version="1.0.0")
 
+logger = structlog.get_logger()
 registry = NLURegistry()
 embedder = IntentEmbedder(registry)
+logger.info("Creating IntentValidator")
 validator = IntentValidator(registry)
+logger.info("IntentValidator created")
 
 @app.get("/health")
 async def health():

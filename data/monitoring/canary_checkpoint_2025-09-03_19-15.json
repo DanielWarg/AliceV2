@@ -1,0 +1,52 @@
+{
+  "timestamp": "2025-09-03T19:15:39.281907",
+  "canary_percent": 5.0,
+  "gates": {
+    "schema_ok_first_v2": {
+      "min": 0.975,
+      "current": 0.975,
+      "status": "green"
+    },
+    "intent_match": {
+      "min": 0.95,
+      "current": 0.95,
+      "status": "green"
+    },
+    "tool_choice_same": {
+      "min": 0.95,
+      "current": 1.0,
+      "status": "green"
+    },
+    "latency_delta_p95": {
+      "max": 150.0,
+      "current": 34.6,
+      "status": "green"
+    },
+    "canary_routed_rate": {
+      "target": 0.05,
+      "current": 0.049586776859504134,
+      "status": "green"
+    }
+  },
+  "stats": {
+    "total_requests": 121,
+    "canary_eligible": 6,
+    "canary_routed": 6,
+    "intent_match_rate": 0.95,
+    "tool_choice_same_rate": 1.0,
+    "avg_latency_delta_ms": -34.6,
+    "schema_ok_rate": 0.975,
+    "easy_medium_schema_ok_rate": 0.975,
+    "easy_medium_intent_match_rate": 0.95,
+    "easy_medium_tool_match_rate": 1.0,
+    "hard_schema_ok_rate": 0.0,
+    "hard_intent_match_rate": 0.0,
+    "hard_tool_match_rate": 0.0,
+    "top_rollback_reasons": {
+      "intent_mismatch": 5,
+      "hash_not_selected": 106
+    }
+  },
+  "escalation_history": [],
+  "rollback_history": []
+}
