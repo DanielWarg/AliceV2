@@ -1,82 +1,52 @@
 """
-Planner LLM driver for Qwen-MoE - structured planning with JSON output.
+Planner LLM driver using Qwen model with minimal tool-based schema.
 """
 
 import os
 import json
 import time
 import structlog
-from typing import Dict, Any, Optional, List
-from pydantic import BaseModel, ValidationError
+from typing import Dict, Any, Optional
+from pydantic import ValidationError
 from .ollama_client import get_ollama_client
+from ..planner.schema import PlannerOutput
 
 logger = structlog.get_logger(__name__)
 
-# Pydantic schema for planner output
-class ToolStep(BaseModel):
-    tool: str
-    args: Dict[str, Any]
-    reason: str
-
-class PlannerOutput(BaseModel):
-    plan: str
-    steps: List[ToolStep]
-    response: str
-
 class PlannerQwenDriver:
-    """Planner LLM driver using Qwen-MoE for structured tool planning"""
+    """Planner driver using Qwen model with minimal tool selection"""
     
     def __init__(self):
-        self.model = os.getenv("LLM_PLANNER", "phi3:latest")
+        self.model = os.getenv("LLM_PLANNER", "llama3.2:1b-instruct-q4_K_M")
         self.client = get_ollama_client()
         
-        # Robust planner settings for structured planning
-        self.temperature = 0.0  # Strict deterministic output for JSON
-        self.max_tokens = 300   # Reduced for faster response
-        self.top_p = 0.8       # Focused sampling for structured output
+        # Minimal system prompt for tool selection
+        self.system_prompt = """Du är en planeringsmotor. Svara ENBART med giltig JSON, ingen text.
+Schema: {"tool":"<enum>","args":{}}.
+Tillåtna tool: ["calendar.create","email.draft","memory.query","none"].
+Om du är osäker använd {"tool":"none","args":{}}."""
         
-        # Timeout settings (env-configurable, respecting overall budget)
-        self.planner_timeout_ms = int(os.getenv("PLANNER_TIMEOUT_MS", "1200"))  # default 1200ms
-        self.repair_timeout_ms = int(os.getenv("PLANNER_REPAIR_TIMEOUT_MS", "200"))  # default 200ms
+        # Generation parameters optimized for JSON output
+        self.generation_params = {
+            "format": "json",
+            "temperature": 0.1,
+            "top_p": 0.9,
+            "num_ctx": 4096,
+            "num_predict": 256,
+            "stop": ["```", "Human:", "Assistant:", "\n\n"]
+        }
         
         # Circuit breaker settings
-        self.max_failures = 5
-        self.failure_window_s = 30
+        self.max_failures = 3
+        self.failure_window_s = 60
         self.failure_count = 0
         self.last_failure_time = 0
-        
-        # Swedish system prompt for planner with strict JSON output
-        self.system_prompt = """Du är Alice, en AI-assistent som planerar och utför åtgärder.
-Du ska svara ENDAST med JSON-format för att strukturera dina planer och verktygsanrop.
-
-Tillgängliga verktyg:
-- calendar.create: Skapa kalenderhändelser
-- email.draft: Skapa e-postutkast
-- weather.get: Hämta väderinformation
-- time.get: Hämta aktuell tid
-- n8n.run: Kör n8n-arbetsflöden (email_draft, calendar_draft, batch_rag)
-
-Svara ALLTID med exakt detta JSON-format:
-{
-  "plan": "Beskrivning av planen",
-  "steps": [
-    {
-      "tool": "verktygsnamn",
-      "args": {"param1": "värde1"},
-      "reason": "Varför detta steg behövs"
-    }
-  ],
-  "response": "Kort svar till användaren"
-}
-
-VIKTIGT: 
-- Svara ENDAST med JSON, inga extra text
-- Använd exakt format ovan
-- Avsluta med "}" och inget mer
-- För n8n.run, använd: {"tool": "n8n.run", "args": {"workflow": "email_draft", "request_id": "unique_id", "subject": "ämne", "to": ["email@example.com"]}}"""
+        self.circuit_open = False
+        self.circuit_open_time = 0
+        self.cool_down_s = 30
     
     def generate(self, prompt: str, **kwargs) -> Dict[str, Any]:
-        """Generate structured plan using Qwen-MoE with robust error handling"""
+        """Generate minimal tool selection using Qwen model"""
         start_time = time.perf_counter()
         
         try:
@@ -85,22 +55,8 @@ VIKTIGT:
                 logger.warning("Circuit breaker open, using fallback")
                 return self._fallback_response("circuit_breaker_open")
             
-            # Override with planner-specific settings
-            # Defaults, can be overridden via kwargs or env
-            num_ctx_default = int(os.getenv("PLANNER_NUM_CTX", "1024"))
-            num_predict_default = int(os.getenv("PLANNER_NUM_PREDICT", "200"))
-
-            planner_kwargs = {
-                "temperature": kwargs.get("temperature", self.temperature),
-                "max_tokens": kwargs.get("max_tokens", self.max_tokens),
-                "top_p": kwargs.get("top_p", self.top_p),
-                "system": kwargs.get("system", self.system_prompt),
-                "format": "json",  # Enforce JSON mode in Ollama
-                "stop": ["```", "Human:", "Assistant:"],  # Stop tokens
-                # Low-footprint options for Ollama
-                "num_ctx": kwargs.get("num_ctx", num_ctx_default),
-                "num_predict": kwargs.get("num_predict", num_predict_default),
-            }
+            # Use generation parameters
+            gen_params = {**self.generation_params, **kwargs}
             
             logger.info("Generating planner response", model=self.model, prompt_length=len(prompt))
             
@@ -108,44 +64,38 @@ VIKTIGT:
             response = self.client.generate(
                 model=self.model,
                 prompt=prompt,
-                request_timeout_ms=self.planner_timeout_ms,
-                **planner_kwargs
+                system=self.system_prompt,
+                request_timeout_ms=6000,  # 6s timeout
+                **gen_params
             )
             
             generation_time = (time.perf_counter() - start_time) * 1000
             
-            # Check timeout
-            if generation_time > self.planner_timeout_ms:
-                logger.warning("Planner generation timeout", 
-                              generation_time_ms=generation_time,
-                              timeout_ms=self.planner_timeout_ms)
-                return self._fallback_response("planner_timeout")
-            
             # Extract response text
             response_text = response.get("response", "").strip()
+            
+            # Log raw response for debugging
+            logger.info("Raw planner response", 
+                       response_text=response_text[:200],  # First 200 chars
+                       response_length=len(response_text))
             
             # Try to parse JSON from response
             parsed_json = self._parse_json_response(response_text)
             repair_used = False
             
             if parsed_json is None:
-                # Try JSON repair with timeout
-                repair_start = time.perf_counter()
+                # Try JSON repair
                 parsed_json = self._repair_json_response(response_text)
-                repair_time = (time.perf_counter() - repair_start) * 1000
-                
-                if parsed_json is None or repair_time > self.repair_timeout_ms:
-                    logger.warning("JSON repair failed or timeout", 
-                                  repair_time_ms=repair_time,
-                                  repair_timeout_ms=self.repair_timeout_ms)
+                if parsed_json is None:
+                    logger.warning("JSON parse failed")
                     self._record_failure()
                     return self._fallback_response("json_parse_failed")
                 else:
                     repair_used = True
             
-            # Validate with Pydantic schema
+            # Validate with minimal schema
             try:
-                validated_plan = PlannerOutput(**parsed_json)
+                validated_output = PlannerOutput(**parsed_json)
                 schema_ok = True
             except ValidationError as e:
                 logger.warning("Schema validation failed", validation_errors=str(e))
@@ -159,24 +109,21 @@ VIKTIGT:
             
             logger.info("Planner response generated successfully", 
                        model=self.model, 
-                       response_length=len(response_text),
-                       tokens_used=response.get("eval_count", 0),
+                       tool=validated_output.tool,
                        generation_time_ms=generation_time,
                        total_time_ms=total_time,
-                       json_valid=True,
                        schema_ok=True)
             
             return {
                 "text": response_text,
                 "model": self.model,
                 "tokens_used": response.get("eval_count", 0),
-                "prompt_tokens": response.get("prompt_eval_count", 0),
-                "response_tokens": response.get("eval_count", 0),
-                "temperature": planner_kwargs["temperature"],
+                "temperature": gen_params["temperature"],
                 "route": "planner",
                 "json_parsed": True,
                 "schema_ok": True,
-                "plan": validated_plan.dict(),
+                "tool": validated_output.tool,
+                "args": validated_output.args,
                 "generation_time_ms": generation_time,
                 "total_time_ms": total_time,
                 "fallback_used": False,
@@ -186,50 +133,34 @@ VIKTIGT:
             }
             
         except Exception as e:
-            logger.error("Planner generation failed", model=self.model, error=str(e))
+            logger.error("Planner generation failed", model=self.model, error=str(e), error_type=type(e).__name__)
             self._record_failure()
             return self._fallback_response("exception")
     
     def _parse_json_response(self, response_text: str) -> Optional[Dict[str, Any]]:
-        """Parse JSON from response text, handling common formatting issues"""
+        """Parse JSON from response text"""
         try:
-            # Try to extract JSON from the response
-            # Look for JSON between ```json and ``` markers
-            if "```json" in response_text and "```" in response_text:
-                start = response_text.find("```json") + 7
-                end = response_text.find("```", start)
-                json_text = response_text[start:end].strip()
-            else:
-                # Try to find JSON object in the text
-                start = response_text.find("{")
-                end = response_text.rfind("}") + 1
-                if start >= 0 and end > start:
-                    json_text = response_text[start:end]
-                else:
-                    return None
-            
-            return json.loads(json_text)
-            
+            # Try to find JSON object in the text
+            start = response_text.find("{")
+            end = response_text.rfind("}") + 1
+            if start >= 0 and end > start:
+                json_text = response_text[start:end]
+                return json.loads(json_text)
+            return None
         except (json.JSONDecodeError, ValueError) as e:
             logger.warning("Failed to parse JSON from planner response", error=str(e))
             return None
     
     def _repair_json_response(self, response_text: str) -> Optional[Dict[str, Any]]:
-        """Attempt to repair malformed JSON with quick fixes"""
+        """Attempt to repair malformed JSON"""
         try:
-            # Common JSON repair patterns
+            # Simple repair: strip to last complete JSON
             repaired = response_text
+            if "}" in repaired:
+                last_brace = repaired.rfind("}")
+                repaired = repaired[:last_brace + 1]
             
-            # Fix missing quotes around keys
-            import re
-            repaired = re.sub(r'(\w+):', r'"\1":', repaired)
-            
-            # Fix trailing commas
-            repaired = re.sub(r',(\s*[}\]])', r'\1', repaired)
-            
-            # Try to parse repaired JSON
             return json.loads(repaired)
-            
         except (json.JSONDecodeError, ValueError):
             return None
     
@@ -239,13 +170,12 @@ VIKTIGT:
             "text": "Jag kunde inte planera denna åtgärd just nu. Kan jag hjälpa dig på ett annat sätt?",
             "model": "fallback",
             "tokens_used": 0,
-            "prompt_tokens": 0,
-            "response_tokens": 0,
             "temperature": 0.0,
             "route": "fallback",
             "json_parsed": False,
             "schema_ok": False,
-            "plan": None,
+            "tool": "none",
+            "args": {},
             "generation_time_ms": 0,
             "total_time_ms": 0,
             "fallback_used": True,
@@ -273,7 +203,21 @@ VIKTIGT:
     
     def _is_circuit_open(self) -> bool:
         """Check if circuit breaker is open"""
-        return self.failure_count >= self.max_failures
+        current_time = time.time()
+        
+        # Check if we should close the circuit
+        if self.circuit_open and (current_time - self.circuit_open_time) > self.cool_down_s:
+            self.circuit_open = False
+            self.failure_count = 0
+            logger.info("Circuit breaker closed after cool-down")
+        
+        # Check if we should open the circuit
+        if self.failure_count >= self.max_failures and not self.circuit_open:
+            self.circuit_open = True
+            self.circuit_open_time = current_time
+            logger.warning("Circuit breaker opened", failure_count=self.failure_count)
+        
+        return self.circuit_open
     
     def health_check(self) -> bool:
         """Check if planner model is available"""

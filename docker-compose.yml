@@ -41,16 +41,17 @@ services:
       - API_BASE=http://orchestrator:8000
       - GUARDIAN_HEALTH_URL=http://guardian:8787/health
       - LOG_DIR=/data/telemetry
-      - OLLAMA_BASE_URL=http://dev-proxy:80/ollama/api
-      - OLLAMA_HOST=http://ollama:11434
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      - OLLAMA_HOST=http://host.docker.internal:11434
       - MICRO_MODEL=llama2:7b
       - MICRO_DRIVER_VERSION=2
-      - LLM_PLANNER=qwen2.5:3b
-      - PLANNER_TIMEOUT_MS=1200
-      - PLANNER_REPAIR_TIMEOUT_MS=150
+      - LLM_PLANNER=llama3.2:1b-instruct-q4_K_M
+      - PLANNER_TIMEOUT_MS=8000
+      - PLANNER_REPAIR_TIMEOUT_MS=200
       - LLM_TIMEOUT_MS=16000
       - PLANNER_NUM_CTX=768
-      - PLANNER_NUM_PREDICT=100
+      - PLANNER_NUM_PREDICT=80
+      - OLLAMA_KEEP_ALIVE=30m
       - SECURITY_ENFORCE=true
     volumes:
       - ./data/telemetry:/data/telemetry

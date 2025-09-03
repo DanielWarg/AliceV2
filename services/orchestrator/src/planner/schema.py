@@ -1,10 +1,17 @@
 """
-JSON schema for planner output validation.
+JSON schema for planner output validation - minimal tool-based approach.
 """
 
 from typing import Dict, Any, List, Optional
 from pydantic import BaseModel, Field
 
+class PlannerOutput(BaseModel):
+    """Minimal planner output - just tool enum and args"""
+    tool: str = Field(..., pattern="^(calendar\\.create|email\\.draft|memory\\.query|none)$", 
+                     description="Tool to execute (enum only)")
+    args: Dict[str, Any] = Field(default_factory=dict, description="Arguments for the tool")
+
+# Legacy schemas for backward compatibility
 class ToolStep(BaseModel):
     """A single step in a plan that uses a tool"""
     tool: str = Field(..., description="Name of the tool to use")
@@ -23,43 +30,15 @@ class Plan(BaseModel):
 PLANNER_SCHEMA = {
     "type": "object",
     "properties": {
-        "plan": {
+        "tool": {
             "type": "string",
-            "description": "Description of the overall plan"
+            "pattern": "^(calendar\\.create|email\\.draft|memory\\.query|none)$",
+            "description": "Tool to execute (enum only)"
         },
-        "steps": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "tool": {
-                        "type": "string",
-                        "description": "Name of the tool to use"
-                    },
-                    "args": {
-                        "type": "object",
-                        "description": "Arguments for the tool"
-                    },
-                    "reason": {
-                        "type": "string",
-                        "description": "Why this step is needed"
-                    },
-                    "timeout_ms": {
-                        "type": "integer",
-                        "description": "Timeout for this tool call in milliseconds"
-                    }
-                },
-                "required": ["tool", "reason"]
-            }
-        },
-        "response": {
-            "type": "string",
-            "description": "Response to give to the user"
-        },
-        "guardrails": {
+        "args": {
             "type": "object",
-            "description": "Safety guardrails"
+            "description": "Arguments for the tool"
         }
     },
-    "required": ["plan", "response"]
+    "required": ["tool"]
 }
