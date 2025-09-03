@@ -69,6 +69,26 @@ TIME_TOOL_SCHEMA = {
     }
 }
 
+N8N_TOOL_SCHEMA = {
+    "name": "n8n.run",
+    "description": "Execute n8n workflow via webhook",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "workflow": {"type": "string", "description": "Workflow name (email_draft, calendar_draft, batch_rag)", "enum": ["email_draft", "calendar_draft", "batch_rag"]},
+            "request_id": {"type": "string", "description": "Unique request identifier"},
+            "subject": {"type": "string", "description": "Subject/title for the task"},
+            "to": {"type": "array", "items": {"type": "string"}, "description": "Recipient list (for email_draft)"},
+            "body": {"type": "string", "description": "Content/description"},
+            "start_time": {"type": "string", "description": "Start time (ISO format, for calendar_draft)"},
+            "end_time": {"type": "string", "description": "End time (ISO format, for calendar_draft)"},
+            "attendees": {"type": "array", "items": {"type": "string"}, "description": "Attendee list (for calendar_draft)"},
+            "query": {"type": "string", "description": "Search query (for batch_rag)"}
+        },
+        "required": ["workflow", "request_id"]
+    }
+}
+
 class MCPToolRegistry:
     """MCP Tool Registry with real tool implementations"""
     
@@ -92,6 +112,11 @@ class MCPToolRegistry:
             "time.get": {
                 "schema": TIME_TOOL_SCHEMA,
                 "handler": self._handle_time_get,
+                "fallback": None
+            },
+            "n8n.run": {
+                "schema": N8N_TOOL_SCHEMA,
+                "handler": self._handle_n8n_run,
                 "fallback": None
             }
         }
@@ -274,6 +299,143 @@ class MCPToolRegistry:
                 "data": result,
                 "error": None
             }
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e),
+                "data": None
+            }
+
+    def _handle_n8n_run(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle n8n workflow execution via webhook"""
+        try:
+            # Validate required fields
+            if "workflow" not in args:
+                return {
+                    "success": False,
+                    "error": "Missing required field: workflow",
+                    "data": None
+                }
+            
+            if "request_id" not in args:
+                return {
+                    "success": False,
+                    "error": "Missing required field: request_id",
+                    "data": None
+                }
+            
+            workflow = args["workflow"]
+            request_id = args["request_id"]
+            
+            # Validate workflow name
+            valid_workflows = ["email_draft", "calendar_draft", "batch_rag"]
+            if workflow not in valid_workflows:
+                return {
+                    "success": False,
+                    "error": f"Invalid workflow: {workflow}. Valid workflows: {valid_workflows}",
+                    "data": None
+                }
+            
+            # Prepare payload based on workflow type
+            payload = {
+                "request_id": request_id,
+                "metadata": {
+                    "source": "alice_v2",
+                    "timestamp": datetime.now().isoformat()
+                }
+            }
+            
+            # Add workflow-specific fields
+            if workflow == "email_draft":
+                if "subject" not in args:
+                    return {
+                        "success": False,
+                        "error": "Missing required field: subject for email_draft",
+                        "data": None
+                    }
+                if "to" not in args:
+                    return {
+                        "success": False,
+                        "error": "Missing required field: to for email_draft",
+                        "data": None
+                    }
+                
+                payload.update({
+                    "subject": args["subject"],
+                    "to": args["to"],
+                    "body": args.get("body", "")
+                })
+            
+            elif workflow == "calendar_draft":
+                if "subject" not in args:
+                    return {
+                        "success": False,
+                        "error": "Missing required field: subject for calendar_draft",
+                        "data": None
+                    }
+                
+                payload.update({
+                    "subject": args["subject"],
+                    "start_time": args.get("start_time"),
+                    "end_time": args.get("end_time"),
+                    "attendees": args.get("attendees", []),
+                    "body": args.get("body", "")
+                })
+            
+            elif workflow == "batch_rag":
+                if "query" not in args:
+                    return {
+                        "success": False,
+                        "error": "Missing required field: query for batch_rag",
+                        "data": None
+                    }
+                
+                payload.update({
+                    "query": args["query"],
+                    "body": args.get("body", "")
+                })
+            
+            # Call n8n webhook
+            n8n_url = f"http://n8n:5678/webhook/{workflow}"
+            
+            try:
+                with httpx.Client(timeout=10.0) as client:
+                    response = client.post(
+                        n8n_url,
+                        json=payload,
+                        headers={"Content-Type": "application/json"}
+                    )
+                    
+                    if response.status_code == 200:
+                        result = {
+                            "workflow": workflow,
+                            "request_id": request_id,
+                            "status": "started",
+                            "n8n_response": response.text,
+                            "timestamp": datetime.now().isoformat()
+                        }
+                        
+                        logger.info("n8n workflow started", workflow=workflow, request_id=request_id)
+                        
+                        return {
+                            "success": True,
+                            "data": result,
+                            "error": None
+                        }
+                    else:
+                        return {
+                            "success": False,
+                            "error": f"n8n webhook failed: {response.status_code} - {response.text}",
+                            "data": None
+                        }
+                        
+            except Exception as e:
+                return {
+                    "success": False,
+                    "error": f"n8n webhook call failed: {str(e)}",
+                    "data": None
+                }
             
         except Exception as e:
             return {

@@ -92,9 +92,10 @@ curl -s -u alice:secret -H 'Content-Type: application/json' \
 ### n8n – Import & Troubleshooting
 
 ```bash
-# Inloggning (standard):
+# Inloggning (första gången):
 #   UI: http://localhost:5678
-#   User/Pass: alice / secret
+#   Skapa konto med email (Basic Auth avstängt)
+#   Efter setup: importera flows och aktivera
 
 # Importera flöden i UI
 # 1) Öppna UI → Workflows → Import from file → välj:

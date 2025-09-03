@@ -12,7 +12,7 @@ Fast, deterministic tool choice with strict JSON. The model only selects a tool 
 ## JSON Contract (Output)
 ```
 {
-  "tool": "none|time.now|weather.get|memory.query|email.create_draft|calendar.create_draft|scrape_and_summarize|batch_rag",
+  "tool": "none|time.now|weather.get|memory.query|email.create_draft|calendar.create_draft|scrape_and_summarize|batch_rag|n8n.run",
   "reason": "Kort motivering på svenska"
 }
 ```
@@ -25,7 +25,7 @@ Rules:
 """
 Du är ToolSelector. Svara ENDAST med giltig JSON enligt:
 {"tool":"…","reason":"…"}
-Tillåtna verktyg: none, time.now, weather.get, memory.query, email.create_draft, calendar.create_draft, scrape_and_summarize, batch_rag.
+Tillåtna verktyg: none, time.now, weather.get, memory.query, email.create_draft, calendar.create_draft, scrape_and_summarize, batch_rag, n8n.run.
 Inga argument; de byggs i koden. Svenska i reason. Avsluta direkt efter }.
 """
 

@@ -54,6 +54,7 @@ Tillgängliga verktyg:
 - email.draft: Skapa e-postutkast
 - weather.get: Hämta väderinformation
 - time.get: Hämta aktuell tid
+- n8n.run: Kör n8n-arbetsflöden (email_draft, calendar_draft, batch_rag)
 
 Svara ALLTID med exakt detta JSON-format:
 {
@@ -71,7 +72,8 @@ Svara ALLTID med exakt detta JSON-format:
 VIKTIGT: 
 - Svara ENDAST med JSON, inga extra text
 - Använd exakt format ovan
-- Avsluta med "}" och inget mer"""
+- Avsluta med "}" och inget mer
+- För n8n.run, använd: {"tool": "n8n.run", "args": {"workflow": "email_draft", "request_id": "unique_id", "subject": "ämne", "to": ["email@example.com"]}}"""
     
     def generate(self, prompt: str, **kwargs) -> Dict[str, Any]:
         """Generate structured plan using Qwen-MoE with robust error handling"""
