@@ -79,9 +79,9 @@ services/tester/                  # ❌ OBSOLETE - Replaced by services/eval/
 - **ASR Partial**: <300ms after speech detected
 - **ASR Final**: <800ms after silence
 - **Guardian Response**: <150ms state transitions ✅
-- **Micro LLM**: <250ms first token (model pull next step)
-- **Planner LLM**: <900ms first token, <1500ms complete (model pull next step)
-- **Deep LLM**: <1800ms first token, <3000ms complete (activated after Guardian validation)
+- **Micro LLM**: <250ms first token (aktiveras när modell är tillgänglig)
+- **Planner LLM**: <900ms first token, <1500ms complete (aktiveras när modell är tillgänglig)
+- **Deep LLM**: <1800ms first token, <3000ms complete (aktiveras efter Guardian-gate)
 - **TTS Cached**: <120ms audio generation
 - **TTS Uncached**: <800ms (≤40 characters)
 
@@ -100,9 +100,19 @@ services/tester/                  # ❌ OBSOLETE - Replaced by services/eval/
 
 ### **NEW: Observability SLO** ✅ IMPLEMENTED
 - **Metrics Collection**: <10ms overhead per turn ✅
+- **Cost/Token Tracking**: per-turn tokens (prompt/completion), kostnad (SEK), provider ✅
 - **Dashboard Load**: <2s for complete HUD ✅
 - **E2E Test Success**: ≥80% pass rate for 20 scenarios ✅
 - **SLO Validation**: Automatic P95 threshold checking ✅
+
+### CI Gates (fail build om ej uppfyllt)
+| Gate | Tröskel | Källa |
+|---|---:|---|
+| E2E pass rate | ≥ 80% | `data/tests/summary.json` |
+| Fast route P95 (first) | ≤ 250 ms | turn events |
+| Planner P95 (full) | ≤ 1500 ms | turn events |
+| Tool success rate | ≥ 95% | tool events |
+| Guardian EMERGENCY | 0 händelser | guardian logs |
 
 ## 🧪 Test Scenarios
 
@@ -224,6 +234,12 @@ if rtsp_reconnect_time > 2000ms:
 - **All changes logged** with before/after values and rollback commands
 - **Automatic rollback** if issues persist after 2 failed remediation attempts
 - **Manual intervention required** signal after 3 consecutive failures
+
+**Remediation guardrails**
+- Max 1 remediation per loop
+- Remediation whitelist: {`vad_thresholds`,`eos_timeout`,`rag_top_k`,`strict_schema`}
+- Cooldown 15 min per parameter
+- Rollback auto om metrik inte förbättras inom 2 re-körningar
 
 ## 📈 Continuous Testing Loop
 
@@ -364,6 +380,11 @@ timestamp,scenario_id,metric,value,unit,status
   condition: guardian_state == "EMERGENCY"  
   severity: critical
   action: [collect_diagnostics, create_incident]
+
+- name: "OpenAI Cost Budget"
+  condition: daily_cost_sek > ${OPENAI_DAILY_BUDGET_SEK}
+  severity: warning
+  action: [switch_to_local_provider, notify_team]
 ```
 
 ## 🚀 Implementation & Deployment
@@ -372,9 +393,9 @@ timestamp,scenario_id,metric,value,unit,status
 ```yaml
 # Add to docker-compose.yml
 services:
-  tester:
-    build: ./services/tester
-    container_name: alice-tester
+  eval:
+    build: ./services/eval
+    container_name: alice-eval
     depends_on:
       - orchestrator
       - guardian  
@@ -388,8 +409,8 @@ services:
       - CALDAV_URL=${TEST_CALDAV_URL} 
       - RTSP_URL=${TEST_CAMERA_URL}
     volumes:
-      - ./services/tester/datasources:/data
-      - ./services/tester/runs:/runs
+      - ./services/eval/datasources:/data
+      - ./services/eval/runs:/runs
     restart: unless-stopped
 ```
 
@@ -413,11 +434,11 @@ curl http://localhost:8000/health
 curl http://localhost:8787/guardian/health
 
 # 3. Start autonomous testing
-docker compose up -d tester
+docker compose up -d eval
 
 # 4. Monitor test results
-tail -f services/tester/runs/latest/log.jsonl
-open services/tester/runs/latest/summary.md
+tail -f services/eval/runs/latest/log.jsonl
+open services/eval/runs/latest/summary.md
 ```
 
 ## 🔒 Security & Privacy
@@ -426,7 +447,7 @@ open services/tester/runs/latest/summary.md
 - **Sandbox Accounts**: Never use production email/calendar credentials
 - **PII Masking**: Automatic detection and redaction in all logs
 - **Audio Retention**: Generated TTS samples deleted after manual review
-- **Consent Enforcement**: Block operations without proper scope permissions
+- **Consent Enforcement**: Block operations without proper scope permissions (HTTP 403 + `required_scopes`)
 - **Data Isolation**: Test data never mixed with production user data
 
 ### Safe Remediation Boundaries
@@ -468,6 +489,14 @@ Alice v2 implements a **multi-tier data collection system** that captures all te
     schema/v1/*.json         # JSON Schema for logs
     hashes/seen_hashes.db    # Deduplication index
 ```
+
+### Retention
+| Dataset | Syfte | Retention |
+|---|---|---|
+| Telemetry (bronze) | Operativ felsökning | 7 dagar |
+| Silver | Eval & modellering | 30 dagar |
+| Gold | Handgranskad träningsdata | Tills manuellt borttagen |
+| Audio artifacts | QA av röst | 24 h (om `audio:store` scope) |
 
 ### Unified Event Format (JSONL)
 
@@ -732,6 +761,9 @@ def log_test_failure(test_name: str, failure_info: dict):
 - [ ] **Retention limits**: 7d telemetry, 30d silver, gold until manual cleanup
 - [ ] **Deduplication**: Hash-based to prevent duplicate sensitive data
 - [ ] **Test vs prod**: Clear environment tagging for filtering
+- [ ] **AI Act transparency**: Logga `llm.provider`, `llm.model`, `policy_mode` (NORMAL/BROWNOUT), och `tool_autonomy` (manual_review|auto)
+- [ ] **GDPR lawful basis**: `consent_scopes` krävs före RESTRICTED dataprocessing; blockera utan scope
+- [ ] **Data subject rights**: `/memory/forget` rensar även `datasets/silver` via referens-hash
 
 #### Data Quality Validation
 ```python

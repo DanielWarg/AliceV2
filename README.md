@@ -1,6 +1,10 @@
 # Alice v2 AI Assistant
 *AI assistant with Guardian safety system, real-time observability, and autonomous E2E testing*
 
+![E2E](https://img.shields.io/badge/E2E-Auto--verify-green)
+![SLO](https://img.shields.io/badge/SLO-Per--route%20P95-green)
+![Privacy](https://img.shields.io/badge/Privacy-GDPR%20by%20design-blue)
+
 > **🚦 Status (live-gates)**: Fast P95 ✅ | Planner P95 ❌ | Auto-verify (core) ✅, (planner) ❌
 > Planner: Hybrid (OpenAI 4o-mini primary + Local ToolSelector fallback). Cost/budget guard ON.
 
