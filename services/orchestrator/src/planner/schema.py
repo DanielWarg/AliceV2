@@ -2,14 +2,20 @@
 JSON schema for planner output validation - minimal tool-based approach.
 """
 
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Literal
 from pydantic import BaseModel, Field
 
 class PlannerOutput(BaseModel):
-    """Minimal planner output - just tool enum and args"""
-    tool: str = Field(..., pattern="^(calendar\\.create|email\\.draft|memory\\.query|none)$", 
-                     description="Tool to execute (enum only)")
-    args: Dict[str, Any] = Field(default_factory=dict, description="Arguments for the tool")
+    """Minimal planner output - just tool enum and optional reason"""
+    tool: Literal[
+        "none",
+        "email.create_draft", 
+        "calendar.create_draft",
+        "weather.lookup",
+        "memory.query"
+    ]
+    reason: Optional[str] = None
+    version: Optional[int] = 1  # Make version optional since model doesn't always include it
 
 # Legacy schemas for backward compatibility
 class ToolStep(BaseModel):
@@ -32,12 +38,15 @@ PLANNER_SCHEMA = {
     "properties": {
         "tool": {
             "type": "string",
-            "pattern": "^(calendar\\.create|email\\.draft|memory\\.query|none)$",
-            "description": "Tool to execute (enum only)"
+            "enum": ["none", "email.create_draft", "calendar.create_draft", "weather.lookup", "memory.query"]
         },
-        "args": {
-            "type": "object",
-            "description": "Arguments for the tool"
+        "reason": {
+            "type": "string",
+            "nullable": True
+        },
+        "version": {
+            "type": "integer",
+            "default": 1
         }
     },
     "required": ["tool"]

@@ -92,7 +92,11 @@ async def chat_completion(
         except Exception:
             pass
         # Decide route early so middleware can capture per-route latency
-        route = route_hint if route_hint in {"micro", "planner", "deep"} else "micro"
+        # Respect force_route parameter if provided
+        if hasattr(chat_request, 'force_route') and chat_request.force_route:
+            route = chat_request.force_route
+        else:
+            route = route_hint if route_hint in {"micro", "planner", "deep"} else "micro"
         response.headers["X-Route"] = route
         # Check Guardian admission control
         admitted = await guardian.check_admission({

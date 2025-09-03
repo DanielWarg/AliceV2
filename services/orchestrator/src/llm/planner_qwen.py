@@ -8,7 +8,10 @@ import time
 import structlog
 from typing import Dict, Any, Optional
 from pydantic import ValidationError
+from pathlib import Path
+from datetime import datetime
 from .ollama_client import get_ollama_client
+from .planner_classifier import get_planner_classifier, ClassificationResult
 from ..planner.schema import PlannerOutput
 
 logger = structlog.get_logger(__name__)
@@ -19,21 +22,51 @@ class PlannerQwenDriver:
     def __init__(self):
         self.model = os.getenv("LLM_PLANNER", "llama3.2:1b-instruct-q4_K_M")
         self.client = get_ollama_client()
+        self.classifier = get_planner_classifier()
         
-        # Minimal system prompt for tool selection
-        self.system_prompt = """Du är en planeringsmotor. Svara ENBART med giltig JSON, ingen text.
-Schema: {"tool":"<enum>","args":{}}.
-Tillåtna tool: ["calendar.create","email.draft","memory.query","none"].
-Om du är osäker använd {"tool":"none","args":{}}."""
+        # Robust debug settings - can never crash
+        self.debug_dump = os.getenv("PLANNER_DEBUG_DUMP", "0") not in ("0", "", "false", "False")
+        self.debug_dir = Path(os.getenv("PLANNER_DEBUG_DIR", "data/telemetry/planner_raw"))
+        self.no_fallback = os.getenv("PLANNER_NO_FALLBACK", "0") not in ("0", "", "false", "False")
         
-        # Generation parameters optimized for JSON output
+        # Enhanced system prompt with few-shots and strict JSON enforcement
+        self.system_prompt = """Du är en tool-selector. Svara med EN enda rad JSON som följer exakt schemat.
+Absolut inget annat (ingen text, ingen kodblock, inga nya rader).
+Schema: {"version":1,"tool":"<enum>","reason":"<kort svensk motivering>"}
+Tillåtna "tool": ["none","email.create_draft","calendar.create_draft","weather.lookup","memory.query"].
+Vid tydliga e-post/mötesfraser ska verktyg väljas, 'none' bara vid oklarheter.
+Svara alltid på svenska.
+
+Exempel:
+Fråga: "Skicka email till Anna"
+Svar: {"version":1,"tool":"email.create_draft","reason":"Skicka email till Anna"}
+
+Fråga: "Boka möte imorgon kl 14:00"
+Svar: {"version":1,"tool":"calendar.create_draft","reason":"Boka möte imorgon kl 14:00"}
+
+Fråga: "Vad är vädret i Stockholm?"
+Svar: {"version":1,"tool":"weather.lookup","reason":"Kolla vädret i Stockholm"}
+
+Fråga: "Kommer du ihåg vad vi sa igår?"
+Svar: {"version":1,"tool":"memory.query","reason":"Sök i minnet efter igår"}
+
+Fråga: "Hej, hur mår du?"
+Svar: {"version":1,"tool":"none","reason":"Enkel hälsning, inget verktyg behövs"}
+
+Fråga: "Tack för hjälpen"
+Svar: {"version":1,"tool":"none","reason":"Tack, inget verktyg behövs"}"""
+        
+        # Generation parameters optimized for strict JSON output
         self.generation_params = {
             "format": "json",
-            "temperature": 0.1,
-            "top_p": 0.9,
-            "num_ctx": 4096,
-            "num_predict": 256,
-            "stop": ["```", "Human:", "Assistant:", "\n\n"]
+            "temperature": 0.0,  # Deterministic output
+            "top_p": 0.1,        # Very focused sampling
+            "mirostat": 0,
+            "num_ctx": 1024,     # Reduced context for speed
+            "num_predict": 64,   # Short responses
+            "stream": False,
+            "repeat_penalty": 1.05,  # Prevent repetition
+            "stop": ["\n", "```", " Human:", " Assistant:"]  # Stop tokens
         }
         
         # Circuit breaker settings
@@ -45,8 +78,41 @@ Om du är osäker använd {"tool":"none","args":{}}."""
         self.circuit_open_time = 0
         self.cool_down_s = 30
     
+    def _safe_dump(self, text: str) -> None:
+        """Safe dump function that can never crash the flow"""
+        if not getattr(self, "debug_dump", False):
+            return
+        try:
+            self.debug_dir.mkdir(parents=True, exist_ok=True)
+            p = self.debug_dir / f"{datetime.utcnow().isoformat()}Z.txt"
+            p.write_text(text or "", encoding="utf-8")
+            logger.info("planner.raw_dump", path=str(p), bytes=len(text or ""))
+        except Exception as e:
+            # Never throw - dump must never crash the flow
+            logger.warning("planner.raw_dump_failed", err=str(e))
+    
+    def _post_process_json(self, text: str) -> str:
+        """Post-process and repair JSON if needed"""
+        if not text:
+            return text
+        
+        # Trim whitespace and remove code block markers
+        text = text.strip()
+        text = text.replace("```json", "").replace("```", "")
+        
+        # Quick repair: balance braces and quotes if exactly one is missing
+        if text.count("{") == text.count("}") - 1:
+            text += "}"
+        elif text.count("{") == text.count("}") + 1:
+            text = "{" + text
+        
+        if text.count('"') % 2 == 1:
+            text += '"'
+        
+        return text
+    
     def generate(self, prompt: str, **kwargs) -> Dict[str, Any]:
-        """Generate minimal tool selection using Qwen model"""
+        """Generate minimal tool selection using Qwen model with classifier pre-filter"""
         start_time = time.perf_counter()
         
         try:
@@ -55,50 +121,116 @@ Om du är osäker använd {"tool":"none","args":{}}."""
                 logger.warning("Circuit breaker open, using fallback")
                 return self._fallback_response("circuit_breaker_open")
             
+            # Pre-classify with regex patterns
+            classification = self.classifier.classify(prompt)
+            logger.info("Planner classification", 
+                       tool=classification.tool,
+                       confidence=classification.confidence,
+                       use_llm=classification.use_llm,
+                       reason=classification.reason)
+            
+            # If high confidence classification, skip LLM
+            if not classification.use_llm:
+                logger.info("Using classifier result, skipping LLM")
+                return {
+                    "text": f'{{"version":1,"tool":"{classification.tool}","reason":"{classification.reason}"}}',
+                    "model": "classifier",
+                    "tokens_used": 0,
+                    "temperature": 0.0,
+                    "route": "planner",
+                    "json_parsed": True,
+                    "schema_ok": True,
+                    "tool": classification.tool,
+                    "reason": classification.reason,
+                    "generation_time_ms": 0,
+                    "total_time_ms": (time.perf_counter() - start_time) * 1000,
+                    "fallback_used": False,
+                    "fallback_reason": None,
+                    "circuit_open": False,
+                    "classifier_used": True
+                }
+            
             # Use generation parameters
             gen_params = {**self.generation_params, **kwargs}
             
             logger.info("Generating planner response", model=self.model, prompt_length=len(prompt))
             
-            # Generate with timeout
+            # Load GBNF grammar for strict JSON output
+            grammar_path = Path(__file__).parent / "planner_grammar.gbnf"
+            grammar = None
+            if grammar_path.exists():
+                grammar = grammar_path.read_text(encoding="utf-8")
+            
+            # Generate with timeout and grammar
             response = self.client.generate(
                 model=self.model,
                 prompt=prompt,
                 system=self.system_prompt,
-                request_timeout_ms=6000,  # 6s timeout
+                request_timeout_ms=8000,  # 8s timeout
+                grammar=grammar,  # Use GBNF grammar for strict output
                 **gen_params
             )
             
-            generation_time = (time.perf_counter() - start_time) * 1000
+            # Extract response text safely
+            resp_txt = ""
+            try:
+                resp_txt = response.get("response", "") if isinstance(response, dict) else str(response)
+            except Exception:
+                # Last defense line
+                resp_txt = str(response)
             
-            # Extract response text
-            response_text = response.get("response", "").strip()
+            # Post-process JSON response
+            processed_text = self._post_process_json(resp_txt)
+            
+            # UNCONDITIONAL raw dump before parsing
+            self._safe_dump(processed_text)
+            
+            generation_time = (time.perf_counter() - start_time) * 1000
             
             # Log raw response for debugging
             logger.info("Raw planner response", 
-                       response_text=response_text[:200],  # First 200 chars
-                       response_length=len(response_text))
+                       response_text=processed_text[:500],  # First 500 chars
+                       response_length=len(processed_text))
             
-            # Try to parse JSON from response
-            parsed_json = self._parse_json_response(response_text)
-            repair_used = False
+            # JSON parse with retry logic
+            parsed_json = None
+            parse_error = None
             
-            if parsed_json is None:
-                # Try JSON repair
-                parsed_json = self._repair_json_response(response_text)
-                if parsed_json is None:
-                    logger.warning("JSON parse failed")
-                    self._record_failure()
-                    return self._fallback_response("json_parse_failed")
-                else:
-                    repair_used = True
+            for attempt in range(2):  # Try twice
+                try:
+                    parsed_json = json.loads(processed_text)
+                    break
+                except json.JSONDecodeError as e:
+                    parse_error = e
+                    if attempt == 0:  # First attempt failed, try one more time with same prompt
+                        logger.warning("planner.json_decode_error_retry", 
+                                      attempt=attempt,
+                                      pos=e.pos, 
+                                      msg=str(e),
+                                      sample=(processed_text or "")[:200])
+                        # Retry with same prompt (no changes)
+                        continue
+                    else:  # Second attempt also failed
+                        logger.warning("planner.json_decode_error_final", 
+                                      pos=e.pos, 
+                                      lineno=getattr(e, 'lineno', 'unknown'),
+                                      colno=getattr(e, 'colno', 'unknown'),
+                                      msg=str(e),
+                                      sample=(processed_text or "")[:200])
+                        if self.no_fallback:
+                            # Force visible error in debug mode
+                            raise
+                        self._record_failure()
+                        return self._fallback_response("json_decode_error")
             
             # Validate with minimal schema
             try:
                 validated_output = PlannerOutput(**parsed_json)
                 schema_ok = True
             except ValidationError as e:
-                logger.warning("Schema validation failed", validation_errors=str(e))
+                logger.warning("planner.schema_validation_failed", err=str(e), obj=parsed_json)
+                if self.no_fallback:
+                    raise
                 self._record_failure()
                 return self._fallback_response("schema_validation_failed")
             
@@ -115,7 +247,7 @@ Om du är osäker använd {"tool":"none","args":{}}."""
                        schema_ok=True)
             
             return {
-                "text": response_text,
+                "text": processed_text,
                 "model": self.model,
                 "tokens_used": response.get("eval_count", 0),
                 "temperature": gen_params["temperature"],
@@ -123,46 +255,20 @@ Om du är osäker använd {"tool":"none","args":{}}."""
                 "json_parsed": True,
                 "schema_ok": True,
                 "tool": validated_output.tool,
-                "args": validated_output.args,
+                "reason": validated_output.reason,
                 "generation_time_ms": generation_time,
                 "total_time_ms": total_time,
                 "fallback_used": False,
                 "fallback_reason": None,
-                "repair_used": repair_used,
                 "circuit_open": False
             }
             
         except Exception as e:
             logger.error("Planner generation failed", model=self.model, error=str(e), error_type=type(e).__name__)
+            if self.no_fallback:
+                raise e
             self._record_failure()
             return self._fallback_response("exception")
-    
-    def _parse_json_response(self, response_text: str) -> Optional[Dict[str, Any]]:
-        """Parse JSON from response text"""
-        try:
-            # Try to find JSON object in the text
-            start = response_text.find("{")
-            end = response_text.rfind("}") + 1
-            if start >= 0 and end > start:
-                json_text = response_text[start:end]
-                return json.loads(json_text)
-            return None
-        except (json.JSONDecodeError, ValueError) as e:
-            logger.warning("Failed to parse JSON from planner response", error=str(e))
-            return None
-    
-    def _repair_json_response(self, response_text: str) -> Optional[Dict[str, Any]]:
-        """Attempt to repair malformed JSON"""
-        try:
-            # Simple repair: strip to last complete JSON
-            repaired = response_text
-            if "}" in repaired:
-                last_brace = repaired.rfind("}")
-                repaired = repaired[:last_brace + 1]
-            
-            return json.loads(repaired)
-        except (json.JSONDecodeError, ValueError):
-            return None
     
     def _fallback_response(self, reason: str) -> Dict[str, Any]:
         """Generate fallback response when planner fails"""
@@ -175,7 +281,7 @@ Om du är osäker använd {"tool":"none","args":{}}."""
             "json_parsed": False,
             "schema_ok": False,
             "tool": "none",
-            "args": {},
+            "reason": None,
             "generation_time_ms": 0,
             "total_time_ms": 0,
             "fallback_used": True,

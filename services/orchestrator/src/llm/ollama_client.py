@@ -64,6 +64,10 @@ class OllamaClient:
             "keep_alive": f"{self.config.keep_alive}s"
         }
         
+        # Add grammar if provided
+        if "grammar" in kwargs:
+            data["grammar"] = kwargs["grammar"]
+        
         # Add optional parameters
         if "temperature" in kwargs:
             data["temperature"] = kwargs["temperature"]

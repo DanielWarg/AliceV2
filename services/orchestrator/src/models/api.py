@@ -46,6 +46,7 @@ class ChatRequest(BaseRequest):
     message: str = Field(..., min_length=1, max_length=10000, description="User message")
     model: Optional[ModelType] = Field(default=ModelType.AUTO, description="Preferred model")
     context: Optional[Dict[str, Any]] = Field(default=None, description="Additional context")
+    force_route: Optional[str] = Field(default=None, description="Force specific route (micro, planner, deep)")
 
 class ChatResponse(BaseResponse):
     """Chat completion response"""

@@ -504,9 +504,13 @@ async def orchestrator_chat(
             )
         
         # Route to appropriate model using LLM Integration v1 (+ NLU hint)
-        route = route_request(chat_request)
-        if nlu_route_hint in {"micro", "planner", "deep"}:
-            route = nlu_route_hint
+        # Respect force_route parameter if provided
+        if hasattr(chat_request, 'force_route') and chat_request.force_route:
+            route = chat_request.force_route
+        else:
+            route = route_request(chat_request)
+            if nlu_route_hint in {"micro", "planner", "deep"}:
+                route = nlu_route_hint
         logger.info("Route selected", route=route)
         
         # Generate response based on route

@@ -1,0 +1,7 @@
+root ::= obj
+obj ::= "{" ws "\"version\"" ws ":" ws "1" ws "," ws "\"tool\"" ws ":" ws tool ws "," ws "\"reason\"" ws ":" ws string ws "}"
+tool ::= "\"none\"" | "\"email.create_draft\"" | "\"calendar.create_draft\"" | "\"weather.lookup\"" | "\"memory.query\""
+string ::= "\"" chars "\""
+chars ::= "" | char | char chars
+char  ::= [^"\\] | "\\" ["\\/bfnrt]
+ws ::= "" | " " ws
