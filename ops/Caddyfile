@@ -30,10 +30,10 @@ reverse_proxy @guardian guardian:8787
 @hud path /hud*
 redir @hud http://localhost:3001
 
-# Ollama proxy (direct access)
+# Ollama proxy (direct access to local Ollama)
 @ollama path /ollama/*
 handle_path /ollama/* {
-  reverse_proxy ollama:11434
+  reverse_proxy host.docker.internal:11434
 }
 
 # n8n webhooks
