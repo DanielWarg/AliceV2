@@ -43,6 +43,14 @@ clean: clean-venv ## Clean all generated files
 	rm -rf .coverage services/*/.coverage
 	@echo "✅ Cleanup complete"
 
+cleanup-data: ## Clean old data files (dry run by default)
+	@echo "🧹 Cleaning old data files..."
+	@DRY_RUN=true CLEANUP_CONFIRM=false bash scripts/cleanup.sh
+
+cleanup-data-force: ## Clean old data files (with confirmation)
+	@echo "🧹 Cleaning old data files (with confirmation)..."
+	@DRY_RUN=false CLEANUP_CONFIRM=true bash scripts/cleanup.sh
+
 fetch-models: ## Download required models
 	@echo "📥 Fetching models..."
 	./scripts/fetch_models.sh
