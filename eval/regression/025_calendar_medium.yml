@@ -1,0 +1,11 @@
+id: '025'
+tags:
+- MEDIUM
+- calendar
+prompt_sv: Boka konferensrum för nästa vecka
+expected_intent: calendar.create_draft
+expected_tools:
+- calendar.create_draft
+max_latency_ms: 500
+schema_ok_first: false
+fallback_allowed: false

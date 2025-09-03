@@ -1,0 +1,10 @@
+id: 019
+tags:
+- EASY
+- time
+prompt_sv: Vad är tiden?
+expected_intent: time.now
+expected_tools: []
+max_latency_ms: 200
+schema_ok_first: true
+fallback_allowed: false

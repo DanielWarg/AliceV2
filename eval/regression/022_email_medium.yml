@@ -1,0 +1,11 @@
+id: '022'
+tags:
+- MEDIUM
+- email
+prompt_sv: Skicka ett mail till chef@företag.se med ämnet 'Rapport klar'
+expected_intent: email.create_draft
+expected_tools:
+- email.create_draft
+max_latency_ms: 500
+schema_ok_first: false
+fallback_allowed: false

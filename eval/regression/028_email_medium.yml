@@ -1,0 +1,11 @@
+id: 028
+tags:
+- MEDIUM
+- email
+prompt_sv: Maila support om tekniskt problem
+expected_intent: email.create_draft
+expected_tools:
+- email.create_draft
+max_latency_ms: 500
+schema_ok_first: false
+fallback_allowed: false

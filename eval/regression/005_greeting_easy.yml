@@ -1,0 +1,10 @@
+id: '005'
+tags:
+- EASY
+- greeting
+prompt_sv: Hej!
+expected_intent: greeting.hello
+expected_tools: []
+max_latency_ms: 200
+schema_ok_first: true
+fallback_allowed: false

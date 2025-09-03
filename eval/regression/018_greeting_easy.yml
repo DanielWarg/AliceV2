@@ -1,0 +1,10 @@
+id: 018
+tags:
+- EASY
+- greeting
+prompt_sv: Trevligt att träffas
+expected_intent: greeting.hello
+expected_tools: []
+max_latency_ms: 200
+schema_ok_first: true
+fallback_allowed: false

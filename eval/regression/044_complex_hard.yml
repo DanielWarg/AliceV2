@@ -1,0 +1,13 @@
+id: '044'
+tags:
+- HARD
+- complex
+prompt_sv: Planera en komplett projektkickoff med agenda, deltagarlista och uppföljningsmöte,
+  skicka inbjudningar till alla berörda
+expected_intent: calendar.create_draft
+expected_tools:
+- calendar.create_draft
+- email.create_draft
+max_latency_ms: 1500
+schema_ok_first: false
+fallback_allowed: true

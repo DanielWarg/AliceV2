@@ -1,0 +1,13 @@
+id: '042'
+tags:
+- HARD
+- complex
+prompt_sv: Gå igenom min kalender för denna vecka och identifiera konflikter, skicka
+  sedan ett mail till berörda personer med förslag på alternativa tider
+expected_intent: calendar.create_draft
+expected_tools:
+- calendar.create_draft
+- email.create_draft
+max_latency_ms: 1500
+schema_ok_first: false
+fallback_allowed: true

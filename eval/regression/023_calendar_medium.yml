@@ -1,0 +1,11 @@
+id: '023'
+tags:
+- MEDIUM
+- calendar
+prompt_sv: Schemalägg ett möte med teamet på fredag
+expected_intent: calendar.create_draft
+expected_tools:
+- calendar.create_draft
+max_latency_ms: 500
+schema_ok_first: false
+fallback_allowed: false

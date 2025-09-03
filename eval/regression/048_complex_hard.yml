@@ -1,0 +1,12 @@
+id: 048
+tags:
+- HARD
+- complex
+prompt_sv: Planera en komplett konferensresa med transport, boende och möten, inklusive
+  backup-planer
+expected_intent: calendar.create_draft
+expected_tools:
+- calendar.create_draft
+max_latency_ms: 1500
+schema_ok_first: false
+fallback_allowed: true
