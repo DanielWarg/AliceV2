@@ -26,10 +26,9 @@ reverse_proxy @api orchestrator:8000
 @guardian path /guardian* /api/status/guardian
 reverse_proxy @guardian guardian:8787
 
-# HUD (dashboard) via /hud (automatiskt strip via handle_path)
-handle_path /hud* {
-  reverse_proxy dashboard:8501
-}
+# HUD redirect to Next.js (port 3001)
+@hud path /hud*
+redir @hud http://localhost:3001
 
 # Ollama proxy (direct access)
 @ollama path /ollama/*

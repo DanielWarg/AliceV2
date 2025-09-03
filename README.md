@@ -32,7 +32,7 @@ alice-v2/
 │   ├── guardian/       # ✅ System health & admission control
 │   ├── eval/           # ✅ Autonomous E2E testing harness
 │   └── loadgen/        # ✅ Brownout testing & SLO validation
-├── monitoring/         # ✅ Streamlit HUD & observability dashboard
+├── monitoring/         # ✅ Observability tools (Streamlit scripts)
 ├── data/               # ✅ Telemetry & structured logging
 ├── scripts/            # ✅ Autonomous E2E test automation
 └── test-results/       # ✅ Nightly validation & trends
@@ -104,8 +104,6 @@ make up
 make test-all
 
 # Access HUD
-# Direkt: http://localhost:3001 (Next.js HUD)
-# Via proxy: http://localhost:18000/hud (Streamlit dashboard)
 open http://localhost:3001
 ```
 
@@ -201,8 +199,7 @@ docker compose logs -f
 docker compose logs -f orchestrator
 
 # HUD (real-time monitoring)
-open http://localhost:3001  # Next.js HUD (direkt)
-# eller: open http://localhost:18000/hud  # Streamlit dashboard (via proxy)
+open http://localhost:3001
 ```
 
 ### 🔧 Manual Setup (Alternative)
@@ -212,7 +209,7 @@ git clone <repository>
 cd alice-v2
 
 # Start core services via proxy
-docker compose up -d guardian orchestrator nlu dashboard dev-proxy
+docker compose up -d guardian orchestrator nlu dev-proxy
 
 # Verify via proxy
 curl http://localhost:18000/health
@@ -221,9 +218,8 @@ curl http://localhost:18000/api/status/simple
 # Run autonomous E2E test (validates everything)
 ./scripts/auto_verify.sh
 
-# HUD via proxy
-open http://localhost:3001  # Next.js HUD (direkt)
-# eller: open http://localhost:18000/hud  # Streamlit dashboard (via proxy)
+# HUD
+open http://localhost:3001
 ```
 
 ### 🧪 Development Workflow

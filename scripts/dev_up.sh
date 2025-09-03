@@ -57,8 +57,8 @@ fi
 log_info "Cleaning old containers (if any)..."
 docker compose down --remove-orphans >/dev/null 2>&1 || true
 
-log_info "Starting guardian, orchestrator, nlu, dashboard, dev-proxy..."
-docker compose up -d --build guardian orchestrator nlu dashboard dev-proxy || true
+log_info "Starting guardian, orchestrator, nlu, dev-proxy..."
+docker compose up -d --build guardian orchestrator nlu dev-proxy || true
 
 log_info "Scheduler disabled - use host cron for scheduled tasks"
 # docker compose up -d scheduler || true
@@ -68,7 +68,7 @@ for i in {1..60}; do
   if curl -fsS http://localhost:$PORT/health >/dev/null 2>&1; then
     log_info "✅ Up: http://localhost:$PORT"
     log_info "🚀 Alice v2 development stack is ready!"
-    log_info "📊 HUD: http://localhost:3001 (Next.js) | http://localhost:$PORT/hud (Streamlit)"
+    log_info "📊 HUD: http://localhost:3001"
     log_info "🔍 Health: http://localhost:$PORT/health"
     exit 0
   fi
