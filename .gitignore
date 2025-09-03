@@ -169,3 +169,11 @@ test-results/
 models/*.onnx
 models/*.json
 .cursorrules
+
+# Test and debug files
+find_canary_session.py
+*_test.py
+test_*.py
+
+# Canary monitoring files
+data/monitoring/canary_checkpoint_*.json
