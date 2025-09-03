@@ -10,6 +10,9 @@ pandas>=2.0.0
 pyarrow>=12.0.0
 fastparquet>=2023.0.0
 
+# OpenAI integration
+openai>=1.0.0
+
 # Environment and logging
 python-dotenv==1.0.1
 structlog==25.4.0

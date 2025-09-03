@@ -19,7 +19,7 @@ class MicroPhiDriver:
         # Fail-fast: säkerställ att /tags svarar innan vi kör generate
         try:
             with httpx.Client(timeout=3.0) as client:
-                r = client.get(f"{self._base_url}/tags")
+                r = client.get(f"{self._base_url}/api/tags")
                 r.raise_for_status()
                 logger.info(f"MicroLLM healthcheck OK at {self._base_url}/tags")
         except Exception as e:
@@ -95,7 +95,7 @@ Var kort och koncis (max 2-3 meningar). Var hjälpsam och vänlig."""
         """Check if micro model is available"""
         try:
             with httpx.Client(timeout=3.0) as client:
-                response = client.get(f"{self._base_url}/tags")
+                response = client.get(f"{self._base_url}/api/tags")
                 response.raise_for_status()
                 data = response.json()
                 models = [model["name"] for model in data.get("models", [])]

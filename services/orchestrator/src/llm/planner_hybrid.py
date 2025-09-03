@@ -1,84 +1,101 @@
 """
-Hybrid Planner - Routes EASY/MEDIUM to local model, HARD to OpenAI API
+Hybrid Planner Implementation
+Routes EASY/MEDIUM scenarios to local model, HARD to OpenAI API
 """
 
 import os
+import re
 import time
-import structlog
 from typing import Dict, Any, Optional
-from pathlib import Path
-from datetime import datetime
-import openai
+import structlog
 from .planner_qwen import PlannerQwenDriver
-from .planner_classifier import get_planner_classifier, ClassificationResult
-from ..planner.schema import PlannerOutput
+from .planner_classifier import PlannerClassifier
 
-logger = structlog.get_logger(__name__)
+logger = structlog.get_logger()
 
 class PlannerHybridDriver:
-    """Hybrid planner with local model for EASY/MEDIUM, OpenAI for HARD"""
+    """Hybrid planner that routes based on complexity"""
     
     def __init__(self):
         self.local_driver = PlannerQwenDriver()
-        self.classifier = get_planner_classifier()
+        self.classifier = PlannerClassifier()
         
-        # OpenAI configuration
+        # OpenAI client
         self.openai_client = None
         self.openai_model = os.getenv("OPENAI_PLANNER_MODEL", "gpt-4o-mini")
-        self.openai_api_key = os.getenv("OPENAI_API_KEY")
         
-        if self.openai_api_key:
-            self.openai_client = openai.OpenAI(api_key=self.openai_api_key)
-            logger.info("OpenAI client initialized", model=self.openai_model)
+        # Initialize OpenAI if API key is available
+        api_key = os.getenv("OPENAI_API_KEY")
+        if api_key:
+            try:
+                import openai
+                self.openai_client = openai.OpenAI(api_key=api_key)
+                logger.info("OpenAI client initialized", model=self.openai_model)
+            except ImportError:
+                logger.warning("OpenAI package not installed, falling back to local only")
         else:
-            logger.warning("OpenAI API key not found, HARD scenarios will use local model")
+            logger.warning("No OpenAI API key found, using local model only")
         
         # Complexity thresholds
-        self.hard_threshold = 0.6  # Confidence threshold for HARD classification
-        
-        # Debug settings
-        self.debug_dump = os.getenv("PLANNER_DEBUG_DUMP", "0") not in ("0", "", "false", "False")
-        self.debug_dir = Path(os.getenv("PLANNER_DEBUG_DIR", "data/telemetry/planner_raw"))
-        self.no_fallback = os.getenv("PLANNER_NO_FALLBACK", "0") not in ("0", "", "false", "False")
+        self.hard_threshold = 0.6
+        self.medium_threshold = 0.3
     
     def _classify_complexity(self, text: str) -> str:
-        """Classify text complexity (EASY, MEDIUM, HARD)"""
-        # Simple heuristics for complexity
+        """Classify text complexity (EASY, MEDIUM, HARD) using advanced heuristics"""
         words = text.split()
         word_count = len(words)
         
-        # Check for complex patterns
-        complex_patterns = [
-            r"om.*så.*annars",  # Conditional logic
-            r"baserat på.*och.*",  # Context-heavy
-            r"analysera.*och.*skapa",  # Multi-step
-            r"prioritera.*baserat på",  # Complex reasoning
+        hard_patterns = [
+            r"analysera.*och.*föreslå",  # Analysis + recommendation
+            r"utvärdera.*alternativ",  # Evaluate alternatives
+            r"prioritera.*baserat på",  # Priority-based reasoning
             r"utveckla.*strategi",  # Strategy development
-            r"utvärdera.*risk",  # Risk assessment
-            r"optimera.*med hänsyn till",  # Optimization
+            r"optimera.*med hänsyn till",  # Optimization with constraints
             r"sammanfatta.*och.*",  # Complex summarization
+            r"jämför.*och.*",  # Comparison and analysis
+            r"planera.*schematiskt",  # Systematic planning
+            r"koordinera.*mellan",  # Coordination tasks
+            r"beräkna.*effektivitet",  # Efficiency calculations
         ]
         
-        import re
+        medium_patterns = [
+            r"skapa.*för",  # Create for specific purpose
+            r"hitta.*information",  # Information retrieval
+            r"organisera.*",  # Organization tasks
+            r"schemalägg.*",  # Scheduling
+            r"sammanfatta.*",  # Simple summarization
+            r"kontrollera.*",  # Verification tasks
+        ]
+        
         complexity_score = 0
         
-        # Word count factor
-        if word_count > 20:
+        if word_count > 25:
+            complexity_score += 0.4
+        elif word_count > 20:
             complexity_score += 0.3
         elif word_count > 15:
             complexity_score += 0.2
         elif word_count > 10:
             complexity_score += 0.1
         
-        # Pattern matching
-        for pattern in complex_patterns:
+        for pattern in hard_patterns:
             if re.search(pattern, text, re.IGNORECASE):
-                complexity_score += 0.4
+                complexity_score += 0.5
+                break
         
-        # Determine complexity level
+        for pattern in medium_patterns:
+            if re.search(pattern, text, re.IGNORECASE):
+                complexity_score += 0.2
+        
+        if re.search(r"om.*så.*annars", text, re.IGNORECASE):
+            complexity_score += 0.3
+        
+        if re.search(r"baserat på.*och.*", text, re.IGNORECASE):
+            complexity_score += 0.3
+        
         if complexity_score >= self.hard_threshold:
             return "HARD"
-        elif complexity_score >= 0.3:
+        elif complexity_score >= self.medium_threshold:
             return "MEDIUM"
         else:
             return "EASY"
@@ -86,112 +103,105 @@ class PlannerHybridDriver:
     def _call_openai(self, prompt: str) -> Dict[str, Any]:
         """Call OpenAI API for HARD scenarios"""
         if not self.openai_client:
-            logger.warning("OpenAI client not available, falling back to local model")
-            return self.local_driver.generate(prompt)
+            raise Exception("OpenAI client not available")
+        
+        start_time = time.time()
         
         try:
-            start_time = time.perf_counter()
-            
             response = self.openai_client.chat.completions.create(
                 model=self.openai_model,
                 messages=[
-                    {
-                        "role": "system",
-                        "content": """Du är en tool-selector. Svara med EN enda rad JSON som följer exakt schemat.
-Absolut inget annat (ingen text, ingen kodblock, inga nya rader).
-Schema: {"version":1,"tool":"<enum>","reason":"<kort svensk motivering>"}
-Tillåtna "tool": ["none","email.create_draft","calendar.create_draft","weather.lookup","memory.query"].
-Vid tydliga e-post/mötesfraser ska verktyg väljas, 'none' bara vid oklarheter.
-Svara alltid på svenska."""
-                    },
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
+                    {"role": "system", "content": self.local_driver.system_prompt},
+                    {"role": "user", "content": prompt}
                 ],
                 temperature=0.0,
-                max_tokens=64,
+                max_tokens=150,
                 response_format={"type": "json_object"}
             )
             
-            generation_time = (time.perf_counter() - start_time) * 1000
+            generation_time = (time.time() - start_time) * 1000
             
-            # Extract response
-            response_text = response.choices[0].message.content
-            
-            # Parse JSON
-            import json
-            parsed_json = json.loads(response_text)
-            
-            # Validate with schema
-            validated_output = PlannerOutput(**parsed_json)
-            
-            logger.info("OpenAI planner response generated", 
-                       model=self.openai_model,
-                       tool=validated_output.tool,
-                       generation_time_ms=generation_time)
-            
-            return {
-                "text": response_text,
-                "model": f"openai:{self.openai_model}",
-                "tokens_used": response.usage.total_tokens,
-                "temperature": 0.0,
-                "route": "planner",
-                "json_parsed": True,
-                "schema_ok": True,
-                "tool": validated_output.tool,
-                "reason": validated_output.reason,
-                "generation_time_ms": generation_time,
-                "total_time_ms": generation_time,
-                "fallback_used": False,
-                "fallback_reason": None,
-                "circuit_open": False,
-                "openai_used": True
-            }
-            
-        except Exception as e:
-            logger.error("OpenAI call failed", error=str(e))
-            if self.no_fallback:
+            # Parse response
+            content = response.choices[0].message.content
+            try:
+                import json
+                result = json.loads(content)
+                # Convert OpenAI response to local driver format
+                result = {
+                    "text": json.dumps(result),  # Convert back to JSON string
+                    "model": f"openai:{self.openai_model}",
+                    "tokens_used": response.usage.total_tokens if hasattr(response, 'usage') else 0,
+                    "temperature": 0.0,
+                    "route": "planner",
+                    "json_parsed": True,
+                    "schema_ok": True,
+                    "tool": result.get("tool", "none"),
+                    "reason": result.get("reason", ""),
+                    "generation_time_ms": generation_time,
+                    "total_time_ms": generation_time,
+                    "fallback_used": False,
+                    "fallback_reason": None,
+                    "circuit_open": False,
+                    "openai_used": True,
+                    "complexity": "HARD"
+                }
+                
+                logger.info(
+                    "OpenAI planner response generated",
+                    model=self.openai_model,
+                    generation_time_ms=generation_time,
+                    tool=result.get("tool", "unknown")
+                )
+                
+                return result
+                
+            except json.JSONDecodeError:
+                logger.error("Failed to parse OpenAI JSON response", content=content)
                 raise
-            return self.local_driver.generate(prompt)
+                
+        except Exception as e:
+            logger.error("OpenAI API call failed", error=str(e))
+            raise
     
-    def generate(self, prompt: str, **kwargs) -> Dict[str, Any]:
-        """Generate tool selection with hybrid routing"""
-        start_time = time.perf_counter()
+    def generate(self, prompt: str) -> Dict[str, Any]:
+        """Generate planner response using hybrid routing"""
+        start_time = time.time()
+        
+        # Classify complexity
+        complexity = self._classify_complexity(prompt)
+        logger.info(
+            "Planner complexity classification",
+            complexity=complexity,
+            prompt_length=len(prompt)
+        )
         
         try:
-            # Classify complexity
-            complexity = self._classify_complexity(prompt)
-            logger.info("Planner complexity classification", 
-                       complexity=complexity,
-                       prompt_length=len(prompt))
-            
-            # Route based on complexity
             if complexity == "HARD" and self.openai_client:
                 logger.info("Routing HARD scenario to OpenAI")
                 result = self._call_openai(prompt)
-                result["complexity"] = complexity
-                result["total_time_ms"] = (time.perf_counter() - start_time) * 1000
-                return result
             else:
+                # Use local model for EASY/MEDIUM or if OpenAI not available
                 logger.info(f"Routing {complexity} scenario to local model")
-                result = self.local_driver.generate(prompt, **kwargs)
+                result = self.local_driver.generate(prompt)
                 result["complexity"] = complexity
-                result["total_time_ms"] = (time.perf_counter() - start_time) * 1000
-                return result
-                
+                result["openai_used"] = False
+            
+            # Add timing info
+            total_time = (time.time() - start_time) * 1000
+            result["total_time_ms"] = total_time
+            
+            return result
+            
         except Exception as e:
-            logger.error("Hybrid planner generation failed", error=str(e))
-            if self.no_fallback:
-                raise
-            return self.local_driver.generate(prompt, **kwargs)
+            logger.error("Hybrid planner failed, falling back to local", error=str(e))
+            # Fallback to local
+            result = self.local_driver.generate(prompt)
+            result["complexity"] = complexity
+            result["openai_used"] = False
+            result["fallback_reason"] = str(e)
+            return result
 
-# Global hybrid driver instance
-_hybrid_driver: Optional[PlannerHybridDriver] = None
 
 def get_hybrid_planner_driver() -> PlannerHybridDriver:
-    """Get or create global hybrid planner driver instance"""
-    global _hybrid_driver
-    if _hybrid_driver is None:
-        _hybrid_driver = PlannerHybridDriver()
-    return _hybrid_driver
+    """Factory function for hybrid planner driver"""
+    return PlannerHybridDriver()

@@ -20,7 +20,7 @@ from ..utils.energy import EnergyMeter
 from ..utils.tool_errors import record_tool_call, classify_tool_error
 
 # LLM Integration v1 imports
-from ..llm import get_micro_driver, get_planner_driver, get_deep_driver
+from ..llm import get_micro_driver, get_planner_driver, get_hybrid_planner_driver, get_deep_driver
 from ..router import get_router_policy
 from ..planner import get_planner_executor
 import hashlib
@@ -526,7 +526,14 @@ async def orchestrator_chat(
                 model_used = llm_response["model"]
                 
             elif route == "planner":
-                planner_driver = get_planner_driver()
+                # Use hybrid planner if enabled, otherwise fallback to local
+                if os.getenv("PLANNER_HYBRID_ENABLED", "0") == "1":
+                    planner_driver = get_hybrid_planner_driver()
+                    logger.info("Using hybrid planner (EASY/MEDIUM → local, HARD → OpenAI)")
+                else:
+                    planner_driver = get_planner_driver()
+                    logger.info("Using local planner only")
+                
                 llm_response = planner_driver.generate(chat_request.message)
                 model_used = llm_response["model"]
                 
