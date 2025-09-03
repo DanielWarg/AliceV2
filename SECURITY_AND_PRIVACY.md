@@ -166,8 +166,15 @@ Alice v2 följer EU:s AI-förordning (AI Act) genom:
 
 ## 📞 Contact
 
-* **Security & Privacy**: [daniel@postboxen.se](mailto:daniel@postboxen.se)
-* **External resources**: CERT-SE, Datainspektionen (GDPR), EU AI Act guidelines
+### Security Team
+
+* **Primary**: [daniel@postboxen.se](mailto:daniel@postboxen.se)
+
+### External Resources
+
+* **CERT-SE**: Computer Emergency Response Team Sweden
+* **Police**: Cybercrime division (if criminal activity)
+* **Legal**: Data protection authority (for GDPR incidents)
 
 ---
 
