@@ -159,4 +159,4 @@ services/*/temp/
 secrets/
 
 # Local CV summary (do not commit)
-cv.md
+cv.mdAGENTS.md
