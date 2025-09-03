@@ -40,6 +40,13 @@ yarn-error.log*
 .npm
 .yarn-integrity
 
+# Next.js
+.next/
+.turbo/
+out/
+dist/
+build/
+
 # IDEs and editors
 .vscode/
 .idea/
@@ -152,6 +159,13 @@ Thumbs.db
 AGENTS.md
 data/telemetry/
 data/tests/
+data/embeddings/
+data/n8n/
+data/n8n_db/
 services/*/data/
 *.jsonl
 tombstones.jsonl
+test-results/
+models/*.onnx
+models/*.json
+.cursorrules
