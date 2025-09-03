@@ -20,7 +20,7 @@ graph TB
     Guardian --> Orchestrator[Orchestrator<br/>LangGraph Router + policies<br/>Router Phi-mini<br/>Policies/SLO + Tool registry MCP<br/>Event-bus & tracing<br/>RAM-peak, energy, tool error tracking]
     
     Orchestrator --> Micro[Micro-LLM<br/>simple answers<br/>Phi-3.5-Mini]
-    Orchestrator --> Planner[Planner-LLM<br/>planning+tools<br/>Qwen2.5-MoE]
+    Orchestrator --> Planner[Planner<br/>OpenAI GPT-4o-mini<br/>function-calling<br/>fallback: Local ToolSelector 3B]
     Orchestrator --> Deep[Deep Reasoning<br/>deep analysis<br/>Llama-3.1 on-dmd]
     Orchestrator --> Vision[Vision/Sensors<br/>YOLO/SAM/RTSP<br/>events→router]
     
@@ -39,17 +39,42 @@ graph TB
     Proactivity[Proactivity<br/>Prophet/Goal Scheduler] --> Orchestrator
     Reflection[Reflection<br/>logs+metrics → suggestions<br/>cache, RAG-K, prewarm] --> Orchestrator
     
+    %% Budget and cost tracking
+    Cost[Cost Tracking<br/>OpenAI tokens & cost<br/>daily/weekly budget<br/>auto-switch on breach] --> Orchestrator
+    
     style User fill:#e1f5fe
     style Guardian fill:#fff3e0
     style Orchestrator fill:#f3e5f5
     style Memory fill:#e8f5e8
     style Tools fill:#fff8e1
     style HUD fill:#fce4ec
+    style Cost fill:#ffebee
 ```
 
 ## 🔧 Component Overview
 
-### 1. **Frontend Layer (Web/Mobile)** ✅ IMPLEMENTED
+### 1. **Hybrid Planner System** 🔄 IN PROGRESS
+```
+services/orchestrator/src/planner/
+├── provider_manager.py      # OpenAI + local switching
+├── openai_planner.py        # GPT-4o-mini driver
+├── toolselector.py          # Local fallback (enum-only)
+└── arg_builder.py           # Deterministic argument building
+```
+
+**Features:**
+- **Primary**: OpenAI GPT-4o-mini with function-calling
+- **Fallback**: Local ToolSelector (3B model, enum-only schema)
+- **Cost Control**: Daily/weekly budget with auto-switch
+- **User Opt-in**: `cloud_ok` flag for cloud processing
+- **Arg Building**: Deterministic argument construction with error taxonomy
+
+**SLO Targets:**
+- OpenAI: schema_ok ≥ 99%, p95 ≤ 900ms
+- Local fallback: schema_ok ≥ 95%, p95 ≤ 1200ms
+- Arg building: success ≥ 95%
+
+### 2. **Frontend Layer (Web/Mobile)** ✅ IMPLEMENTED
 ```typescript
 apps/web/                    # Next.js frontend app
 ├── src/components/
@@ -90,7 +115,28 @@ Brownout != NONE → forced neutral_alice
 - Final transcript: <1000ms  
 - End-to-end: <2000ms
 
-### 3. **Guardian System (Security)** ✅ IMPLEMENTED
+### 4. **Cost Management & Security** 🔄 IN PROGRESS
+```
+services/orchestrator/src/security/
+├── cost_tracker.py          # OpenAI token/cost tracking
+├── budget_gate.py           # Daily/weekly budget enforcement
+├── n8n_security.py          # HMAC + replay protection
+└── cloud_optin.py           # User opt-in management
+```
+
+**Features:**
+- **Cost Tracking**: OpenAI tokens and cost per turn
+- **Budget Gates**: Daily ($1) and weekly ($3) limits with auto-switch
+- **n8n Security**: HMAC-SHA256 + timestamp verification
+- **Replay Protection**: Guardian prevents duplicate webhook execution
+- **User Opt-in**: `cloud_ok` flag with audit logging
+
+**Security Requirements:**
+- n8n webhooks require HMAC-SHA256 + timestamp
+- Guardian verifies ±300s window and prevents replay
+- Cost budget breach triggers automatic local fallback
+
+### 5. **Guardian System (Resource Protection)** ✅ IMPLEMENTED
 ```
 services/guardian/
 ├── src/core/
@@ -272,6 +318,28 @@ v2/
 └── infrastructure/
     ├── docker/            # Container definitions
     └── k8s/               # Kubernetes manifests
+```
+
+## 🔧 Environment Configuration
+
+### Hybrid Planner Environment Variables
+```bash
+# Provider Configuration
+PLANNER_PROVIDER=openai|local          # Primary planner provider
+PLANNER_ARGS_FROM_MODEL=false          # Use deterministic arg building
+PLANNER_TIMEOUT_MS=1200                # Planner timeout
+
+# OpenAI Configuration
+OPENAI_API_KEY=sk-...                  # OpenAI API key
+OPENAI_DAILY_BUDGET_USD=1.00          # Daily cost limit
+OPENAI_WEEKLY_BUDGET_USD=3.00         # Weekly cost limit
+
+# User Opt-in
+CLOUD_OK=false                         # User opt-in for cloud processing
+
+# n8n Security
+N8N_WEBHOOK_SECRET=your-secret         # HMAC signing secret
+N8N_REPLAY_WINDOW_S=300                # Replay protection window
 ```
 
 ## 🚀 Deployment Architecture
