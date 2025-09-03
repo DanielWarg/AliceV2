@@ -89,6 +89,34 @@ curl -s -u alice:secret -H 'Content-Type: application/json' \
   http://localhost:18000/webhook/email_draft | jq .
 ```
 
+### n8n – Import & Troubleshooting
+
+```bash
+# Inloggning (standard):
+#   UI: http://localhost:5678
+#   User/Pass: alice / secret
+
+# Importera flöden i UI
+# 1) Öppna UI → Workflows → Import from file → välj:
+#    services/n8n/flows/email_draft.json
+#    services/n8n/flows/calendar_draft.json
+#    services/n8n/flows/batch_rag.json
+# 2) Aktivera varje workflow (toggle: Active)
+
+# Verifiera REST (listar workflows)
+curl -s -u alice:secret http://localhost:5678/rest/workflows | jq .
+
+# Snabb hälsokoll av n8n
+curl -s http://localhost:5678/healthz
+
+# Felsökning (ERR_CONNECTION_REFUSED):
+# - Säkerställ portmappning i docker-compose (ports: "5678:5678")
+# - Starta om tjänsten: docker compose up -d n8n
+# - Läs loggar: docker logs alice-n8n --tail 200
+# - Kontrollera env i container: docker inspect alice-n8n
+#   (N8N_HOST=localhost, N8N_PROTOCOL=http, N8N_EDITOR_BASE_URL=http://localhost:5678)
+```
+
 ### 🔧 Manual Setup (Alternative)
 ```bash
 # Clone and enter directory
