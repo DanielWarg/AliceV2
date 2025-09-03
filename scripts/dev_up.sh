@@ -68,7 +68,7 @@ for i in {1..60}; do
   if curl -fsS http://localhost:$PORT/health >/dev/null 2>&1; then
     log_info "✅ Up: http://localhost:$PORT"
     log_info "🚀 Alice v2 development stack is ready!"
-    log_info "📊 HUD: http://localhost:$PORT/hud"
+    log_info "📊 HUD: http://localhost:3001 (Next.js) | http://localhost:$PORT/hud (Streamlit)"
     log_info "🔍 Health: http://localhost:$PORT/health"
     exit 0
   fi

@@ -104,7 +104,9 @@ make up
 make test-all
 
 # Access HUD
-open http://localhost:18000/hud
+# Direkt: http://localhost:3001 (Next.js HUD)
+# Via proxy: http://localhost:18000/hud (Streamlit dashboard)
+open http://localhost:3001
 ```
 
 ## ⚡ Solo Quickstart (Local Lite)
@@ -199,7 +201,8 @@ docker compose logs -f
 docker compose logs -f orchestrator
 
 # HUD (real-time monitoring)
-open http://localhost:18000/hud
+open http://localhost:3001  # Next.js HUD (direkt)
+# eller: open http://localhost:18000/hud  # Streamlit dashboard (via proxy)
 ```
 
 ### 🔧 Manual Setup (Alternative)
@@ -219,7 +222,8 @@ curl http://localhost:18000/api/status/simple
 ./scripts/auto_verify.sh
 
 # HUD via proxy
-open http://localhost:18000/hud
+open http://localhost:3001  # Next.js HUD (direkt)
+# eller: open http://localhost:18000/hud  # Streamlit dashboard (via proxy)
 ```
 
 ### 🧪 Development Workflow
