@@ -1,9 +1,27 @@
-# Default owners
-* @evil
+# Code ownership for Alice v2
+# Each line is a file pattern followed by one or more owners
 
-# Services
-/services/orchestrator/ @evil
-/services/guardian/ @evil
-/services/eval/ @evil
-/monitoring/ @evil
-/scripts/ @evil
+# Core services
+/services/orchestrator/   @DanielWarg
+/services/guardian/       @DanielWarg
+/services/memory/         @DanielWarg
+/services/voice/          @DanielWarg
+
+# Frontend and HUD
+/apps/                    @DanielWarg
+/monitoring/              @DanielWarg
+
+# Configuration and deployment
+/docker-compose.yml       @DanielWarg
+/ops/                     @DanielWarg
+/scripts/                 @DanielWarg
+
+# Documentation and architecture
+/.cursor/rules/           @DanielWarg
+/README.md                @DanielWarg
+/ROADMAP.md               @DanielWarg
+/ALICE_SYSTEM_BLUEPRINT.md @DanielWarg
+
+# Tests and data
+/data/                    @DanielWarg
+/tests/                   @DanielWarg

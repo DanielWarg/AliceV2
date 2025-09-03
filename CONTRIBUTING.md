@@ -63,6 +63,17 @@ curl http://localhost:8787/guardian/health
 5. **Commit**: Use conventional commit format
 6. **Pull Request**: Create PR with detailed description
 
+### Architecture First (required for significant changes)
+Before coding, update and link:
+- `.cursor/rules/ADR.mdc` (decision, alternatives, consequences)
+- `.cursor/rules/PRD.mdc` (goals, SLOs, constraints, budget)
+- `.cursor/rules/workflow.mdc` (steps, commands, gates)
+
+A PR cannot be merged until:
+- `./scripts/auto_verify.sh` is green and artifacts exist under `data/tests/` and `data/telemetry/`
+- Planner SLOs met (schema_ok ≥99%, P95 ≤900ms, tail >1.5s <1%)
+- Cost within daily budget; cloud_ok policy respected
+
 ## 📋 Code Standards
 
 ### TypeScript/JavaScript
@@ -125,6 +136,12 @@ pnpm test:e2e         # End-to-end tests
 pnpm test:performance # Performance tests
 ```
 
+### System Gates (must pass)
+- `auto_verify.sh --count 50` per route (planner_openai & planner_local)
+- Arg-building success ≥95% with error taxonomy metrics
+- n8n door-to-door P95 ≤10s with valid HMAC
+- Cost tracking included in `summary.json` and HUD
+
 ## 🔒 Security Guidelines
 
 ### Code Review Security
@@ -133,11 +150,35 @@ pnpm test:performance # Performance tests
 - Validate all user inputs
 - Follow OWASP security guidelines
 
+### Cloud & Webhook Policy
+- OpenAI use requires explicit user opt-in (`cloud_ok=true` per session)
+- Enforce daily/weekly budget via Guardian; auto-switch to local planner on breach
+- n8n webhooks must be HMAC-SHA256 signed with timestamp; Guardian verifies ±300s and blocks replays
+
 ### Vulnerability Reporting
 - Report security issues privately (see SECURITY.md)
 - Do not create public GitHub issues for security problems
 - Include detailed reproduction steps
 - Provide impact assessment
+
+## 🔧 Development Tools
+
+### Pre-commit Hooks
+We use pre-commit hooks to maintain code quality:
+
+```bash
+# JavaScript/TypeScript
+pnpm dlx husky-init && pnpm i
+# hooks: pnpm lint && pnpm type-check && pnpm -w format:check
+
+# Python
+pre-commit install
+# .pre-commit-config.yaml: ruff, black, detect-secrets
+```
+
+### Reproducibility
+- `make up` must be idempotent (models, seeds, version-locked lockfiles)
+- `system_prompt_sha256` in `/health` and turn-events (for traceability)
 
 ## 📚 Documentation Standards
 
@@ -161,6 +202,10 @@ pnpm test:performance # Performance tests
 - [ ] Security review completed
 - [ ] Performance benchmarks met
 - [ ] Changelog updated
+- [ ] ADR/PRD/workflow updated and linked in PR
+- [ ] auto_verify artifacts attached (`summary.json`, `results.jsonl`)
+- [ ] Cost report for planner_openai (tokens & USD) within budget
+- [ ] Rollback path verified (`PLANNER_PROVIDER=local`)
 
 ### Release Steps
 1. **Version Bump**: Update version in package.json
