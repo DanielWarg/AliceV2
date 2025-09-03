@@ -28,6 +28,15 @@ THROTTLE_SLEEP=${THROTTLE_SLEEP:-0.05}   # Per-iteration sleep when throttled
 LOAD_CHECK_EVERY=${LOAD_CHECK_EVERY:-25} # Re-check cadence during loops
 SAFETY_THROTTLED=0
 
+# Test timeout and watchdog settings
+TIME_CAP_S=${TIME_CAP_S:-300}  # Max 5 minutes total test time
+ABORT_ON_UNHEALTHY=${ABORT_ON_UNHEALTHY:-true}
+ABORT_ON_P95_MS=${ABORT_ON_P95_MS:-8000}  # Abort if P95 > 8s
+ABORT_ON_SCHEMA_OK=${ABORT_ON_SCHEMA_OK:-50}  # Abort if schema_ok < 50%
+ABORT_ON_FALLBACK=${ABORT_ON_FALLBACK:-20}  # Abort if fallback > 20%
+SKIP_EVAL=${SKIP_EVAL:-false}
+REPORT_INTERVAL=${REPORT_INTERVAL:-30}  # Report every 30 seconds
+
 # Traffic generation parameters (counts + customizable messages)
 MICRO_LOOPS=${MICRO_LOOPS:-50}
 PLANNER_LOOPS=${PLANNER_LOOPS:-1500}
@@ -115,13 +124,6 @@ mkdir -p "$ART_DIR"
 PROG_LOG="$ART_DIR/progress.log"
 > "$PROG_LOG"
 
-# Watchdog & health guards
-TIME_CAP_S=${TIME_CAP_S:-0}                 # 0 = disabled
-REPORT_INTERVAL=${REPORT_INTERVAL:-15}      # seconds between progress reports
-ABORT_ON_UNHEALTHY=${ABORT_ON_UNHEALTHY:-true}
-ABORT_ON_P95_MS=${ABORT_ON_P95_MS:-0}       # 0 = disabled
-ABORT_ON_SCHEMA_OK=${ABORT_ON_SCHEMA_OK:-0} # 0 = disabled (% threshold)
-
 TODAY=$(date +%F)
 TEL_FILE="$TEL_DIR/$TODAY/events_$TODAY.jsonl"
 
@@ -160,6 +162,20 @@ watchdog_check(){
       pct=$(awk -v a=$ok -v b=$total 'BEGIN{printf("%d", (a>0&&b>0)?(a*100.0/b):0)}')
       if [ "$pct" -lt "$ABORT_ON_SCHEMA_OK" ]; then
         echo "❌ schema_ok ${pct}% < ${ABORT_ON_SCHEMA_OK}% – abort" | tee -a "$PROG_LOG"
+        exit 1
+      fi
+    fi
+  fi
+  # Quick fallback gate
+  if [ "${ABORT_ON_FALLBACK:-0}" -gt 0 ] && [ -f "$TEL_FILE" ]; then
+    local last total fallback pct
+    last=$(tail -n 200 "$TEL_FILE" 2>/dev/null || true)
+    total=$(echo "$last" | grep -c '"route": "planner"' || true)
+    if [ "$total" -gt 0 ]; then
+      fallback=$(echo "$last" | grep -c '"fallback_used": true' || true)
+      pct=$(awk -v a=$fallback -v b=$total 'BEGIN{printf("%d", (a>0&&b>0)?(a*100.0/b):0)}')
+      if [ "$pct" -gt "$ABORT_ON_FALLBACK" ]; then
+        echo "❌ planner fallback_used ${pct}% > ${ABORT_ON_FALLBACK}% – abort" | tee -a "$PROG_LOG"
         exit 1
       fi
     fi

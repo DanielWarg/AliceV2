@@ -6,6 +6,7 @@ import re
 import structlog
 from typing import Dict, Any, List, Tuple, Optional
 from dataclasses import dataclass
+import os
 
 logger = structlog.get_logger(__name__)
 
@@ -100,6 +101,12 @@ class RouterPolicy:
         micro_score = self._calculate_micro_score(features)
         planner_score = self._calculate_planner_score(features)
         deep_score = self._calculate_deep_score(features)
+        
+        # Local Lite logic: Check if we should skip planner for simple intents
+        safe_mode = os.getenv("SAFE_MODE", "false").lower() == "true"
+        if safe_mode and micro_score > 0.5:
+            # In safe mode, prefer micro for simple intents
+            planner_score *= 0.3  # Reduce planner preference
         
         # Normalize scores
         total_score = micro_score + planner_score + deep_score
