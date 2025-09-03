@@ -79,8 +79,8 @@ services/tester/                  # ❌ OBSOLETE - Replaced by services/eval/
 - **ASR Partial**: <300ms after speech detected
 - **ASR Final**: <800ms after silence
 - **Guardian Response**: <150ms state transitions ✅
-- **Micro LLM**: <250ms first token (current: 39ms)
-- **Planner LLM**: <900ms first token, <1500ms complete (current: 33ms)
+- **Micro LLM**: <250ms first token (aktiveras när modell är tillgänglig)
+- **Planner LLM**: <900ms first token, <1500ms complete (aktiveras när modell är tillgänglig)
 - **Deep LLM**: <1800ms first token, <3000ms complete (aktiveras efter Guardian-gate)
 - **TTS Cached**: <120ms audio generation
 - **TTS Uncached**: <800ms (≤40 characters)

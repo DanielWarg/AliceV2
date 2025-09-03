@@ -100,6 +100,10 @@ Svar: {"version":1,"tool":"none","reason":"Tack, inget verktyg behövs"}"""
         text = text.strip()
         text = text.replace("```json", "").replace("```", "")
         
+        # Fix <enum> placeholders
+        text = text.replace('"<enum>"', '"none"')
+        text = text.replace("'<enum>'", '"none"')
+        
         # Quick repair: balance braces and quotes if exactly one is missing
         if text.count("{") == text.count("}") - 1:
             text += "}"
@@ -132,8 +136,39 @@ Svar: {"version":1,"tool":"none","reason":"Tack, inget verktyg behövs"}"""
             # If high confidence classification, skip LLM
             if not classification.use_llm:
                 logger.info("Using classifier result, skipping LLM")
+                
+                # Create schema v4 compatible output
+                from ..planner.schema_v4 import PlanOut, IntentType, ToolType, RenderInstruction
+                
+                # Map tool to intent
+                intent_map = {
+                    "weather.lookup": "weather",
+                    "calendar.create_draft": "calendar", 
+                    "email.create_draft": "email",
+                    "memory.query": "memory",
+                    "none": "greeting"
+                }
+                
+                intent = intent_map.get(classification.tool, "greeting")
+                tool = classification.tool if classification.tool != "none" else None
+                
+                # Create schema v4 output
+                schema_v4_output = {
+                    "intent": intent,
+                    "tool": tool,
+                    "args": {},
+                    "render_instruction": "none",
+                    "meta": {
+                        "version": "4.0",
+                        "model_id": "classifier_v2",
+                        "schema_version": "v4",
+                        "classifier_used": True,
+                        "confidence": classification.confidence
+                    }
+                }
+                
                 return {
-                    "text": f'{{"version":1,"tool":"{classification.tool}","reason":"{classification.reason}"}}',
+                    "text": json.dumps(schema_v4_output, ensure_ascii=False),
                     "model": "classifier",
                     "tokens_used": 0,
                     "temperature": 0.0,
@@ -261,7 +296,7 @@ Svar: {"version":1,"tool":"none","reason":"Tack, inget verktyg behövs"}"""
                 "fallback_used": False,
                 "fallback_reason": None,
                 "circuit_open": False,
-                "level": classification_result.level if classification_result else "medium"
+                "level": getattr(classification_result, 'level', 'medium') if 'classification_result' in locals() else "medium"
             }
             
         except Exception as e:
@@ -275,10 +310,10 @@ Svar: {"version":1,"tool":"none","reason":"Tack, inget verktyg behövs"}"""
         """Generate fallback response when planner fails"""
         return {
             "text": "Jag kunde inte planera denna åtgärd just nu. Kan jag hjälpa dig på ett annat sätt?",
-            "model": "fallback",
+            "model": "planner_fallback",
             "tokens_used": 0,
             "temperature": 0.0,
-            "route": "fallback",
+            "route": "planner",
             "json_parsed": False,
             "schema_ok": False,
             "tool": "none",

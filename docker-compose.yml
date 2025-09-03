@@ -46,8 +46,9 @@ services:
       - LOG_DIR=/data/telemetry
       - OLLAMA_BASE_URL=http://host.docker.internal:11434
       - OLLAMA_HOST=http://host.docker.internal:11434
-      - MICRO_MODEL=phi3:mini
+      - MICRO_MODEL=llama3:8b
       - MICRO_DRIVER_VERSION=2
+      - FEATURE_MICRO_MOCK=1
       - LLM_PLANNER=llama3.2:1b-instruct-q4_K_M
       - PLANNER_TIMEOUT_MS=8000
       - PLANNER_REPAIR_TIMEOUT_MS=200
@@ -70,8 +71,8 @@ services:
       - PLANNER_CANARY_MIN_INTENT_MATCH=0.90
       - PLANNER_CANARY_LEVELS=easy,medium
       - PLANNER_CANARY_MAX_LAT_MS=150
-                        - PLANNER_CANARY_EVAL_WINDOW_HOURS=24
-                  - PLANNER_CANARY_AUTO_ROLLBACK=1
+      - PLANNER_CANARY_EVAL_WINDOW_HOURS=24
+      - PLANNER_CANARY_AUTO_ROLLBACK=1
       - SHADOW_EVAL_DIR=data/shadow_eval
       - PLANNER_SCHEMA_VERSION=4
     volumes:

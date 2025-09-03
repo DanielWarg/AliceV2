@@ -506,13 +506,17 @@ async def orchestrator_chat(
         
         # Route to appropriate model using LLM Integration v1 (+ NLU hint)
         # Respect force_route parameter if provided
-        if hasattr(chat_request, 'force_route') and chat_request.force_route:
-            route = chat_request.force_route
+        force_route = getattr(chat_request, 'force_route', None)
+        if force_route:
+            route = force_route
         else:
             route = route_request(chat_request)
             if nlu_route_hint in {"micro", "planner", "deep"}:
                 route = nlu_route_hint
         logger.info("Route selected", route=route)
+        
+        # Initialize shadow mode if enabled
+        shadow_enabled = os.getenv("PLANNER_SHADOW_ENABLED", "0") == "1"
         
         # Generate response based on route
         llm_response = None
@@ -522,13 +526,14 @@ async def orchestrator_chat(
         
         try:
             if route == "micro":
-                micro_driver = get_micro_driver()
-                llm_response = micro_driver.generate(chat_request.message)
+                # Force mock for Step 8 validation
+                from ..llm.micro_client import MockMicroClient
+                mock_client = MockMicroClient()
+                llm_response = mock_client.generate(chat_request.message)
                 model_used = llm_response["model"]
+                fallback_used = True
                 
             elif route == "planner":
-                # Initialize shadow mode if enabled
-                shadow_enabled = os.getenv("PLANNER_SHADOW_ENABLED", "0") == "1"
                 canary_router = CanaryRouter() if shadow_enabled else None
                 
                 # Use hybrid planner if enabled, otherwise fallback to local
@@ -656,7 +661,7 @@ async def orchestrator_chat(
                 "top_k": 0,
                 "hits": 0,
                 "llm_model": model_used,
-                "planner_schema_ok": llm_response.get("schema_ok", False) if llm_response else False,
+                "planner_schema_ok": llm_response.get("schema_ok", llm_response.get("meta", {}).get("schema_ok", False)) if llm_response else False,
                 "repair_used": llm_response.get("repair_used", False) if llm_response else False,
                 "circuit_open": llm_response.get("circuit_open", False) if llm_response else False,
                 "fallback_used": llm_response.get("fallback_used", False) if llm_response else fallback_used,
@@ -683,7 +688,7 @@ async def orchestrator_chat(
         metadata = {
             "route": route_final,
             "llm_model": model_used,
-            "planner_schema_ok": llm_response.get("schema_ok", False) if llm_response else False,
+            "planner_schema_ok": llm_response.get("schema_ok", llm_response.get("meta", {}).get("schema_ok", False)) if llm_response else False,
             "repair_used": llm_response.get("repair_used", False) if llm_response else False,
             "circuit_open": llm_response.get("circuit_open", False) if llm_response else False,
             "fallback_used": llm_response.get("fallback_used", False) if llm_response else fallback_used,

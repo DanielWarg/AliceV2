@@ -101,7 +101,7 @@ resource_guard() {
     low_batt=1
   fi
 
-  if [ "$over_load" -eq 1 ] || [ "$low_batt" -eq 1 ]; then
+  if [ "${DISABLE_RESOURCE_GUARD:-0}" != "1" ] && ([ "$over_load" -eq 1 ] || [ "$low_batt" -eq 1 ]); then
     SAFETY_THROTTLED=1
     echo "⚠️  Resource guard active (load=${load}, batt=${batt}%, ac=${ac}). Throttling..."
     # Reduce loops to keep system cool
