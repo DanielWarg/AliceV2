@@ -76,6 +76,25 @@
 
 > Policy: No steps are checked off until the live test‑gate is green and artifacts exist under `data/tests/` and `data/telemetry/`.
 
+## 🐳 Docker Development Lessons
+
+**Key insight**: Docker cache is not your friend for code changes. We learned this the hard way during hybrid routing implementation.
+
+**Best practices**:
+- Use `make dev-fast` for rapid development (2 min vs 5 min)
+- Use `make down && make up` for code changes (not `docker compose restart`)
+- Use `docker compose restart` only for config changes
+- Full rebuild is often faster than debugging cache issues
+
+**Performance comparison**:
+| Command | Time | Services | Use case |
+|---------|------|----------|----------|
+| `make up` | ~5 min | All | Full stack |
+| `make dev-fast` | ~2 min | Core only | Fast development |
+| `docker compose restart` | ~15 sec | One service | Config changes |
+
+See `docs/development/docker_cache_lessons.md` for detailed analysis.
+
 ## 🛠️ Development Setup (Updated)
 
 **One-command setup**:
@@ -90,6 +109,7 @@ make test-all     # Runs complete test suite (unit + e2e + integration)
 ```bash
 make help         # Show all available commands
 make up           # Start development stack (auto-setup)
+make dev-fast     # Start core services only (fast development)
 make down         # Stop development stack
 make restart      # Restart development stack
 make test-all     # Run complete test suite

@@ -73,6 +73,17 @@ up: install-requirements fetch-models ## Start development stack (auto-setup)
 	@echo "🎨 Starting frontend..."
 	@$(MAKE) frontend
 
+dev-fast: install-requirements fetch-models ## Start core services only (fast dev)
+	@echo "🚀 Starting core services (fast dev mode)..."
+	@if docker info >/dev/null 2>&1; then \
+		./scripts/dev_up_fast.sh; \
+	else \
+		echo "⚠️  Docker not running. Start Docker first."; \
+		exit 1; \
+	fi
+	@echo "🎨 Starting frontend..."
+	@$(MAKE) frontend
+
 down: ## Stop development stack (with Docker fallback)
 	@echo "🛑 Stopping dev stack..."
 	@echo "🎨 Stopping frontend..."
