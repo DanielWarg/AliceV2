@@ -7,6 +7,7 @@ from .micro_phi import get_micro_driver, MicroPhiDriver
 from .planner_qwen import get_planner_driver, PlannerQwenDriver
 from .planner_classifier import get_planner_classifier, PlannerClassifier, ClassificationResult
 from .planner_hybrid import get_hybrid_planner_driver, PlannerHybridDriver
+from .planner_v2 import get_planner_v2_driver, PlannerV2Driver
 from .deep_llama import get_deep_driver, DeepLlamaDriver
 
 __all__ = [
@@ -22,6 +23,8 @@ __all__ = [
     "ClassificationResult",
     "get_hybrid_planner_driver",
     "PlannerHybridDriver",
+    "get_planner_v2_driver",
+    "PlannerV2Driver",
     "get_deep_driver",
     "DeepLlamaDriver"
 ]

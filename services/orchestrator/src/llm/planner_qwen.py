@@ -260,7 +260,8 @@ Svar: {"version":1,"tool":"none","reason":"Tack, inget verktyg behövs"}"""
                 "total_time_ms": total_time,
                 "fallback_used": False,
                 "fallback_reason": None,
-                "circuit_open": False
+                "circuit_open": False,
+                "level": classification_result.level if classification_result else "medium"
             }
             
         except Exception as e:
@@ -285,7 +286,8 @@ Svar: {"version":1,"tool":"none","reason":"Tack, inget verktyg behövs"}"""
             "generation_time_ms": 0,
             "total_time_ms": 0,
             "fallback_used": True,
-            "fallback_reason": reason
+            "fallback_reason": reason,
+            "level": "medium"
         }
     
     def _record_failure(self):

@@ -320,15 +320,21 @@ make dev-quick    # Quick development workflow (up + e2e only)
 - Max 3 tools per conversation turn
 
 **Definition of Done**:
-- [ ] Tool schema = enum-only; deterministic arg-builders + error taxonomy (`ARG_MISSING_SLOT|UNCERTAIN|AMBIGUOUS|INVALID_FORMAT`)
-- [ ] OpenAI rate limit (2 rps), circuit breaker (5 fails/30s → 30s pause)
-- [ ] Budget guard active (`OPENAI_DAILY_BUDGET_USD`, auto switch to local)
-- [ ] cloud_ok per session (opt-in) + audit log
-- [ ] n8n webhooks HMAC-SHA256 (+/- 300s) + replay-guard (Redis SETNX)
-- [ ] MCP tool registry implemented
-- [ ] 1-2 tool-calls per flow validated
-- [ ] Schema-validated tool execution
-- [ ] Tool fallback matrix implemented
+- [x] Tool schema = enum-only; deterministic arg-builders + error taxonomy (`ARG_MISSING_SLOT|UNCERTAIN|AMBIGUOUS|INVALID_FORMAT`)
+- [x] OpenAI rate limit (2 rps), circuit breaker (5 fails/30s → 30s pause)
+- [x] Budget guard active (`OPENAI_DAILY_BUDGET_USD`, auto switch to local)
+- [x] cloud_ok per session (opt-in) + audit log
+- [x] n8n webhooks HMAC-SHA256 (+/- 300s) + replay-guard (Redis SETNX)
+- [x] MCP tool registry implemented
+- [x] 1-2 tool-calls per flow validated
+- [x] Schema-validated tool execution
+- [x] Tool fallback matrix implemented
+- [x] **Shadow Mode**: 100% traffic comparison v1 vs v2
+- [x] **Canary Routing**: 5% live traffic via v2 with guardrails
+- [x] **Schema v4**: Strict Pydantic models with canonicalizer
+- [x] **Auto-repair**: Enum-fix and schema validation
+- [x] **Level-gating**: EASY+MEDIUM only for canary
+- [x] **Real-time metrics**: Live monitoring via HUD
 
 **Checklist**:
 - [ ] Tool registry with health monitoring

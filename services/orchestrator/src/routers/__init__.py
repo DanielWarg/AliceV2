@@ -1,2 +1,2 @@
 # Routers package
-from . import chat, orchestrator, status, feedback, learn, memory
+from . import chat, orchestrator, status, feedback, learn, memory, shadow_dashboard

@@ -33,7 +33,7 @@ class TestResult:
     success: bool
 
 class PlannerStressTest:
-    def __init__(self, base_url: str = "http://localhost:18000"):
+    def __init__(self, base_url: str = "http://localhost:8000"):
         self.base_url = base_url
         self.session_id = f"stress-test-{int(time.time())}"
         self.results: List[TestResult] = []
@@ -112,8 +112,8 @@ class PlannerStressTest:
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.post(
-                    f"{self.base_url}/api/chat",  # Use working chat endpoint
-                    headers={"Content-Type": "application/json", "Authorization": "Bearer test-key-123"},
+                    f"{self.base_url}/api/planner/plan",  # Use planner endpoint
+                    headers={"Content-Type": "application/json"},
                     json=payload,
                     timeout=aiohttp.ClientTimeout(total=10)
                 ) as response:
@@ -286,12 +286,25 @@ class PlannerStressTest:
 async def main():
     """Main function"""
     import sys
+    import argparse
     
-    base_url = "http://localhost:18000"
-    if len(sys.argv) > 1:
-        base_url = sys.argv[1]
+    parser = argparse.ArgumentParser(description="Planner Stress Test")
+    parser.add_argument("--scenarios", type=int, default=50, help="Number of scenarios to test")
+    parser.add_argument("--level", type=str, default="easy,medium,hard", help="Complexity levels to test")
+    parser.add_argument("--base-url", type=str, default="http://localhost:18000", help="Base URL for API")
     
-    tester = PlannerStressTest(base_url)
+    args = parser.parse_args()
+    
+    # Filter scenarios by level
+    levels = args.level.split(",")
+    filtered_scenarios = [s for s in PlannerStressTest().scenarios if s.complexity in levels]
+    
+    # Limit number of scenarios
+    if args.scenarios < len(filtered_scenarios):
+        filtered_scenarios = filtered_scenarios[:args.scenarios]
+    
+    tester = PlannerStressTest(args.base_url)
+    tester.scenarios = filtered_scenarios
     await tester.run_all_tests()
 
 if __name__ == "__main__":

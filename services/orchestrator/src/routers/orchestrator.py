@@ -20,7 +20,8 @@ from ..utils.energy import EnergyMeter
 from ..utils.tool_errors import record_tool_call, classify_tool_error
 
 # LLM Integration v1 imports
-from ..llm import get_micro_driver, get_planner_driver, get_hybrid_planner_driver, get_deep_driver
+from ..llm import get_micro_driver, get_planner_driver, get_hybrid_planner_driver, get_planner_v2_driver, get_deep_driver
+from ..shadow import CanaryRouter
 from ..router import get_router_policy
 from ..planner import get_planner_executor
 import hashlib
@@ -526,6 +527,10 @@ async def orchestrator_chat(
                 model_used = llm_response["model"]
                 
             elif route == "planner":
+                # Initialize shadow mode if enabled
+                shadow_enabled = os.getenv("PLANNER_SHADOW_ENABLED", "0") == "1"
+                canary_router = CanaryRouter() if shadow_enabled else None
+                
                 # Use hybrid planner if enabled, otherwise fallback to local
                 if os.getenv("PLANNER_HYBRID_ENABLED", "0") == "1":
                     planner_driver = get_hybrid_planner_driver()
@@ -534,8 +539,37 @@ async def orchestrator_chat(
                     planner_driver = get_planner_driver()
                     logger.info("Using local planner only")
                 
+                # Generate primary response
                 llm_response = planner_driver.generate(chat_request.message)
                 model_used = llm_response["model"]
+                
+                # Run shadow evaluation if enabled
+                if shadow_enabled:
+                    try:
+                        # Generate shadow response with planner v2
+                        shadow_driver = get_planner_v2_driver()
+                        shadow_result = shadow_driver.generate(chat_request.message)
+                        
+                        # Evaluate shadow vs primary
+                        shadow_response = await canary_router.evaluate_shadow(
+                            session_id=chat_request.session_id,
+                            message=chat_request.message,
+                            primary_result=llm_response,
+                            shadow_result=shadow_result,
+                            trace_id=trace_id
+                        )
+                        
+                        # Use shadow result if canary routing is enabled and eligible
+                        if shadow_response.canary_routed:
+                            logger.info("Using canary response (planner v2)")
+                            llm_response = shadow_result
+                            model_used = shadow_result["model"]
+                        else:
+                            logger.info("Using primary response (planner v1)")
+                            
+                    except Exception as shadow_error:
+                        logger.warning("Shadow evaluation failed", error=str(shadow_error))
+                        # Continue with primary response
                 
                 # Execute plan if JSON was parsed successfully
                 if llm_response.get("json_parsed") and llm_response.get("plan"):
@@ -659,6 +693,19 @@ async def orchestrator_chat(
             "planner_execution": planner_execution,
             "nlu": {"intent": nlu_intent_label, "slots": nlu_slots} if (nlu_intent_label or nlu_slots) else None,
         }
+        
+        # Add shadow mode metadata if enabled
+        if shadow_enabled and 'shadow_response' in locals():
+            metadata["shadow"] = {
+                "enabled": True,
+                "canary_eligible": shadow_response.canary_eligible,
+                "canary_routed": shadow_response.canary_routed,
+                "intent_match": shadow_response.comparison.get("intent_match", False),
+                "tool_choice_same": shadow_response.comparison.get("tool_choice_same", False),
+                "latency_delta_ms": shadow_response.comparison.get("latency_delta_ms", 0)
+            }
+        else:
+            metadata["shadow"] = {"enabled": False}
         
         response_data = ChatResponse(
             session_id=chat_request.session_id,

@@ -1,0 +1,18 @@
+root ::= obj
+obj ::= "{" ws "\"intent\"" ws ":" ws intent ws "," ws "\"tool\"" ws ":" ws tool ws "," ws "\"args\"" ws ":" ws args ws "," ws "\"render_instruction\"" ws ":" ws render_instruction ws "," ws "\"meta\"" ws ":" ws meta ws "}"
+
+intent ::= "\"email\"" | "\"calendar\"" | "\"weather\"" | "\"memory\"" | "\"none\""
+tool ::= "\"email.create_draft\"" | "\"calendar.create_draft\"" | "\"weather.lookup\"" | "\"memory.query\"" | "\"none\""
+render_instruction ::= "\"chart\"" | "\"map\"" | "\"scene\"" | "\"none\""
+
+args ::= "{}" | "{" ws key_value ws "}"
+key_value ::= string ws ":" ws value
+value ::= string | number | "true" | "false" | "null"
+
+meta ::= "{" ws "\"version\"" ws ":" ws "\"4.0\"" ws "," ws "\"model_id\"" ws ":" ws string ws "," ws "\"schema_version\"" ws ":" ws "\"v4\"" ws "}"
+
+string ::= "\"" chars "\""
+chars ::= "" | char | char chars
+char ::= [^"\\] | "\\" ["\\/bfnrt]
+number ::= "-"? ("0" | [1-9] [0-9]*) ("." [0-9]+)?
+ws ::= "" | " " ws
