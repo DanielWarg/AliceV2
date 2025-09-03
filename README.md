@@ -49,43 +49,43 @@ alice-v2/
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Docker Desktop (installerat och körande)
+- Docker Desktop (installed and running)
 - Python 3.11+ (for local development)
-- pnpm (för frontend: `npm install -g pnpm`)
-- Ollama (för lokala modeller: https://ollama.ai)
+- pnpm (for frontend: `npm install -g pnpm`)
+- Ollama (for local models: https://ollama.ai)
 
 ### 🚀 First Time Setup
 
-**För nya användare - kör detta EN gång:**
+**For new users - run this ONCE:**
 
 ```bash
-# 1. Installera prerequisites
+# 1. Install prerequisites
 brew install python@3.11 pnpm  # macOS
-# eller: sudo apt install python3.11 pnpm  # Ubuntu
+# or: sudo apt install python3.11 pnpm  # Ubuntu
 
-# 2. Installera Docker Desktop
-# Ladda ner från: https://www.docker.com/products/docker-desktop/
+# 2. Install Docker Desktop
+# Download from: https://www.docker.com/products/docker-desktop/
 
-# 3. Installera Ollama
+# 3. Install Ollama
 curl -fsSL https://ollama.ai/install.sh | sh
 
-# 4. Starta Docker Desktop och Ollama
-# Docker Desktop: Starta appen
-# Ollama: ollama serve (körs automatiskt på macOS)
+# 4. Start Docker Desktop and Ollama
+# Docker Desktop: Start the app
+# Ollama: ollama serve (runs automatically on macOS)
 
-# 5. Klona projektet
+# 5. Clone the project
 git clone https://github.com/your-repo/alice-v2.git
 cd alice-v2
 
-# 6. Sätt environment variables (valfritt)
+# 6. Set environment variables (optional)
 export N8N_ENCRYPTION_KEY=change-me
-export OPENAI_API_KEY=sk-your-key-here  # När vi implementerar OpenAI
+export OPENAI_API_KEY=sk-your-key-here  # When we implement OpenAI
 
-# 7. Starta allt!
+# 7. Start everything!
 make up
 ```
 
-**Efter första gången räcker det med:**
+**After the first time, just run:**
 ```bash
 git pull
 make up
@@ -133,69 +133,69 @@ curl -s -u alice:secret -H 'Content-Type: application/json' \
 ### n8n – Import & Troubleshooting
 
 ```bash
-# Inloggning (första gången):
+# Login (first time):
 #   UI: http://localhost:5678
-#   Skapa konto med email (Basic Auth avstängt)
-#   Efter setup: importera flows och aktivera
+#   Create account with email (Basic Auth disabled)
+#   After setup: import flows and activate
 
-# Importera flöden i UI
-# 1) Öppna UI → Workflows → Import from file → välj:
+# Import flows in UI
+# 1) Open UI → Workflows → Import from file → select:
 #    services/n8n/flows/email_draft.json
 #    services/n8n/flows/calendar_draft.json
 #    services/n8n/flows/batch_rag.json
-# 2) Aktivera varje workflow (toggle: Active)
+# 2) Activate each workflow (toggle: Active)
 
-# Verifiera REST (listar workflows)
+# Verify REST (lists workflows)
 curl -s -u alice:secret http://localhost:5678/rest/workflows | jq .
 
-# Snabb hälsokoll av n8n
+# Quick health check of n8n
 curl -s http://localhost:5678/healthz
 
-# Felsökning (ERR_CONNECTION_REFUSED):
-# - Säkerställ portmappning i docker-compose (ports: "5678:5678")
-# - Starta om tjänsten: docker compose up -d n8n
-# - Läs loggar: docker logs alice-n8n --tail 200
-# - Kontrollera env i container: docker inspect alice-n8n
+# Troubleshooting (ERR_CONNECTION_REFUSED):
+# - Ensure port mapping in docker-compose (ports: "5678:5678")
+# - Restart service: docker compose up -d n8n
+# - Read logs: docker logs alice-n8n --tail 200
+# - Check env in container: docker inspect alice-n8n
 #   (N8N_HOST=localhost, N8N_PROTOCOL=http, N8N_EDITOR_BASE_URL=http://localhost:5678)
 ```
 
 ### 🔧 Troubleshooting
 
-**Vanliga problem och lösningar:**
+**Common problems and solutions:**
 
 ```bash
-# Port 18000 redan i bruk
+# Port 18000 already in use
 ./scripts/ports-kill.sh
 
-# Docker containers startar inte
+# Docker containers won't start
 docker compose down --remove-orphans
 docker compose up -d
 
-# Ollama modeller saknas
+# Ollama models missing
 ollama pull qwen2.5:3b
 ollama pull phi3:mini
 
-# n8n UI går inte att nå
-# Kontrollera att n8n container körs:
+# n8n UI not accessible
+# Check if n8n container is running:
 docker compose ps n8n
-# Om inte: docker compose up -d n8n
+# If not: docker compose up -d n8n
 
-# Frontend (HUD) startar inte
+# Frontend (HUD) won't start
 cd apps/hud && pnpm install && pnpm dev
 
-# Alla tester failar
+# All tests fail
 make down
 make up
-sleep 30  # Vänta på att allt är healthy
+sleep 30  # Wait for everything to be healthy
 make test-all
 ```
 
-**Loggar och debugging:**
+**Logs and debugging:**
 ```bash
-# Se alla loggar
+# View all logs
 docker compose logs -f
 
-# Se specifik service
+# View specific service
 docker compose logs -f orchestrator
 
 # HUD (real-time monitoring)
