@@ -17,6 +17,12 @@ Fast, deterministic tool choice with strict JSON. The model only selects a tool 
 }
 ```
 
+## Tool Enum Schema (Strict)
+- Model selects ONLY tool name (enum)
+- Args built deterministically in code
+- No model-generated arguments
+- Error taxonomy: MISSING_SLOT, UNCERTAIN, AMBIGUOUS, INVALID_FORMAT
+
 Rules:
 - No extra fields. No prose outside JSON.
 - Temperature 0.0, format=json (or grammar), stop at "}".

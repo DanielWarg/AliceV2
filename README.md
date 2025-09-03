@@ -1,7 +1,7 @@
 # Alice v2 AI Assistant
 *Production-ready AI assistant with Guardian safety system, real-time observability, and autonomous E2E testing*
 
-> **🚀 Production Status**: Auto-verify PASS 100% | P95 fast=81ms planner=224ms
+> **🚀 Production Status**: Auto-verify PASS 100% | P95 fast=81ms planner=224ms | Step 7: Hybrid Planner (OpenAI + Local)
 
 ## 🎯 Project Overview
 
@@ -40,9 +40,11 @@ alice-v2/
 
 ### Architecture at a glance (Solo Edition)
 - Fast-route for time/weather/memory/smalltalk (utan LLM i loopen)
-- ToolSelector (3B) → enum + reason (strikt JSON); args byggs deterministiskt i kod
+- Hybrid Planner: OpenAI primary + local ToolSelector fallback
+- Tool enum-only schema: model väljer verktyg, args byggs deterministiskt i kod
 - n8n för tunga/asynkrona jobb via säkrade webhooks
-- Guardian skyddar med brownout/circuit‑breakers; dev‑proxy exponerar /api, /ollama, /webhook
+- Guardian skyddar med brownout/circuit‑breakers + OpenAI policies (rate limit, cost budget)
+- User opt-in för cloud processing (cloud_ok flag)
 
 ## 🚀 Quick Start
 
@@ -166,10 +168,12 @@ make fetch-models   # Download required models
 ## 🎯 Solo Edition (Local Lite)
 
 - Fast-route: time/weather/memory/smalltalk utan LLM i loopen
-- ToolSelector (3B): strikt JSON (enum + reason), args byggs i kod
+- Hybrid Planner: OpenAI primary + local ToolSelector fallback
+- Tool enum-only schema: model väljer verktyg, args byggs deterministiskt i kod
 - n8n för tunga jobb (email_draft, calendar_draft, scrape_and_summarize, batch_rag) via säkrade webhooks
 - Röst: Whisper.cpp (STT) + Piper (sv‑SE) för TTS
-- SLO (solo): fast-route p95 ≤ 250 ms; selector p95 ≤ 900 ms; n8n email_draft p95 ≤ 10 s
+- SLO (solo): fast-route p95 ≤ 250 ms; planner p95 ≤ 900 ms; n8n email_draft p95 ≤ 10 s
+- Cost budget: ≤$3/day för OpenAI; user opt-in för cloud processing
 
 ## 🎬 Demo Guide (3 scenarier)
 1) Boka möte i morgon 14:00

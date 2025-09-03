@@ -1,5 +1,5 @@
 ---
-description: "Architecture-First workflow for Alice v2 Planner (Cursor rules)"
+description: "Architecture-First workflow for Alice v2 Hybrid Planner (OpenAI + Local Fallback)"
 globs: ["**/*"]
 alwaysApply: true
 contextFiles:
@@ -14,17 +14,19 @@ contextFiles:
 1) Blueprint (Plan First)
 - Read PRD.mdc and ADR.mdc; confirm success metrics and constraints
 - Identify impacted components and env variables
+- Plan tool enum-only schema and arg building taxonomy
 - Propose edits; no code until owner confirms plan if unclear
 
 2) Construct (Implement Safely)
 - Small, isolated edits; strict typing and error handling
-- Instrumentation: ensure telemetry fields present (schema_ok, fallback_used)
+- Implement provider switching (OpenAI/local) with fallback
+- Instrumentation: ensure telemetry fields present (provider, schema_ok, fallback_used, cost, arg_build)
 - Env-driven config only; no hard-coded endpoints
 
 3) Validate (Test & Gate)
 - Run ./scripts/auto_verify.sh with route focus before scaling
 - Check artifacts in data/tests and telemetry JSONL
-- Gate on planner_schema_ok, tails, P95
+- Gate on planner_schema_ok, tails, P95, cost budget, arg_build_success
 
 4) Document (Update Records)
 - Update ADR status and add follow-up if decisions evolved
@@ -33,3 +35,4 @@ contextFiles:
 5) Operate (Monitor)
 - Start HUD and validate no spikes
 - Ensure Guardian stays NORMAL during steady-state
+- Monitor OpenAI cost and circuit breaker state

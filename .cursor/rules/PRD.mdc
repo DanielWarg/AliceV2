@@ -1,9 +1,9 @@
 ---
-title: "PRD – Alice v2 Planner Route (Text)"
-version: "1.0"
-date: "2025-09-02"
+title: "PRD – Alice v2 Hybrid Planner: OpenAI + Local Fallback"
+version: "2.0"
+date: "2025-09-03"
 owners: ["Platform Team", "AI/Integration Team"]
-description: "Product requirements for the text-based planner route with tools (MCP)"
+description: "Product requirements for hybrid planner with OpenAI primary, local fallback, tool enum-only schema, and deterministic arg building"
 contextFiles:
   - "README.md"
   - "ROADMAP.md"
@@ -11,29 +11,41 @@ contextFiles:
 ---
 
 ## Overview & Goals
-Deliver a reliable planner route that produces actionable tool plans with JSON output, measured and gated by autonomous tests. Maintain Swedish UX, safety (Guardian), and strict SLOs.
+Deliver a hybrid planner route with OpenAI primary and local fallback that produces actionable tool plans with tool enum-only schema and deterministic arg building. Maintain Swedish UX, safety (Guardian), cost control, and strict SLOs.
 
 ## Success Metrics
 - Tool success rate ≥ 95%
 - Planner P95 (first) < 900ms, P95 (full) ≤ 1.5s
 - planner_schema_ok ≥ 99%, fallback_used ≤ 1%
+- Arg build success ≥ 95%
+- OpenAI cost ≤ $3 for test period
+- User cloud_ok opt-in rate ≥ 90% first week
+- n8n flow selection accuracy ≥ 95%
 - ≥500 samples per route before gating; tails ≤1% >1.5s
 
 ## Functional Requirements (Use Cases)
 - Parse user intents (NLU v1) → route hint
-- Generate planner JSON conforming to schema (steps, args, response)
+- Generate tool enum-only JSON (tool, reason) via OpenAI or local fallback
+- Build tool args deterministically in code with error taxonomy
 - Execute 0–3 tools with retries and error taxonomy
-- Log turn events with metrics (ram, energy, tool_calls, schema_ok)
+- User opt-in for cloud processing (cloud_ok flag)
+- Guardian policies: rate limiting, circuit breaker, cost budget
+- Log turn events with metrics (provider, ram, energy, tool_calls, schema_ok, cost, arg_build)
 
 ## Non-Functional Requirements
-- Observability: JSONL logs, P50/P95 per route, HUD
-- Safety: Guardian admission, fast fallback, injection awareness
-- Performance: meet SLO budgets; no requests >3s
+- Observability: JSONL logs, P50/P95 per route, HUD with cost tracking
+- Safety: Guardian admission, fast fallback, injection awareness, rate limiting
+- Performance: meet SLO budgets; no requests >3s; OpenAI timeout 1.2s
+- Cost: budget control ≤$3/day, real-time monitoring, user transparency
+- Privacy: user opt-in required, data minimization, audit logging
 - Language: Swedish prompt/UX; docs in English (repo policy)
 
 ## Assumptions / Constraints / Dependencies
-- Ollama provides local models (planner/micro/deep)
+- OpenAI API available with GPT-4o-mini model
+- Local Ollama provides fallback models (planner/micro/deep)
 - Dev-proxy exposes /api and /ollama
+- User opt-in required for cloud processing
+- Cost budget ≤$3/day for test period
 - Scripts enforce gates via auto_verify.sh
 
 ## Personas
@@ -43,6 +55,10 @@ Deliver a reliable planner route that produces actionable tool plans with JSON o
 ## Release Criteria
 - Auto-verify PASS with above thresholds; artifacts written
 - HUD shows per-route metrics without spikes; no EMERGENCY state
+- OpenAI cost tracking implemented and within budget
+- User cloud_ok opt-in flow working with audit logging
+- Arg building error taxonomy implemented and monitored
 
 ## Change Log
 - 2025-09-02: Initial PRD for Step 7 planner route
+- 2025-09-03: Updated to hybrid OpenAI + local fallback architecture

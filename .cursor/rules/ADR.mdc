@@ -1,8 +1,8 @@
 ---
-title: "ADR-0001 – Planner LLM via Ollama with strict JSON + fallbacks"
+title: "ADR-0001 – Hybrid Planner: OpenAI + Local Fallback with Tool Enum + Arg Building"
 status: "proposed"
-date: "2025-09-02"
-description: "Select planner model integration pattern (Ollama), JSON contract, circuit breakers, and fallbacks."
+date: "2025-09-03"
+description: "Select hybrid planner architecture with OpenAI primary, local fallback, tool enum-only schema, and deterministic arg building."
 globs: ["**/*.py", "**/*.sh", "**/*.md", "**/*.mdc"]
 alwaysApply: false
 contextFiles:
@@ -16,49 +16,61 @@ contextFiles:
 ---
 
 ## Context / Problem Statement
-We need a production-ready planner route that outputs tool plans as valid JSON, at low latency, with high schema conformance and safe fallbacks. The system must be observable, respect strict budgets, and degrade safely under failures. Models are hosted locally via Ollama and accessed through the dev-proxy and/or direct host.
+We need a production-ready planner route that outputs tool plans as valid JSON, at low latency, with high schema conformance and safe fallbacks. Current local Ollama models timeout (31s > 1.2s) and have low schema_ok (< 99%), requiring fallback responses. We need a hybrid approach that leverages OpenAI's superior JSON generation while maintaining local fallback safety.
 
 Constraints:
 - Planner schema_ok ≥ 99%, fallback_used ≤ 1%, P95 full ≤ 1.5s (AC in AGENTS.md / ROADMAP.md)
+- Cost budget ≤ $3 for test period, with real-time monitoring
+- User opt-in required for cloud processing (cloud_ok flag)
+- Deterministic arg building in code (not from model) for reliability
 - No mocks in production routes; real integration; structured telemetry
-- Circuit breaker and timeout budgets per Step 7 policy
 
 ## Decision
-- Use Ollama-hosted models for the planner (initially Qwen-family or Phi-family) behind a strict JSON contract.
-- Enforce deterministic JSON via model "format=json" and a Swedish system prompt that defines an explicit schema.
-- Apply short timeouts (env-configurable): PLANNER_TIMEOUT_MS, PLANNER_REPAIR_TIMEOUT_MS.
-- One-shot JSON repair attempt under tight budget; otherwise fast fallback to micro.
-- Log turn-events with planner_schema_ok and fallback_used; gate SLOs in auto_verify.
+- Use OpenAI GPT-4o-mini as primary planner with local ToolSelector as fallback.
+- Implement tool enum-only schema: model selects only tool name, args built deterministically in code.
+- Enforce user opt-in via cloud_ok flag per session, with audit logging.
+- Apply Guardian policies: rate limiting (2 rps), circuit breaker (5 failures/30s), cost budget ($3/day).
+- Implement arg building taxonomy with error codes (MISSING_SLOT, UNCERTAIN, AMBIGUOUS, INVALID_FORMAT).
+- Log turn-events with provider, schema_ok, fallback_used, cost, and arg_build metrics; gate SLOs in auto_verify.
 
 ## Alternatives Considered
-1) Cloud LLM with JSON mode
-   - Pros: likely stronger reasoning; managed infra
-   - Cons: network variance, cost, privacy; slows local CI gates
+1) Local Ollama models only
+   - Pros: privacy, no cost, no network dependency
+   - Cons: poor JSON generation, timeouts, low schema_ok (< 99%)
 
-2) Local vLLM server
-   - Pros: high throughput; scaling
-   - Cons: added complexity; not necessary for current SLO/sample sizes
+2) OpenAI only (no local fallback)
+   - Pros: superior JSON generation, high schema_ok
+   - Cons: network dependency, cost, privacy concerns, no offline capability
 
-3) Direct tool execution without LLM planning
-   - Pros: predictable; simple
-   - Cons: limited generality; poor scalability to new tasks
+3) Model-generated args (not deterministic)
+   - Pros: more flexible, handles edge cases
+   - Cons: lower reliability, harder to validate, security risks
+
+4) Local vLLM server
+   - Pros: high throughput, scaling
+   - Cons: added complexity, not necessary for current SLO/sample sizes
 
 ## Consequences
 Positive:
-- Local, reproducible, observable pipeline with strict contracts
-- Fast repair/fallback ensures low tail risk
-- Clear SLO gates and metrics tie back to turn events
+- Superior JSON generation and schema_ok (≥99%) via OpenAI
+- Robust fallback to local ToolSelector ensures reliability
+- Deterministic arg building eliminates parsing errors
+- User opt-in provides privacy control and cost transparency
+- Comprehensive monitoring (cost, performance, errors)
 
 Negative/Trade-offs:
-- Tighter JSON constraints may reduce creativity
-- Model curation and warm-up required (pulls, tags, quant levels)
-- Planner responses must stay within token/time budgets
+- Network dependency and potential latency spikes
+- Cost management required (budget limits, monitoring)
+- Privacy concerns (data sent to OpenAI)
+- More complex architecture (hybrid provider switching)
+- Arg building logic must handle all edge cases
 
 ## Status & Follow-ups
-- Status: proposed → adopt once schema_ok ≥99% on 500+ samples
+- Status: proposed → adopt once schema_ok ≥99% on 500+ samples with OpenAI
 - Follow-up ADRs:
-  - ADR-0002: Finalize model choice (exact tag, quant)
-  - ADR-0003: Tool registry & MCP error taxonomy
+  - ADR-0002: Arg building error taxonomy and recovery strategies
+  - ADR-0003: Cost optimization and budget management strategies
+  - ADR-0004: Privacy-preserving techniques for cloud processing
 
 ## References
 - AGENTS.md – Step 7 acceptance criteria
