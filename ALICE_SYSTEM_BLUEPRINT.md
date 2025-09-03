@@ -110,13 +110,20 @@ services/guardian/
 
 **State Machine:**
 ```
-NORMAL ──80% RAM──▶ BROWNOUT ──92% RAM──▶ EMERGENCY
-  ▲                    │                     │
-  │ 45s recovery        ▼ degradation        │
-  └─────────────── DEGRADED ◄────cooldown────┘
-                      │
-                      ▼ max kills
-                  LOCKDOWN (1h)
+╭─────────╮  ──80% RAM──▶  ╭──────────╮  ──92% RAM──▶  ╭───────────╮
+│ NORMAL  │                 │ BROWNOUT │                 │ EMERGENCY │
+╰────┬────╯                 ╰────┬─────╯                 ╰─────┬─────╯
+     │                           │                           │
+     │ 45s recovery              ▼ degradation               │
+     └─────────────── ╭──────────╮ ◄────cooldown─────────────┘
+                      │ DEGRADED │
+                      ╰────┬─────╯
+                           │
+                           ▼ max kills
+                      ╭───────────╮
+                      │ LOCKDOWN  │
+                      │   (1h)    │
+                      ╰───────────╯
 ```
 
 #### **Guardian Thresholds (Environment Variables)**
