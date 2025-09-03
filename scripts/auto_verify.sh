@@ -479,7 +479,7 @@ echo "🎉 AUTO-VERIFY PASS. Sammanfattning finns i $ART_DIR/summary.json"
 echo "📊 Detaljerad telemetry analysis finns i $ART_DIR/telemetry_analysis.json"
 
 echo "📝 Uppdaterar styrdokument från artifacts…"
-API_BASE="$API_BASE" ART_SUMMARY="$ART_DIR/summary.json" python3 scripts/update_docs.py || true
+API_BASE="$API_BASE" ART_SUMMARY="$ART_DIR/summary.json" python3 scripts/update_docs_intelligent.py || true
 
 echo "🪄 Kör curator för gårdagen…"
 docker compose run --rm curator > "$ART_DIR/curator_summary.json" || true
