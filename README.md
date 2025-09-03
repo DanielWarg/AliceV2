@@ -1,7 +1,8 @@
 # Alice v2 AI Assistant
 *AI assistant with Guardian safety system, real-time observability, and autonomous E2E testing*
 
-> **🚀 Status**: Auto-verify PASS 100% | P95 fast=81ms planner=224ms | Step 7: Hybrid Planner (OpenAI + Local)
+> **🚦 Status (live-gates)**: Fast P95 ✅ | Planner P95 ❌ | Auto-verify (core) ✅, (planner) ❌
+> Planner: Hybrid (OpenAI 4o-mini primary + Local ToolSelector fallback). Cost/budget guard ON.
 
 ## 🎯 Quick Demo (30 seconds)
 
@@ -48,8 +49,9 @@ alice-v2/
 
 ### Architecture at a glance (Solo Edition)
 - Fast-route for time/weather/memory/smalltalk (utan LLM i loopen)
-- Hybrid Planner: OpenAI primary + local ToolSelector fallback
-- Tool enum-only schema: model väljer verktyg, args byggs deterministiskt i kod
+- ToolSelector (local 3B, enum-only, strict JSON)
+- Hybrid Planner: **OpenAI 4o-mini primary** (function-calling, temp=0, max_tokens=40) **+ Local ToolSelector fallback**
+- Budget guard: auto-switch to local när dagsbudget nås
 - n8n för tunga/asynkrona jobb via säkrade webhooks
 - Guardian skyddar med brownout/circuit‑breakers + OpenAI policies (rate limit, cost budget)
 - User opt-in för cloud processing (cloud_ok flag)
@@ -255,8 +257,11 @@ crontab -l | grep auto_verify
 - [ ] FAISS hot/cold index config (HNSW+ondisk)
 - [ ] "Forget me" <1s tested in eval
 
-#### Step 7 – Planner-LLM (Qwen 7B-MoE + MCP tools)
-- [ ] Tool schema (pydantic) + tool-firewall
+#### Step 7 – Planner (OpenAI 4o-mini + MCP tools)
+- [ ] Tool schema = enum-only; deterministic arg-builders + error taxonomy
+- [ ] OpenAI rate limit + circuit breaker + budget guard
+- [ ] cloud_ok per session (opt-in) + audit log
+- [ ] n8n webhooks HMAC-SHA256 + replay-guard
 - [ ] Eval with 1–2 tool-calls/flow
 - [ ] Tool success ≥95%
 
@@ -325,7 +330,9 @@ open http://localhost:18000/hud
 - **Injection Detection**: Pattern-based injection attempt detection
 - **Tool Firewall**: Configurable tool access control
 - **Security Policy**: YAML-based security configuration
-- **Cost Control**: Guardian enforces cost ceilings ($3/day) with automatic fallback to local models when exceeded
+- **OpenAI guardrails**: Rate limit, circuit breaker, daily/weekly budget (auto fallback to local)
+- **n8n webhooks**: HMAC-SHA256 (X-Alice-Timestamp, X-Alice-Signature), ±300s window, replay-block via Redis SETNX
+- **cloud_ok**: Per-session opt-in required before any cloud call
 
 ## 📚 Documentation
 

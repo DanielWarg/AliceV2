@@ -25,6 +25,8 @@
   - Real services (no mocks), P95 per route within budget
   - Pass-rate ≥80% on relevant scenarios
   - Guardian without EMERGENCY during execution
+  - OpenAI budget guard enforced (daily/weekly); auto-switch to local on breach
+  - Cloud processing requires explicit user opt-in (cloud_ok=true)
 
 **Per‑step live gates**
 - Step 4 – NLU + XNLI:
@@ -39,17 +41,26 @@
   - Commands: `make test-all` + manual `POST /memory/forget`
   - Pass: RAG top‑3 ≥80%, P@1 ≥60%, `forget` <1s; no SLO‑regressions
   - Artifacts: memory‑metrics in HUD, events with `rag_hit`
-- Step 7 – Planner‑LLM + Tools (MCP):
+- Step 7 – Planner (OpenAI 4o-mini, function-calling) + Tool Layer (MCP) v1:
   - Commands: `make test-all` with tool‑scenarios
   - Pass: Tool‑success ≥95%, schema‑validated tool‑calls, max 3 tools/turn
+  - SLO Targets:
+    - Tool success rate ≥95%
+    - Planning latency P95 < 900 ms (first token), full ≤ 1.5 s
+    - Schema_ok ≥99% (enum-only tool selection), fallback_used ≤1%
   - Artifacts: tool‑events with error‑classification and success‑ratio
 - Step 8 – Text E2E hard test:
   - Commands: `make test-all` + loadgen `services/loadgen/main.py`
   - Pass: Fast P95 ≤250ms (first), Planner P95 ≤900ms (first)/≤1.5s (full), pass‑rate ≥98%
+  - SLO Targets:
+    - Report per-route p95 (planner_openai vs planner_local)
+    - Cost report included (tokens & USD); total ≤ test budget
   - Artifacts: `test-results/` nightly trends, SLO‑report
 
 ### Solo Edition vNext (Local Lite)
-- ToolSelector (enum‑only, strict JSON), budgets 600/400/150 ms
+- ToolSelector (local 3B, enum-only, strict JSON)
+- Hybrid Planner: **OpenAI 4o-mini primary** (function-calling, temp=0, max_tokens=40) **+ Local ToolSelector fallback**
+- Budget guard: auto-switch to local när dagsbudget nås
 - Router: fast‑route for time/weather/memory/smalltalk
 - n8n integration for heavy flows (email_draft, calendar_draft, scrape_and_summarize, batch_rag)
 - Voice: Whisper.cpp + Piper (sv‑SE)
@@ -269,18 +280,23 @@ make dev-quick    # Quick development workflow (up + e2e only)
 
 ## Phase 3: Advanced Reasoning (Week 3-4)
 
-### Step 7: Planner-LLM (Qwen2.5-7B-MoE) + tool layer (MCP) v1
+### Step 7: Planner (OpenAI 4o-mini, function-calling) + Tool Layer (MCP) v1
 **Why**: Multistep/tool makes Alice useful in the real world.
 
 **Owner**: AI/Integration Team  
 **Timeline**: 5-6 days  
 **SLO Targets**:
 - Tool success rate ≥95%
-- Planning latency P95 <2s
+- Planning latency P95 < 900 ms (first token), full ≤ 1.5 s
+- Schema_ok ≥99% (enum-only tool selection), fallback_used ≤1%
 - Max 3 tools per conversation turn
 
 **Definition of Done**:
-- [ ] Qwen2.5-7B-MoE model deployment
+- [ ] Tool schema = enum-only; deterministic arg-builders + error taxonomy (`ARG_MISSING_SLOT|UNCERTAIN|AMBIGUOUS|INVALID_FORMAT`)
+- [ ] OpenAI rate limit (2 rps), circuit breaker (5 fails/30s → 30s pause)
+- [ ] Budget guard active (`OPENAI_DAILY_BUDGET_USD`, auto switch to local)
+- [ ] cloud_ok per session (opt-in) + audit log
+- [ ] n8n webhooks HMAC-SHA256 (+/- 300s) + replay-guard (Redis SETNX)
 - [ ] MCP tool registry implemented
 - [ ] 1-2 tool-calls per flow validated
 - [ ] Schema-validated tool execution
