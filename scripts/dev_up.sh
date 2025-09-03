@@ -57,19 +57,32 @@ fi
 log_info "Cleaning old containers (if any)..."
 docker compose down --remove-orphans >/dev/null 2>&1 || true
 
-log_info "Starting guardian, orchestrator, nlu, dev-proxy..."
-docker compose up -d --build guardian orchestrator nlu dev-proxy || true
+log_info "Starting guardian, orchestrator, nlu, memory, redis, voice, dev-proxy..."
+docker compose up -d --build guardian orchestrator nlu memory redis voice dev-proxy || true
 
 log_info "Scheduler disabled - use host cron for scheduled tasks"
 # docker compose up -d scheduler || true
 
-log_info "Waiting for dev-proxy at http://localhost:$PORT/health..."
-for i in {1..60}; do
-  if curl -fsS http://localhost:$PORT/health >/dev/null 2>&1; then
+log_info "Waiting for core services to be ready..."
+for i in {1..90}; do
+  if curl -fsS http://localhost:$PORT/health >/dev/null 2>&1 && \
+     curl -fsS http://localhost:8300/health >/dev/null 2>&1; then
     log_info "✅ Up: http://localhost:$PORT"
+    log_info "🧠 Memory: http://localhost:8300"
     log_info "🚀 Alice v2 development stack is ready!"
     log_info "📊 HUD: http://localhost:3001"
     log_info "🔍 Health: http://localhost:$PORT/health"
+    
+    # Check voice service separately (it takes longer to start)
+    log_info "🎤 Checking voice service..."
+    for j in {1..30}; do
+      if curl -fsS http://localhost:8001/health >/dev/null 2>&1; then
+        log_info "✅ Voice: http://localhost:8001"
+        break
+      fi
+      sleep 2
+    done
+    
     exit 0
   fi
   sleep 1

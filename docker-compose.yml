@@ -119,6 +119,8 @@ services:
     volumes:
       - ./data/voice_cache:/data/voice_cache
       - ./models:/models
+    ports:
+      - "8001:8001"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
       interval: 30s
@@ -281,6 +283,8 @@ services:
       - EMBEDDING_MODEL=sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
     volumes:
       - ./data/embeddings:/data/embeddings
+    ports:
+      - "8300:8300"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8300/health"]
       interval: 10s

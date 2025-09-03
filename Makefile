@@ -200,6 +200,33 @@ LEARN_LOG ?= data/learn/logs/learn.jsonl
 verify: ## Run system verification (alias for test-e2e)
 	@$(MAKE) test-e2e
 
+# --- Additional Services ---------------------------------------------------
+
+dashboard: ## Start monitoring dashboard
+	@echo "📊 Starting monitoring dashboard..."
+	docker compose up -d dashboard
+	@echo "✅ Dashboard available at http://localhost:8501"
+
+loadtest: ## Start load testing
+	@echo "🚀 Starting load testing..."
+	docker compose up -d loadgen
+	@echo "✅ Load testing started"
+
+eval: ## Start evaluation service
+	@echo "🧪 Starting evaluation service..."
+	docker compose up -d eval
+	@echo "✅ Evaluation service started"
+
+curator: ## Start data curation service
+	@echo "📝 Starting data curation service..."
+	docker compose up -d curator
+	@echo "✅ Data curation service started"
+
+n8n: ## Start n8n workflow automation
+	@echo "⚡ Starting n8n workflow automation..."
+	docker compose up -d n8n-db n8n
+	@echo "✅ n8n available at http://localhost:5678"
+
 # --- Development Workflow ---------------------------------------------------
 
 dev: up test-all ## Complete development workflow (up + all tests)
