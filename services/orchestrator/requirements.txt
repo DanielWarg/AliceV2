@@ -25,6 +25,7 @@ python-multipart==0.0.6
 
 # Metrics and monitoring
 prometheus-client==0.19.0
+redis==5.0.1
 
 # Testing
 pytest==8.3.4
