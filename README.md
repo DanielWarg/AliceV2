@@ -377,9 +377,11 @@ open http://localhost:18000/hud
 
 - **`ROADMAP.md`** - Live milestone tracker with test gates
 - **`ALICE_SYSTEM_BLUEPRINT.md`** - System architecture and design decisions
-- **`AGENTS.md`** - Instructions for AI coding agents
 - **`TESTING_STRATEGY.md`** - Comprehensive testing approach
 - **`SECURITY.md`** - Security architecture and policies
+
+### 🔧 For Maintainers
+- **`docs/REPO_SETUP.md`** - GitHub repository setup and configuration guide
 
 ## 🤝 Contributing
 
