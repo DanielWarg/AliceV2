@@ -49,8 +49,47 @@ alice-v2/
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Docker & Docker Compose
+- Docker Desktop (installerat och körande)
 - Python 3.11+ (for local development)
+- pnpm (för frontend: `npm install -g pnpm`)
+- Ollama (för lokala modeller: https://ollama.ai)
+
+### 🚀 First Time Setup
+
+**För nya användare - kör detta EN gång:**
+
+```bash
+# 1. Installera prerequisites
+brew install python@3.11 pnpm  # macOS
+# eller: sudo apt install python3.11 pnpm  # Ubuntu
+
+# 2. Installera Docker Desktop
+# Ladda ner från: https://www.docker.com/products/docker-desktop/
+
+# 3. Installera Ollama
+curl -fsSL https://ollama.ai/install.sh | sh
+
+# 4. Starta Docker Desktop och Ollama
+# Docker Desktop: Starta appen
+# Ollama: ollama serve (körs automatiskt på macOS)
+
+# 5. Klona projektet
+git clone https://github.com/your-repo/alice-v2.git
+cd alice-v2
+
+# 6. Sätt environment variables (valfritt)
+export N8N_ENCRYPTION_KEY=change-me
+export OPENAI_API_KEY=sk-your-key-here  # När vi implementerar OpenAI
+
+# 7. Starta allt!
+make up
+```
+
+**Efter första gången räcker det med:**
+```bash
+git pull
+make up
+```
 
 ### 🎯 One-Command Setup (Recommended)
 ```bash
@@ -118,6 +157,49 @@ curl -s http://localhost:5678/healthz
 # - Läs loggar: docker logs alice-n8n --tail 200
 # - Kontrollera env i container: docker inspect alice-n8n
 #   (N8N_HOST=localhost, N8N_PROTOCOL=http, N8N_EDITOR_BASE_URL=http://localhost:5678)
+```
+
+### 🔧 Troubleshooting
+
+**Vanliga problem och lösningar:**
+
+```bash
+# Port 18000 redan i bruk
+./scripts/ports-kill.sh
+
+# Docker containers startar inte
+docker compose down --remove-orphans
+docker compose up -d
+
+# Ollama modeller saknas
+ollama pull qwen2.5:3b
+ollama pull phi3:mini
+
+# n8n UI går inte att nå
+# Kontrollera att n8n container körs:
+docker compose ps n8n
+# Om inte: docker compose up -d n8n
+
+# Frontend (HUD) startar inte
+cd apps/hud && pnpm install && pnpm dev
+
+# Alla tester failar
+make down
+make up
+sleep 30  # Vänta på att allt är healthy
+make test-all
+```
+
+**Loggar och debugging:**
+```bash
+# Se alla loggar
+docker compose logs -f
+
+# Se specifik service
+docker compose logs -f orchestrator
+
+# HUD (real-time monitoring)
+open http://localhost:18000/hud
 ```
 
 ### 🔧 Manual Setup (Alternative)

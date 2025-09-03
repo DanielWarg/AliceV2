@@ -43,6 +43,17 @@ else
     log_info "Required models found ✓"
 fi
 
+# Check Ollama models
+log_info "Checking Ollama models..."
+if ! ollama list | grep -q "qwen2.5:3b"; then
+    log_warn "Ollama model qwen2.5:3b not found. Pulling..."
+    ollama pull qwen2.5:3b || log_warn "Failed to pull qwen2.5:3b - some features may not work"
+fi
+if ! ollama list | grep -q "phi3:mini"; then
+    log_warn "Ollama model phi3:mini not found. Pulling..."
+    ollama pull phi3:mini || log_warn "Failed to pull phi3:mini - some features may not work"
+fi
+
 log_info "Cleaning old containers (if any)..."
 docker compose down --remove-orphans >/dev/null 2>&1 || true
 
