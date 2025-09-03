@@ -11,49 +11,40 @@ Alice v2 is a modular AI assistant with deterministic security control, intellig
 
 ## 🏗️ System Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│  🧑‍💻 User (Swedish speech) ──WS──▶ ASR (Whisper.cpp+VAD) ──▶ NLU (sv-intent/slots/mood)                   │
-│                                                                                                              │
-│                              (JSON)                                                                          │
-│                                     ┌──────────── Guardian Gate (admission control) ───────────┐             │
-│                                     │     (RAM/CPU/temp/battery → Brownout/Degrade)            │             │
-│                                     └───────────────────────▲───────────────────────────────────┘             │
-│                                                             │ (status/pubsub)                                │
-│  ◀── AR/HUD & status ── WebSocket events ───────────────────┼───────────────────────────────────────────────▶ │
-│                                                                                                              │
-│                             Orchestrator (LangGraph Router + policies)                                        │
-│                         ┌─────────────────────────────────────────────────────┐                              │
-│                         │ - Router (Phi-mini)                                │                              │
-│                         │ - Policies/SLO + Tool registry (MCP)               │                              │
-│                         │ - Event-bus & tracing                              │                              │
-│                         │ - RAM-peak, energy, tool error tracking            │                              │
-│                         └───────────────┬───────────────┬────────────────────┘                              │
-│                                         │               │                                                     │
-│                ┌────────────────────────┘               └───────────────────────────┐                       │
-│                v                                                                    v                       │
-│      ╭─────────────────╮        ╭──────────────────╮        ╭────────────────────╮        ╭─────────────────╮
-│      │   Micro-LLM     │        │   Planner-LLM    │        │   Deep Reasoning   │        │  Vision/Sensors │
-│      │ (simple answers) │        │ (planning+tools) │        │ (deep analysis)    │        │ (YOLO/SAM/RTSP) │
-│      │  Phi-3.5-Mini   │        │  Qwen2.5-MoE    │        │ Llama-3.1 (on-dmd) │        │ events→router   │
-│      ╰────────┬────────╯        ╰────────┬─────────╯        ╰────────┬──────────╯        ╰────────┬────────╯
-│               │                         ┌─┴───────────────────────────┘                           │        │
-│               │  (read)                 │ (tool calls, plans)                                      │        │
-│     ╭─────────▼──────────╮     ╭────────▼─────────╮                                      ╭────────▼────────╮
-│     │   Memory (RAG)     │     │   Tools/APIs     │                                      │ Guardian Daemon │
-│     │ FAISS (user mem)   │◀──▶ │ (Mail, Calendar, │ ◀── health/latency class (MCP)       │ psutil/energy   │
-│     │ Redis TTL (session)│     │  Home Assistant) │                                      │ state machine   │
-│     ╰─────────┬──────────╯     ╰──────────────────╯                                      ╰────────▲────────╯
-│               │   (write/update, consent)                                                        │ status   │
-│               └───────────────────────────────────────────────────────────────────────────────────┘         │
-│                                                                                                              │
-│  Text response (eng) ─▶ TTS (VITS/Piper + cache) ─▶ Speakers                                                   │
-│                       │                                                                                      │
-│  Dashboard/HUD ◀──────┼── events+metrics (P50/P95, RAM, tool errors, RAG-hit, energy)                        │
-│                       │                                                                                      │
-│  Proactivity: Prophet/Goal Scheduler ──▶ Orchestrator (idle triggers, prewarm/defer)                         │
-│  Reflection: logs+metrics ──▶ suggestions (cache, RAG-K, prewarm) ─▶ Orchestrator (explicit accept)         │
-└─────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```mermaid
+graph TB
+    User[🧑‍💻 User<br/>Swedish speech] --> ASR[ASR<br/>Whisper.cpp+VAD]
+    ASR --> NLU[NLU<br/>sv-intent/slots/mood]
+    NLU --> Guardian[Guardian Gate<br/>admission control<br/>RAM/CPU/temp/battery]
+    
+    Guardian --> Orchestrator[Orchestrator<br/>LangGraph Router + policies<br/>Router Phi-mini<br/>Policies/SLO + Tool registry MCP<br/>Event-bus & tracing<br/>RAM-peak, energy, tool error tracking]
+    
+    Orchestrator --> Micro[Micro-LLM<br/>simple answers<br/>Phi-3.5-Mini]
+    Orchestrator --> Planner[Planner-LLM<br/>planning+tools<br/>Qwen2.5-MoE]
+    Orchestrator --> Deep[Deep Reasoning<br/>deep analysis<br/>Llama-3.1 on-dmd]
+    Orchestrator --> Vision[Vision/Sensors<br/>YOLO/SAM/RTSP<br/>events→router]
+    
+    Micro --> Memory[Memory RAG<br/>FAISS user mem<br/>Redis TTL session]
+    Planner --> Tools[Tools/APIs<br/>Mail, Calendar<br/>Home Assistant]
+    Deep --> Tools
+    Tools --> Memory
+    
+    Guardian --> GuardianDaemon[Guardian Daemon<br/>psutil/energy<br/>state machine]
+    
+    Memory --> TTS[TTS<br/>VITS/Piper + cache]
+    TTS --> Speakers[Speakers]
+    
+    Orchestrator --> HUD[Dashboard/HUD<br/>events+metrics<br/>P50/P95, RAM, tool errors<br/>RAG-hit, energy]
+    
+    Proactivity[Proactivity<br/>Prophet/Goal Scheduler] --> Orchestrator
+    Reflection[Reflection<br/>logs+metrics → suggestions<br/>cache, RAG-K, prewarm] --> Orchestrator
+    
+    style User fill:#e1f5fe
+    style Guardian fill:#fff3e0
+    style Orchestrator fill:#f3e5f5
+    style Memory fill:#e8f5e8
+    style Tools fill:#fff8e1
+    style HUD fill:#fce4ec
 ```
 
 ## 🔧 Component Overview
@@ -109,21 +100,17 @@ services/guardian/
 ```
 
 **State Machine:**
-```
-╭─────────╮  ──80% RAM──▶  ╭──────────╮  ──92% RAM──▶  ╭───────────╮
-│ NORMAL  │                 │ BROWNOUT │                 │ EMERGENCY │
-╰────┬────╯                 ╰────┬─────╯                 ╰─────┬─────╯
-     │                           │                           │
-     │ 45s recovery              ▼ degradation               │
-     └─────────────── ╭──────────╮ ◄────cooldown─────────────┘
-                      │ DEGRADED │
-                      ╰────┬─────╯
-                           │
-                           ▼ max kills
-                      ╭───────────╮
-                      │ LOCKDOWN  │
-                      │   (1h)    │
-                      ╰───────────╯
+
+```mermaid
+stateDiagram-v2
+    [*] --> NORMAL
+    NORMAL --> BROWNOUT : 80% RAM
+    BROWNOUT --> EMERGENCY : 92% RAM
+    BROWNOUT --> DEGRADED : degradation
+    EMERGENCY --> DEGRADED : cooldown
+    DEGRADED --> NORMAL : 45s recovery
+    DEGRADED --> LOCKDOWN : max kills
+    LOCKDOWN --> NORMAL : 1h timeout
 ```
 
 #### **Guardian Thresholds (Environment Variables)**
