@@ -102,6 +102,34 @@ def health_root():
 def health_alias():
     return health_root()
 
+@app.post("/guardian/metrics")
+def metrics():
+    """Receive metrics from other services"""
+    ram, cpu, temp, batt = update_state()
+    return {
+        "v": "1",
+        "status": "ok",
+        "guardian_state": S.state,
+        "ram_pct": round(ram*100, 1),
+        "cpu_pct": round(cpu*100, 1),
+        "temp_c": temp,
+        "battery_pct": batt
+    }
+
+@app.get("/guardian/metrics")
+def get_metrics():
+    """Get current metrics"""
+    ram, cpu, temp, batt = update_state()
+    return {
+        "v": "1",
+        "status": "ok",
+        "guardian_state": S.state,
+        "ram_pct": round(ram*100, 1),
+        "cpu_pct": round(cpu*100, 1),
+        "temp_c": temp,
+        "battery_pct": batt
+    }
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8787)
