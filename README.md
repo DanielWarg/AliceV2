@@ -1,11 +1,19 @@
 # Alice v2 AI Assistant
-*Production-ready AI assistant with Guardian safety system, real-time observability, and autonomous E2E testing*
+*AI assistant with Guardian safety system, real-time observability, and autonomous E2E testing*
 
-> **🚀 Production Status**: Auto-verify PASS 100% | P95 fast=81ms planner=224ms | Step 7: Hybrid Planner (OpenAI + Local)
+> **🚀 Status**: Auto-verify PASS 100% | P95 fast=81ms planner=224ms | Step 7: Hybrid Planner (OpenAI + Local)
+
+## 🎯 Quick Demo (30 seconds)
+
+```bash
+git clone https://github.com/DanielWarg/AliceV2.git && cd alice-v2
+make up
+open http://localhost:3001   # HUD
+```
 
 ## 🎯 Project Overview
 
-Alice v2 is a robust, production-ready AI assistant featuring:
+Alice v2 is a robust AI assistant featuring:
 
 - **🛡️ Guardian Safety System** - Real-time health monitoring with NORMAL/BROWNOUT/EMERGENCY states
 - **📊 Complete Observability** - RAM-peak per turn, energy tracking, tool error classification, structured JSONL logging
@@ -48,15 +56,23 @@ alice-v2/
 
 ## 🚀 Quick Start
 
-### Prerequisites
+### Minimal Setup (Demo)
+```bash
+git clone https://github.com/DanielWarg/AliceV2.git
+cd alice-v2
+make up
+open http://localhost:3001
+```
+
+### Full Setup (Development)
+
+**Prerequisites:**
 - Docker Desktop (installed and running)
 - Python 3.11+ (for local development)
 - pnpm (for frontend: `npm install -g pnpm`)
 - Ollama (for local models: https://ollama.ai)
 
-### 🚀 First Time Setup
-
-**For new users - run this ONCE:**
+**First time setup:**
 
 ```bash
 # 1. Install prerequisites
@@ -109,97 +125,34 @@ open http://localhost:3001
 
 ## ⚡ Solo Quickstart (Local Lite)
 ```bash
-# 1) Start kärnorna
+# Start core services
 docker compose up -d guardian orchestrator nlu dev-proxy ollama n8n-db n8n
 
-# 2) Sanity via proxy
-curl -s http://localhost:18000/health | jq .
-curl -s http://localhost:18000/api/status/routes | jq .
-
-# 3) N8N UI (aktivera flöden: email_draft, calendar_draft, batch_rag)
-open http://localhost:5678
-
-# 4) Snabb test (fast-route)
+# Quick test
 curl -s -X POST http://localhost:18000/api/chat \
   -H 'Content-Type: application/json' -H 'Authorization: Bearer test-key-123' \
-  -d '{"v":"1","session_id":"fast-1","lang":"sv","message":"Vad är klockan?"}' | jq .
+  -d '{"v":"1","session_id":"test","lang":"sv","message":"Vad är klockan?"}' | jq .
 
-# 5) Email draft via webhook (efter att flow aktiverats)
-curl -s -u alice:secret -H 'Content-Type: application/json' \
-  -d '{"request_id":"t1","subject":"Demo","to":["anna@example.com"]}' \
-  http://localhost:18000/webhook/email_draft | jq .
+# Open HUD
+open http://localhost:3001
 ```
 
-### n8n – Import & Troubleshooting
-
+### n8n Setup
 ```bash
-# Login (first time):
-#   UI: http://localhost:5678
-#   Create account with email (Basic Auth disabled)
-#   After setup: import flows and activate
-
-# Import flows in UI
-# 1) Open UI → Workflows → Import from file → select:
-#    services/n8n/flows/email_draft.json
-#    services/n8n/flows/calendar_draft.json
-#    services/n8n/flows/batch_rag.json
-# 2) Activate each workflow (toggle: Active)
-
-# Verify REST (lists workflows)
-curl -s -u alice:secret http://localhost:5678/rest/workflows | jq .
-
-# Quick health check of n8n
-curl -s http://localhost:5678/healthz
-
-# Troubleshooting (ERR_CONNECTION_REFUSED):
-# - Ensure port mapping in docker-compose (ports: "5678:5678")
-# - Restart service: docker compose up -d n8n
-# - Read logs: docker logs alice-n8n --tail 200
-# - Check env in container: docker inspect alice-n8n
-#   (N8N_HOST=localhost, N8N_PROTOCOL=http, N8N_EDITOR_BASE_URL=http://localhost:5678)
+# UI: http://localhost:5678 (create account with email)
+# Import flows: services/n8n/flows/*.json
+# Verify: curl -s http://localhost:5678/healthz
 ```
 
 ### 🔧 Troubleshooting
 
-**Common problems and solutions:**
-
 ```bash
-# Port 18000 already in use
-./scripts/ports-kill.sh
-
-# Docker containers won't start
-docker compose down --remove-orphans
-docker compose up -d
-
-# Ollama models missing
-ollama pull qwen2.5:3b
-ollama pull phi3:mini
-
-# n8n UI not accessible
-# Check if n8n container is running:
-docker compose ps n8n
-# If not: docker compose up -d n8n
-
-# Frontend (HUD) won't start
-cd apps/hud && pnpm install && pnpm dev
-
-# All tests fail
-make down
-make up
-sleep 30  # Wait for everything to be healthy
-make test-all
-```
-
-**Logs and debugging:**
-```bash
-# View all logs
-docker compose logs -f
-
-# View specific service
-docker compose logs -f orchestrator
-
-# HUD (real-time monitoring)
-open http://localhost:3001
+# Common issues
+./scripts/ports-kill.sh                    # Port conflicts
+docker compose down --remove-orphans        # Container issues
+ollama pull qwen2.5:3b phi3:mini           # Missing models
+docker compose logs -f orchestrator         # View logs
+open http://localhost:3001                  # HUD
 ```
 
 ### 🔧 Manual Setup (Alternative)
@@ -372,6 +325,7 @@ open http://localhost:18000/hud
 - **Injection Detection**: Pattern-based injection attempt detection
 - **Tool Firewall**: Configurable tool access control
 - **Security Policy**: YAML-based security configuration
+- **Cost Control**: Guardian enforces cost ceilings ($3/day) with automatic fallback to local models when exceeded
 
 ## 📚 Documentation
 
