@@ -529,19 +529,23 @@ async def orchestrator_chat(
                 # Fast tool selector for EASY/MEDIUM intents
                 from ..tool_selector_fast import pick_tool
                 
-                # Try fast tool selector first
+                # Always try fast tool selector for better precision
                 fast_tool = pick_tool(chat_request.message)
-                if fast_tool:
-                    print(f"🚀 Fast tool selector: {fast_tool}")
-                    # Generate response with fast tool
-                    micro_driver = get_micro_driver()
-                    llm_response = micro_driver.generate(chat_request.message)
-                    model_used = llm_response["model"]
-                else:
-                    # Fallback to regular micro
-                    micro_driver = get_micro_driver()
-                    llm_response = micro_driver.generate(chat_request.message)
-                    model_used = llm_response["model"]
+                
+                # Generate response
+                micro_driver = get_micro_driver()
+                llm_response = micro_driver.generate(chat_request.message)
+                model_used = llm_response["model"]
+                
+                # Override tool selection with fast tool result if available
+                if fast_tool and llm_response.get("response"):
+                    try:
+                        response_json = json.loads(llm_response["response"])
+                        response_json["tool"] = fast_tool
+                        llm_response["response"] = json.dumps(response_json)
+                        print(f"🚀 Fast tool selector override: {fast_tool}")
+                    except:
+                        pass  # Keep original if parsing fails
                 
             elif route == "planner":
                 canary_router = CanaryRouter() if shadow_enabled else None

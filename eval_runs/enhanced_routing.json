@@ -1,0 +1,1098 @@
+{
+  "sha": "local",
+  "planner": "unknown",
+  "schema": "vunknown",
+  "prompt": "v1.0",
+  "timestamp": "2025-09-04T06:27:10.058859Z",
+  "total_scenarios": 53,
+  "successful_scenarios": 52,
+  "metrics": {
+    "easy.schema_ok_first": 1.0,
+    "medium.schema_ok_first": 1.0,
+    "hard.schema_ok_first": 1.0,
+    "tool_precision": 0.625,
+    "latency_p95_ms": 5894.764280319214,
+    "success_rate": 0.9811320754716981
+  },
+  "detailed_metrics": {
+    "easy": {
+      "easy.schema_ok_first": 1.0,
+      "easy.latency_p50_ms": 4549.572229385376,
+      "easy.latency_p95_ms": 5894.7102308273315,
+      "easy.tool_precision": 0.6,
+      "easy.success_rate": 1.0
+    },
+    "medium": {
+      "medium.schema_ok_first": 1.0,
+      "medium.latency_p50_ms": 5233.220338821411,
+      "medium.latency_p95_ms": 5895.036423206329,
+      "medium.tool_precision": 0.8181818181818182,
+      "medium.success_rate": 1.0
+    },
+    "hard": {
+      "hard.schema_ok_first": 1.0,
+      "hard.latency_p50_ms": 4549.137592315674,
+      "hard.latency_p95_ms": 5894.572019577026,
+      "hard.tool_precision": 0.25,
+      "hard.success_rate": 1.0
+    },
+    "overall": {
+      "latency_p95_ms": 5894.764280319214,
+      "tool_precision": 0.625,
+      "success_rate": 0.9811320754716981
+    }
+  },
+  "scenario_results": [
+    {
+      "scenario_id": "006",
+      "success": true,
+      "latency_ms": 5801.865816116333,
+      "schema_ok_first": true,
+      "tool_precision": 1.0,
+      "intent_match": true,
+      "expected_intent": "greeting.hello",
+      "actual_intent": "greeting.hello",
+      "expected_tools": [],
+      "actual_tools": [],
+      "max_latency_ms": 200,
+      "tags": [
+        "EASY",
+        "greeting"
+      ]
+    },
+    {
+      "scenario_id": "050",
+      "success": true,
+      "latency_ms": 5797.915697097778,
+      "schema_ok_first": true,
+      "tool_precision": 0.0,
+      "intent_match": false,
+      "expected_intent": "memory.query",
+      "actual_intent": "",
+      "expected_tools": [
+        "memory.query"
+      ],
+      "actual_tools": [],
+      "max_latency_ms": 1500,
+      "tags": [
+        "HARD",
+        "complex"
+      ]
+    },
+    {
+      "scenario_id": "038",
+      "success": true,
+      "latency_ms": 5798.6249923706055,
+      "schema_ok_first": true,
+      "tool_precision": 0.0,
+      "intent_match": false,
+      "expected_intent": "email.create_draft",
+      "actual_intent": "",
+      "expected_tools": [
+        "email.create_draft"
+      ],
+      "actual_tools": [
+        "calendar.create_draft"
+      ],
+      "max_latency_ms": 500,
+      "tags": [
+        "MEDIUM",
+        "email"
+      ]
+    },
+    {
+      "scenario_id": "044",
+      "success": false,
+      "error": "",
+      "latency_ms": 0,
+      "schema_ok_first": false,
+      "tool_precision": 0.0
+    },
+    {
+      "scenario_id": "002",
+      "success": true,
+      "latency_ms": 5798.05588722229,
+      "schema_ok_first": true,
+      "tool_precision": 1.0,
+      "intent_match": false,
+      "expected_intent": "weather.lookup",
+      "actual_intent": "weather",
+      "expected_tools": [
+        "weather.lookup"
+      ],
+      "actual_tools": [
+        "weather.lookup"
+      ],
+      "max_latency_ms": 200,
+      "tags": [
+        "EASY",
+        "weather"
+      ]
+    },
+    {
+      "scenario_id": 3,
+      "success": true,
+      "latency_ms": 5797.8761196136475,
+      "schema_ok_first": true,
+      "tool_precision": 1.0,
+      "intent_match": false,
+      "expected_intent": "calendar.create_draft",
+      "actual_intent": "",
+      "expected_tools": [
+        "calendar.create_draft"
+      ],
+      "actual_tools": [
+        "calendar.create_draft"
+      ],
+      "max_latency_ms": 500,
+      "tags": [
+        "MEDIUM",
+        "calendar"
+      ]
+    },
+    {
+      "scenario_id": "028",
+      "success": true,
+      "latency_ms": 5797.6720333099365,
+      "schema_ok_first": true,
+      "tool_precision": 1.0,
+      "intent_match": false,
+      "expected_intent": "email.create_draft",
+      "actual_intent": "email",
+      "expected_tools": [
+        "email.create_draft"
+      ],
+      "actual_tools": [
+        "email.create_draft"
+      ],
+      "max_latency_ms": 500,
+      "tags": [
+        "MEDIUM",
+        "email"
+      ]
+    },
+    {
+      "scenario_id": "032",
+      "success": true,
+      "latency_ms": 5797.088623046875,
+      "schema_ok_first": true,
+      "tool_precision": 1.0,
+      "intent_match": false,
+      "expected_intent": "email.create_draft",
+      "actual_intent": "email",
+      "expected_tools": [
+        "email.create_draft"
+      ],
+      "actual_tools": [
+        "email.create_draft"
+      ],
+      "max_latency_ms": 500,
+      "tags": [
+        "MEDIUM",
+        "email"
+      ]
+    },
+    {
+      "scenario_id": "018",
+      "success": true,
+      "latency_ms": 5797.0240116119385,
+      "schema_ok_first": true,
+      "tool_precision": 1.0,
+      "intent_match": true,
+      "expected_intent": "greeting.hello",
+      "actual_intent": "greeting.hello",
+      "expected_tools": [],
+      "actual_tools": [],
+      "max_latency_ms": 200,
+      "tags": [
+        "EASY",
+        "greeting"
+      ]
+    },
+    {
+      "scenario_id": "026",
+      "success": true,
+      "latency_ms": 5797.322034835815,
+      "schema_ok_first": true,
+      "tool_precision": 1.0,
+      "intent_match": false,
+      "expected_intent": "email.create_draft",
+      "actual_intent": "email",
+      "expected_tools": [
+        "email.create_draft"
+      ],
+      "actual_tools": [
+        "email.create_draft"
+      ],
+      "max_latency_ms": 500,
+      "tags": [
+        "MEDIUM",
+        "email"
+      ]
+    },
+    {
+      "scenario_id": "045",
+      "success": true,
+      "latency_ms": 4668.926954269409,
+      "schema_ok_first": true,
+      "tool_precision": 0.0,
+      "intent_match": false,
+      "expected_intent": "memory.query",
+      "actual_intent": "time.now",
+      "expected_tools": [
+        "memory.query"
+      ],
+      "actual_tools": [
+        "time.now"
+      ],
+      "max_latency_ms": 1500,
+      "tags": [
+        "HARD",
+        "complex"
+      ]
+    },
+    {
+      "scenario_id": "005",
+      "success": true,
+      "latency_ms": 4669.597864151001,
+      "schema_ok_first": true,
+      "tool_precision": 1.0,
+      "intent_match": true,
+      "expected_intent": "greeting.hello",
+      "actual_intent": "greeting.hello",
+      "expected_tools": [],
+      "actual_tools": [],
+      "max_latency_ms": 200,
+      "tags": [
+        "EASY",
+        "greeting"
+      ]
+    },
+    {
+      "scenario_id": "041",
+      "success": true,
+      "latency_ms": 4668.5991287231445,
+      "schema_ok_first": true,
+      "tool_precision": 0.5,
+      "intent_match": false,
+      "expected_intent": "memory.query",
+      "actual_intent": "calendar",
+      "expected_tools": [
+        "memory.query",
+        "calendar.create_draft"
+      ],
+      "actual_tools": [
+        "calendar.create_draft"
+      ],
+      "max_latency_ms": 1500,
+      "tags": [
+        "HARD",
+        "complex"
+      ]
+    },
+    {
+      "scenario_id": "016",
+      "success": true,
+      "latency_ms": 4669.220209121704,
+      "schema_ok_first": true,
+      "tool_precision": 0.0,
+      "intent_match": true,
+      "expected_intent": "time.now",
+      "actual_intent": "time.now",
+      "expected_tools": [],
+      "actual_tools": [
+        "time.now"
+      ],
+      "max_latency_ms": 200,
+      "tags": [
+        "EASY",
+        "time"
+      ]
+    },
+    {
+      "scenario_id": "022",
+      "success": true,
+      "latency_ms": 4669.352054595947,
+      "schema_ok_first": true,
+      "tool_precision": 1.0,
+      "intent_match": false,
+      "expected_intent": "email.create_draft",
+      "actual_intent": "",
+      "expected_tools": [
+        "email.create_draft"
+      ],
+      "actual_tools": [
+        "email.create_draft"
+      ],
+      "max_latency_ms": 500,
+      "tags": [
+        "MEDIUM",
+        "email"
+      ]
+    },
+    {
+      "scenario_id": 5,
+      "success": true,
+      "latency_ms": 4669.248104095459,
+      "schema_ok_first": true,
+      "tool_precision": 0.5,
+      "intent_match": false,
+      "expected_intent": "memory.query",
+      "actual_intent": "calendar",
+      "expected_tools": [
+        "memory.query",
+        "calendar.create_draft"
+      ],
+      "actual_tools": [
+        "calendar.create_draft"
+      ],
+      "max_latency_ms": 1500,
+      "tags": [
+        "HARD",
+        "complex"
+      ]
+    },
+    {
+      "scenario_id": "001",
+      "success": true,
+      "latency_ms": 4669.139862060547,
+      "schema_ok_first": true,
+      "tool_precision": 0.0,
+      "intent_match": true,
+      "expected_intent": "time.now",
+      "actual_intent": "time.now",
+      "expected_tools": [],
+      "actual_tools": [
+        "time.now"
+      ],
+      "max_latency_ms": 200,
+      "tags": [
+        "EASY",
+        "time"
+      ]
+    },
+    {
+      "scenario_id": "036",
+      "success": true,
+      "latency_ms": 4669.134855270386,
+      "schema_ok_first": true,
+      "tool_precision": 1.0,
+      "intent_match": false,
+      "expected_intent": "email.create_draft",
+      "actual_intent": "",
+      "expected_tools": [
+        "email.create_draft"
+      ],
+      "actual_tools": [
+        "email.create_draft"
+      ],
+      "max_latency_ms": 500,
+      "tags": [
+        "MEDIUM",
+        "email"
+      ]
+    },
+    {
+      "scenario_id": "017",
+      "success": true,
+      "latency_ms": 4669.070243835449,
+      "schema_ok_first": true,
+      "tool_precision": 1.0,
+      "intent_match": false,
+      "expected_intent": "weather.lookup",
+      "actual_intent": "weather",
+      "expected_tools": [
+        "weather.lookup"
+      ],
+      "actual_tools": [
+        "weather.lookup"
+      ],
+      "max_latency_ms": 200,
+      "tags": [
+        "EASY",
+        "weather"
+      ]
+    },
+    {
+      "scenario_id": "008",
+      "success": true,
+      "latency_ms": 406.203031539917,
+      "schema_ok_first": true,
+      "tool_precision": 1.0,
+      "intent_match": false,
+      "expected_intent": "weather.lookup",
+      "actual_intent": "weather",
+      "expected_tools": [
+        "weather.lookup"
+      ],
+      "actual_tools": [
+        "weather.lookup"
+      ],
+      "max_latency_ms": 200,
+      "tags": [
+        "EASY",
+        "weather"
+      ]
+    },
+    {
+      "scenario_id": "023",
+      "success": true,
+      "latency_ms": 4431.1089515686035,
+      "schema_ok_first": true,
+      "tool_precision": 1.0,
+      "intent_match": false,
+      "expected_intent": "calendar.create_draft",
+      "actual_intent": "calendar",
+      "expected_tools": [
+        "calendar.create_draft"
+      ],
+      "actual_tools": [
+        "calendar.create_draft"
+      ],
+      "max_latency_ms": 500,
+      "tags": [
+        "MEDIUM",
+        "calendar"
+      ]
+    },
+    {
+      "scenario_id": "004",
+      "success": true,
+      "latency_ms": 4430.016040802002,
+      "schema_ok_first": true,
+      "tool_precision": 1.0,
+      "intent_match": false,
+      "expected_intent": "weather.lookup",
+      "actual_intent": "weather",
+      "expected_tools": [
+        "weather.lookup"
+      ],
+      "actual_tools": [
+        "weather.lookup"
+      ],
+      "max_latency_ms": 200,
+      "tags": [
+        "EASY",
+        "weather"
+      ]
+    },
+    {
+      "scenario_id": "009",
+      "success": true,
+      "latency_ms": 4430.074214935303,
+      "schema_ok_first": true,
+      "tool_precision": 1.0,
+      "intent_match": true,
+      "expected_intent": "greeting.hello",
+      "actual_intent": "greeting.hello",
+      "expected_tools": [],
+      "actual_tools": [],
+      "max_latency_ms": 200,
+      "tags": [
+        "EASY",
+        "greeting"
+      ]
+    },
+    {
+      "scenario_id": "040",
+      "success": true,
+      "latency_ms": 4429.95810508728,
+      "schema_ok_first": true,
+      "tool_precision": 0.0,
+      "intent_match": false,
+      "expected_intent": "email.create_draft",
+      "actual_intent": "",
+      "expected_tools": [
+        "email.create_draft"
+      ],
+      "actual_tools": [],
+      "max_latency_ms": 500,
+      "tags": [
+        "MEDIUM",
+        "email"
+      ]
+    },
+    {
+      "scenario_id": "015",
+      "success": true,
+      "latency_ms": 4429.895877838135,
+      "schema_ok_first": true,
+      "tool_precision": 1.0,
+      "intent_match": true,
+      "expected_intent": "greeting.hello",
+      "actual_intent": "greeting.hello",
+      "expected_tools": [],
+      "actual_tools": [],
+      "max_latency_ms": 200,
+      "tags": [
+        "EASY",
+        "greeting"
+      ]
+    },
+    {
+      "scenario_id": "046",
+      "success": true,
+      "latency_ms": 4429.676055908203,
+      "schema_ok_first": true,
+      "tool_precision": 0.0,
+      "intent_match": false,
+      "expected_intent": "calendar.create_draft",
+      "actual_intent": "greeting.hello",
+      "expected_tools": [
+        "calendar.create_draft"
+      ],
+      "actual_tools": [],
+      "max_latency_ms": 1500,
+      "tags": [
+        "HARD",
+        "complex"
+      ]
+    },
+    {
+      "scenario_id": "013",
+      "success": true,
+      "latency_ms": 4429.936170578003,
+      "schema_ok_first": true,
+      "tool_precision": 0.0,
+      "intent_match": true,
+      "expected_intent": "time.now",
+      "actual_intent": "time.now",
+      "expected_tools": [],
+      "actual_tools": [
+        "time.now"
+      ],
+      "max_latency_ms": 200,
+      "tags": [
+        "EASY",
+        "time"
+      ]
+    },
+    {
+      "scenario_id": 4,
+      "success": true,
+      "latency_ms": 4429.615020751953,
+      "schema_ok_first": true,
+      "tool_precision": 1.0,
+      "intent_match": false,
+      "expected_intent": "email.create_draft",
+      "actual_intent": "",
+      "expected_tools": [
+        "email.create_draft"
+      ],
+      "actual_tools": [
+        "email.create_draft"
+      ],
+      "max_latency_ms": 500,
+      "tags": [
+        "MEDIUM",
+        "email"
+      ]
+    },
+    {
+      "scenario_id": "021",
+      "success": true,
+      "latency_ms": 4429.5032024383545,
+      "schema_ok_first": true,
+      "tool_precision": 1.0,
+      "intent_match": false,
+      "expected_intent": "calendar.create_draft",
+      "actual_intent": "",
+      "expected_tools": [
+        "calendar.create_draft"
+      ],
+      "actual_tools": [
+        "calendar.create_draft"
+      ],
+      "max_latency_ms": 500,
+      "tags": [
+        "MEDIUM",
+        "calendar"
+      ]
+    },
+    {
+      "scenario_id": "039",
+      "success": true,
+      "latency_ms": 4426.414012908936,
+      "schema_ok_first": true,
+      "tool_precision": 0.0,
+      "intent_match": false,
+      "expected_intent": "calendar.create_draft",
+      "actual_intent": "greeting.hello",
+      "expected_tools": [
+        "calendar.create_draft"
+      ],
+      "actual_tools": [],
+      "max_latency_ms": 500,
+      "tags": [
+        "MEDIUM",
+        "calendar"
+      ]
+    },
+    {
+      "scenario_id": "014",
+      "success": true,
+      "latency_ms": 1870.2659606933594,
+      "schema_ok_first": true,
+      "tool_precision": 1.0,
+      "intent_match": false,
+      "expected_intent": "weather.lookup",
+      "actual_intent": "weather",
+      "expected_tools": [
+        "weather.lookup"
+      ],
+      "actual_tools": [
+        "weather.lookup"
+      ],
+      "max_latency_ms": 200,
+      "tags": [
+        "EASY",
+        "weather"
+      ]
+    },
+    {
+      "scenario_id": "049",
+      "success": true,
+      "latency_ms": 1869.5361614227295,
+      "schema_ok_first": true,
+      "tool_precision": 0.0,
+      "intent_match": false,
+      "expected_intent": "memory.query",
+      "actual_intent": "time.now",
+      "expected_tools": [
+        "memory.query"
+      ],
+      "actual_tools": [
+        "time.now"
+      ],
+      "max_latency_ms": 1500,
+      "tags": [
+        "HARD",
+        "complex"
+      ]
+    },
+    {
+      "scenario_id": "027",
+      "success": true,
+      "latency_ms": 1869.338035583496,
+      "schema_ok_first": true,
+      "tool_precision": 1.0,
+      "intent_match": false,
+      "expected_intent": "calendar.create_draft",
+      "actual_intent": "calendar",
+      "expected_tools": [
+        "calendar.create_draft"
+      ],
+      "actual_tools": [
+        "calendar.create_draft"
+      ],
+      "max_latency_ms": 500,
+      "tags": [
+        "MEDIUM",
+        "calendar"
+      ]
+    },
+    {
+      "scenario_id": "042",
+      "success": true,
+      "latency_ms": 1869.1840171813965,
+      "schema_ok_first": true,
+      "tool_precision": 0.5,
+      "intent_match": false,
+      "expected_intent": "calendar.create_draft",
+      "actual_intent": "",
+      "expected_tools": [
+        "calendar.create_draft",
+        "email.create_draft"
+      ],
+      "actual_tools": [
+        "calendar.create_draft"
+      ],
+      "max_latency_ms": 1500,
+      "tags": [
+        "HARD",
+        "complex"
+      ]
+    },
+    {
+      "scenario_id": "003",
+      "success": true,
+      "latency_ms": 1868.9181804656982,
+      "schema_ok_first": true,
+      "tool_precision": 0.0,
+      "intent_match": true,
+      "expected_intent": "time.now",
+      "actual_intent": "time.now",
+      "expected_tools": [],
+      "actual_tools": [
+        "time.now"
+      ],
+      "max_latency_ms": 200,
+      "tags": [
+        "EASY",
+        "time"
+      ]
+    },
+    {
+      "scenario_id": "025",
+      "success": true,
+      "latency_ms": 1869.049072265625,
+      "schema_ok_first": true,
+      "tool_precision": 1.0,
+      "intent_match": false,
+      "expected_intent": "calendar.create_draft",
+      "actual_intent": "calendar",
+      "expected_tools": [
+        "calendar.create_draft"
+      ],
+      "actual_tools": [
+        "calendar.create_draft"
+      ],
+      "max_latency_ms": 500,
+      "tags": [
+        "MEDIUM",
+        "calendar"
+      ]
+    },
+    {
+      "scenario_id": "007",
+      "success": true,
+      "latency_ms": 1868.981122970581,
+      "schema_ok_first": true,
+      "tool_precision": 0.0,
+      "intent_match": true,
+      "expected_intent": "time.now",
+      "actual_intent": "time.now",
+      "expected_tools": [],
+      "actual_tools": [
+        "time.now"
+      ],
+      "max_latency_ms": 200,
+      "tags": [
+        "EASY",
+        "time"
+      ]
+    },
+    {
+      "scenario_id": "010",
+      "success": true,
+      "latency_ms": 1868.8530921936035,
+      "schema_ok_first": true,
+      "tool_precision": 0.0,
+      "intent_match": true,
+      "expected_intent": "time.now",
+      "actual_intent": "time.now",
+      "expected_tools": [],
+      "actual_tools": [
+        "time.now"
+      ],
+      "max_latency_ms": 200,
+      "tags": [
+        "EASY",
+        "time"
+      ]
+    },
+    {
+      "scenario_id": "031",
+      "success": true,
+      "latency_ms": 1868.8502311706543,
+      "schema_ok_first": true,
+      "tool_precision": 1.0,
+      "intent_match": false,
+      "expected_intent": "calendar.create_draft",
+      "actual_intent": "calendar",
+      "expected_tools": [
+        "calendar.create_draft"
+      ],
+      "actual_tools": [
+        "calendar.create_draft"
+      ],
+      "max_latency_ms": 500,
+      "tags": [
+        "MEDIUM",
+        "calendar"
+      ]
+    },
+    {
+      "scenario_id": "047",
+      "success": true,
+      "latency_ms": 2996.5250492095947,
+      "schema_ok_first": true,
+      "tool_precision": 0.0,
+      "intent_match": false,
+      "expected_intent": "memory.query",
+      "actual_intent": "greeting.hello",
+      "expected_tools": [
+        "memory.query"
+      ],
+      "actual_tools": [],
+      "max_latency_ms": 1500,
+      "tags": [
+        "HARD",
+        "complex"
+      ]
+    },
+    {
+      "scenario_id": "029",
+      "success": true,
+      "latency_ms": 5895.067930221558,
+      "schema_ok_first": true,
+      "tool_precision": 1.0,
+      "intent_match": false,
+      "expected_intent": "calendar.create_draft",
+      "actual_intent": "",
+      "expected_tools": [
+        "calendar.create_draft"
+      ],
+      "actual_tools": [
+        "calendar.create_draft"
+      ],
+      "max_latency_ms": 500,
+      "tags": [
+        "MEDIUM",
+        "calendar"
+      ]
+    },
+    {
+      "scenario_id": "024",
+      "success": true,
+      "latency_ms": 5894.857883453369,
+      "schema_ok_first": true,
+      "tool_precision": 1.0,
+      "intent_match": false,
+      "expected_intent": "email.create_draft",
+      "actual_intent": "",
+      "expected_tools": [
+        "email.create_draft"
+      ],
+      "actual_tools": [
+        "email.create_draft"
+      ],
+      "max_latency_ms": 500,
+      "tags": [
+        "MEDIUM",
+        "email"
+      ]
+    },
+    {
+      "scenario_id": "011",
+      "success": true,
+      "latency_ms": 5894.713878631592,
+      "schema_ok_first": true,
+      "tool_precision": 0.0,
+      "intent_match": false,
+      "expected_intent": "weather.lookup",
+      "actual_intent": "greeting.hello",
+      "expected_tools": [
+        "weather.lookup"
+      ],
+      "actual_tools": [],
+      "max_latency_ms": 200,
+      "tags": [
+        "EASY",
+        "weather"
+      ]
+    },
+    {
+      "scenario_id": "030",
+      "success": true,
+      "latency_ms": 5894.707918167114,
+      "schema_ok_first": true,
+      "tool_precision": 1.0,
+      "intent_match": false,
+      "expected_intent": "email.create_draft",
+      "actual_intent": "email",
+      "expected_tools": [
+        "email.create_draft"
+      ],
+      "actual_tools": [
+        "email.create_draft"
+      ],
+      "max_latency_ms": 500,
+      "tags": [
+        "MEDIUM",
+        "email"
+      ]
+    },
+    {
+      "scenario_id": "033",
+      "success": true,
+      "latency_ms": 5894.69313621521,
+      "schema_ok_first": true,
+      "tool_precision": 1.0,
+      "intent_match": false,
+      "expected_intent": "calendar.create_draft",
+      "actual_intent": "",
+      "expected_tools": [
+        "calendar.create_draft"
+      ],
+      "actual_tools": [
+        "calendar.create_draft"
+      ],
+      "max_latency_ms": 500,
+      "tags": [
+        "MEDIUM",
+        "calendar"
+      ]
+    },
+    {
+      "scenario_id": "012",
+      "success": true,
+      "latency_ms": 5894.640922546387,
+      "schema_ok_first": true,
+      "tool_precision": 1.0,
+      "intent_match": true,
+      "expected_intent": "greeting.hello",
+      "actual_intent": "greeting.hello",
+      "expected_tools": [],
+      "actual_tools": [],
+      "max_latency_ms": 200,
+      "tags": [
+        "EASY",
+        "greeting"
+      ]
+    },
+    {
+      "scenario_id": "048",
+      "success": true,
+      "latency_ms": 5894.572019577026,
+      "schema_ok_first": true,
+      "tool_precision": 1.0,
+      "intent_match": false,
+      "expected_intent": "calendar.create_draft",
+      "actual_intent": "calendar",
+      "expected_tools": [
+        "calendar.create_draft"
+      ],
+      "actual_tools": [
+        "calendar.create_draft"
+      ],
+      "max_latency_ms": 1500,
+      "tags": [
+        "HARD",
+        "complex"
+      ]
+    },
+    {
+      "scenario_id": "035",
+      "success": true,
+      "latency_ms": 5894.593000411987,
+      "schema_ok_first": true,
+      "tool_precision": 0.0,
+      "intent_match": false,
+      "expected_intent": "calendar.create_draft",
+      "actual_intent": "greeting.hello",
+      "expected_tools": [
+        "calendar.create_draft"
+      ],
+      "actual_tools": [],
+      "max_latency_ms": 500,
+      "tags": [
+        "MEDIUM",
+        "calendar"
+      ]
+    },
+    {
+      "scenario_id": "034",
+      "success": true,
+      "latency_ms": 5894.304037094116,
+      "schema_ok_first": true,
+      "tool_precision": 1.0,
+      "intent_match": false,
+      "expected_intent": "email.create_draft",
+      "actual_intent": "",
+      "expected_tools": [
+        "email.create_draft"
+      ],
+      "actual_tools": [
+        "email.create_draft"
+      ],
+      "max_latency_ms": 500,
+      "tags": [
+        "MEDIUM",
+        "email"
+      ]
+    },
+    {
+      "scenario_id": "019",
+      "success": true,
+      "latency_ms": 4756.02388381958,
+      "schema_ok_first": true,
+      "tool_precision": 0.0,
+      "intent_match": true,
+      "expected_intent": "time.now",
+      "actual_intent": "time.now",
+      "expected_tools": [],
+      "actual_tools": [
+        "time.now"
+      ],
+      "max_latency_ms": 200,
+      "tags": [
+        "EASY",
+        "time"
+      ]
+    },
+    {
+      "scenario_id": "037",
+      "success": true,
+      "latency_ms": 1729.222059249878,
+      "schema_ok_first": true,
+      "tool_precision": 1.0,
+      "intent_match": false,
+      "expected_intent": "calendar.create_draft",
+      "actual_intent": "",
+      "expected_tools": [
+        "calendar.create_draft"
+      ],
+      "actual_tools": [
+        "calendar.create_draft"
+      ],
+      "max_latency_ms": 500,
+      "tags": [
+        "MEDIUM",
+        "calendar"
+      ]
+    },
+    {
+      "scenario_id": "020",
+      "success": true,
+      "latency_ms": 1729.0596961975098,
+      "schema_ok_first": true,
+      "tool_precision": 1.0,
+      "intent_match": false,
+      "expected_intent": "weather.lookup",
+      "actual_intent": "weather",
+      "expected_tools": [
+        "weather.lookup"
+      ],
+      "actual_tools": [
+        "weather.lookup"
+      ],
+      "max_latency_ms": 200,
+      "tags": [
+        "EASY",
+        "weather"
+      ]
+    },
+    {
+      "scenario_id": "043",
+      "success": true,
+      "latency_ms": 1729.0270328521729,
+      "schema_ok_first": true,
+      "tool_precision": 0.0,
+      "intent_match": false,
+      "expected_intent": "memory.query",
+      "actual_intent": "email",
+      "expected_tools": [
+        "memory.query"
+      ],
+      "actual_tools": [
+        "email.create_draft"
+      ],
+      "max_latency_ms": 1500,
+      "tags": [
+        "HARD",
+        "complex"
+      ]
+    }
+  ]
+}

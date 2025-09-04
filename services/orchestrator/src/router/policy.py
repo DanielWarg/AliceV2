@@ -102,11 +102,11 @@ class RouterPolicy:
         planner_score = self._calculate_planner_score(features)
         deep_score = self._calculate_deep_score(features)
         
-        # Local Lite logic: Check if we should skip planner for simple intents
-        safe_mode = os.getenv("SAFE_MODE", "false").lower() == "true"
-        if safe_mode and micro_score > 0.5:
-            # In safe mode, prefer micro for simple intents
-            planner_score *= 0.3  # Reduce planner preference
+        # Enhanced micro routing for better tool precision
+        # Prefer micro for EASY/MEDIUM scenarios to use fast tool selector
+        if micro_score > 0.3:  # Lower threshold for micro
+            micro_score *= 1.5  # Boost micro preference
+            planner_score *= 0.5  # Reduce planner preference
         
         # Normalize scores
         total_score = micro_score + planner_score + deep_score
