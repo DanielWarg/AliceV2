@@ -366,7 +366,7 @@ curl http://localhost:8787/health
 # Test basic chat functionality
 curl -s -X POST http://localhost:18000/api/chat \
   -H 'Content-Type: application/json' \
-  -H 'Authorization: Bearer test-key-123' \
+  -H 'Authorization: Bearer YOUR_API_KEY_HERE' \
   -d '{"v":"1","session_id":"test","lang":"sv","message":"Vad är klockan?"}' | jq .
 ```
 
