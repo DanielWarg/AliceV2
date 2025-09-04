@@ -1,6 +1,7 @@
-from dataclasses import dataclass
-import numpy as np
 import os
+from dataclasses import dataclass
+
+import numpy as np
 
 
 @dataclass
@@ -25,21 +26,41 @@ class IntentEmbedder:
         # Snabb svensk heuristik för tydliga verbfraser
         lt = text.lower()
         if any(w in lt for w in ["boka", "skapa"]):
-            return SimResult(label="calendar.create", score=0.999, second_label="calendar.move", second_score=0.0, accepted=True)
+            return SimResult(
+                label="calendar.create",
+                score=0.999,
+                second_label="calendar.move",
+                second_score=0.0,
+                accepted=True,
+            )
         if any(w in lt for w in ["flytta", "ändra", "omboka"]):
-            return SimResult(label="calendar.move", score=0.999, second_label="calendar.create", second_score=0.0, accepted=True)
-        if any(w in lt for w in ["skicka mail", "skicka mejl", "mejla", "maila", "e-post"]):
-            return SimResult(label="email.send", score=0.999, second_label="info.query", second_score=0.0, accepted=True)
+            return SimResult(
+                label="calendar.move",
+                score=0.999,
+                second_label="calendar.create",
+                second_score=0.0,
+                accepted=True,
+            )
+        if any(
+            w in lt for w in ["skicka mail", "skicka mejl", "mejla", "maila", "e-post"]
+        ):
+            return SimResult(
+                label="email.send",
+                score=0.999,
+                second_label="info.query",
+                second_score=0.0,
+                accepted=True,
+            )
 
         q = self.registry.encode(text)
         labels = list(self.registry.embeddings.keys())
         embs = np.stack([self.registry.embeddings[l] for l in labels], axis=0)
-        sims = (embs @ q)  # cos om vektorer är normaliserade
+        sims = embs @ q  # cos om vektorer är normaliserade
         top_idx = np.argsort(-sims)[:2]
         l1, l2 = labels[top_idx[0]], labels[top_idx[1]]
         s1, s2 = float(sims[top_idx[0]]), float(sims[top_idx[1]])
         margin = s1 - s2
         accept = (s1 >= self.sim_thresh) and (margin >= self.margin_min)
-        return SimResult(label=l1, score=s1, second_label=l2, second_score=s2, accepted=accept)
-
-
+        return SimResult(
+            label=l1, score=s1, second_label=l2, second_score=s2, accepted=accept
+        )

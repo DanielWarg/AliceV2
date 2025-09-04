@@ -35,6 +35,7 @@ Alice v2 is a robust AI assistant featuring:
 ## 📚 Index (Solo Edition)
 - Solo Quickstart – see below
 - Demo Guide – see below
+- Windows Setup Guide – see below
 - Roadmap – `ROADMAP.md`
 - Architecture – `ALICE_SYSTEM_BLUEPRINT.md`
 - Rules/specs – `.cursor/rules/` (PRD, ADR, workflow, types, structured-outputs, toolselector, n8n)
@@ -132,6 +133,419 @@ make test-all
 # Access HUD
 open http://localhost:3001
 ```
+
+## 🪟 Windows Setup Guide
+
+This comprehensive guide covers setting up Alice v2 on Windows using WSL2 (Windows Subsystem for Linux) for optimal development experience.
+
+### Prerequisites Overview
+
+- **Windows 10 version 2004+** or **Windows 11** (WSL2 requirement)
+- **Administrator access** for initial setup
+- **At least 8GB RAM** (16GB recommended for local AI models)
+- **20GB+ free disk space** for Docker, models, and dependencies
+
+### Step 1: Enable WSL2 and Install Ubuntu
+
+#### 1.1 Enable WSL2 Feature
+Open PowerShell as Administrator and run:
+
+```powershell
+# Enable WSL and Virtual Machine Platform
+dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
+dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
+
+# Restart required
+Restart-Computer
+```
+
+#### 1.2 Install WSL2 Kernel Update
+1. Download the WSL2 Linux kernel update package from Microsoft
+2. Run the installer: `wsl_update_x64.msi`
+
+#### 1.3 Set WSL2 as Default and Install Ubuntu
+```powershell
+# Set WSL2 as default version
+wsl --set-default-version 2
+
+# Install Ubuntu 22.04 LTS (recommended)
+wsl --install -d Ubuntu-22.04
+
+# Or install from Microsoft Store: "Ubuntu 22.04.3 LTS"
+```
+
+#### 1.4 Complete Ubuntu Setup
+1. Launch Ubuntu from Start menu
+2. Create your UNIX username and password
+3. Update the system:
+```bash
+sudo apt update && sudo apt upgrade -y
+```
+
+### Step 2: Docker Desktop Setup for Windows
+
+#### 2.1 Install Docker Desktop
+1. Download Docker Desktop for Windows from: https://www.docker.com/products/docker-desktop/
+2. Run the installer with default settings
+3. **Important**: Enable "Use WSL 2 based engine" during installation
+4. Restart Windows after installation
+
+#### 2.2 Configure Docker for WSL2
+1. Start Docker Desktop
+2. Go to Settings → General
+3. Ensure "Use the WSL 2 based engine" is checked
+4. Go to Settings → Resources → WSL Integration
+5. Enable integration with your Ubuntu distribution
+6. Click "Apply & Restart"
+
+#### 2.3 Verify Docker in WSL2
+Open Ubuntu terminal and verify:
+```bash
+# Check Docker is available in WSL2
+docker --version
+docker-compose --version
+
+# Test Docker works
+docker run hello-world
+```
+
+### Step 3: Install Required Dependencies in WSL2
+
+#### 3.1 Install Python 3.11+
+```bash
+# Add deadsnakes PPA for latest Python versions
+sudo apt update
+sudo apt install -y software-properties-common
+sudo add-apt-repository ppa:deadsnakes/ppa -y
+sudo apt update
+
+# Install Python 3.11 and essential tools
+sudo apt install -y python3.11 python3.11-venv python3.11-dev python3-pip
+sudo apt install -y build-essential curl wget git
+
+# Set Python 3.11 as default (optional)
+sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
+```
+
+#### 3.2 Install Node.js and pnpm
+```bash
+# Install Node.js 18+ via NodeSource
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt install -y nodejs
+
+# Install pnpm globally
+npm install -g pnpm
+
+# Verify installations
+node --version  # Should be v18+
+pnpm --version
+```
+
+#### 3.3 Install Ollama for Local AI Models
+```bash
+# Install Ollama
+curl -fsSL https://ollama.ai/install.sh | sh
+
+# Start Ollama service
+ollama serve &
+
+# Install required models (will download ~2GB each)
+ollama pull qwen2.5:3b
+ollama pull phi3:mini
+
+# Verify models are installed
+ollama list
+```
+
+### Step 4: Clone and Setup Alice v2
+
+#### 4.1 Choose Your Setup Location
+```bash
+# Option 1: WSL2 home directory (better performance)
+cd ~
+git clone https://github.com/DanielWarg/AliceV2.git alice-v2
+cd alice-v2
+
+# Option 2: Windows filesystem (if you need Windows IDE access)
+# Note: Slower file I/O performance
+cd /mnt/c/Users/YourUsername/Documents
+git clone https://github.com/DanielWarg/AliceV2.git alice-v2
+cd alice-v2
+```
+
+**Recommendation**: Use WSL2 home directory (`~`) for better performance, access files via `\\wsl$\Ubuntu-22.04\home\yourusername` in Windows Explorer.
+
+#### 4.2 Set Up Environment Variables
+```bash
+# Create .env file from template
+cp .env.example .env
+
+# Edit environment variables
+nano .env
+```
+
+Add these Windows/WSL2 specific settings to `.env`:
+```env
+# N8N Configuration
+N8N_ENCRYPTION_KEY=change-me-to-secure-key
+
+# OpenAI API Key (optional, for cloud features)
+OPENAI_API_KEY=sk-your-api-key-here
+
+# WSL2 specific Ollama configuration
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_HOST=http://localhost:11434
+
+# Logging
+LOG_LEVEL=INFO
+```
+
+### Step 5: Start Alice v2
+
+#### 5.1 Automated Setup (Recommended)
+```bash
+# Make sure you're in the alice-v2 directory
+cd ~/alice-v2  # or wherever you cloned it
+
+# One-command setup: creates venv, installs deps, fetches models, starts stack
+make up
+```
+
+The `make up` command will automatically:
+- Create Python virtual environment
+- Install all Python dependencies
+- Install Node.js dependencies with pnpm
+- Download required AI models
+- Start all Docker services
+- Launch the frontend HUD
+
+#### 5.2 Manual Setup (Alternative)
+If you prefer step-by-step setup:
+```bash
+# Create and activate virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Install Python dependencies
+pip install --upgrade pip
+pip install pytest httpx fastapi pyyaml prometheus_client psutil structlog
+
+# Install Node.js dependencies
+pnpm install:all
+
+# Fetch AI models
+./scripts/fetch_models.sh
+
+# Start Docker services
+docker compose up -d
+
+# Start frontend (in separate terminal)
+cd apps/hud && pnpm dev
+```
+
+### Step 6: Access Alice v2
+
+#### 6.1 Verify Services Are Running
+```bash
+# Check service health
+curl http://localhost:18000/health
+curl http://localhost:18000/api/status/simple
+
+# Check Guardian status
+curl http://localhost:8787/health
+```
+
+#### 6.2 Access Web Interfaces
+- **Main HUD**: http://localhost:3001 (Primary dashboard)
+- **API Gateway**: http://localhost:18000 (API access)
+- **n8n Workflows**: http://localhost:5678 (Automation platform)
+- **Monitoring Dashboard**: http://localhost:8501 (when enabled)
+
+#### 6.3 Test the AI Assistant
+```bash
+# Test basic chat functionality
+curl -s -X POST http://localhost:18000/api/chat \
+  -H 'Content-Type: application/json' \
+  -H 'Authorization: Bearer test-key-123' \
+  -d '{"v":"1","session_id":"test","lang":"sv","message":"Vad är klockan?"}' | jq .
+```
+
+### Step 7: Windows-Specific Configuration
+
+#### 7.1 Port Forwarding and Networking
+WSL2 uses its own network interface. To access Alice v2 from Windows applications:
+
+```bash
+# Check WSL2 IP address
+hostname -I
+
+# Windows can access via localhost by default for most ports
+# If you have issues, check Windows Firewall settings
+```
+
+#### 7.2 File System Integration
+- **Access WSL2 files from Windows**: `\\wsl$\Ubuntu-22.04\home\yourusername\alice-v2`
+- **Access Windows files from WSL2**: `/mnt/c/Users/YourUsername/...`
+- **VS Code integration**: Install "WSL" extension for seamless development
+
+#### 7.3 Performance Optimization
+```bash
+# Increase WSL2 memory limit (optional)
+# Create/edit ~/.wslconfig in Windows home directory
+notepad.exe ~/.wslconfig
+```
+
+Add to `.wslconfig`:
+```ini
+[wsl2]
+memory=8GB
+processors=4
+swap=2GB
+```
+
+Restart WSL2 after changes:
+```powershell
+wsl --shutdown
+wsl
+```
+
+### Step 8: Troubleshooting Common Windows/WSL Issues
+
+#### 8.1 Docker Issues
+```bash
+# Docker daemon not running
+sudo service docker start
+
+# Permission denied errors
+sudo usermod -aG docker $USER
+# Then logout and login to WSL2
+
+# Docker Desktop integration broken
+# Restart Docker Desktop, ensure WSL2 integration is enabled
+```
+
+#### 8.2 Port Conflicts
+```bash
+# Kill conflicting processes
+./scripts/ports-kill.sh
+
+# Check what's using ports
+sudo netstat -tulpn | grep :8000
+sudo netstat -tulpn | grep :3001
+```
+
+#### 8.3 Ollama Issues
+```bash
+# Ollama not responding
+pkill ollama
+ollama serve &
+
+# Models not downloading
+# Check disk space: df -h
+# Clear Ollama cache: rm -rf ~/.ollama
+
+# Restart Ollama service
+sudo systemctl restart ollama  # if installed as service
+# Or manually: ollama serve &
+```
+
+#### 8.4 Memory Issues
+```bash
+# Check memory usage
+free -h
+docker stats
+
+# Clear Docker cache if needed
+docker system prune -f
+
+# Stop unused services
+docker compose down
+```
+
+#### 8.5 WSL2 Networking Issues
+```powershell
+# Reset WSL2 network (run in Windows PowerShell as Admin)
+wsl --shutdown
+netsh winsock reset
+netsh int ip reset
+# Restart computer
+```
+
+### Step 9: Development Workflow on Windows
+
+#### 9.1 Recommended IDE Setup
+- **VS Code with WSL extension**: Best integration, works seamlessly with WSL2
+- **JetBrains IDEs**: Configure to use WSL2 Python interpreter
+- **Windows Terminal**: Modern terminal with WSL2 tab support
+
+#### 9.2 Daily Development Commands
+```bash
+# Start development environment
+make up
+
+# Run tests
+make test-all
+
+# Stop services
+make down
+
+# View logs
+docker compose logs -f orchestrator
+
+# Quick restart
+make restart
+```
+
+#### 9.3 Git Configuration
+```bash
+# Configure Git in WSL2
+git config --global user.name "Your Name"
+git config --global user.email "your.email@example.com"
+git config --global core.autocrlf input
+git config --global core.filemode false
+```
+
+### Step 10: Production Considerations
+
+#### 10.1 Security
+- Change default passwords in `.env` file
+- Use strong N8N encryption keys
+- Configure proper firewall rules if exposing services
+- Regular updates: `sudo apt update && sudo apt upgrade`
+
+#### 10.2 Backup Strategy
+```bash
+# Backup configuration and data
+tar -czf alice-v2-backup-$(date +%Y%m%d).tar.gz \
+  .env docker-compose.yml data/ config/
+
+# Backup to Windows location
+cp alice-v2-backup-*.tar.gz /mnt/c/Users/YourUsername/Backups/
+```
+
+#### 10.3 Performance Monitoring
+```bash
+# Monitor system resources
+htop
+docker stats
+
+# Check Alice v2 performance
+curl http://localhost:18000/api/status/simple
+```
+
+### Need Help?
+
+If you encounter issues:
+
+1. **Check the logs**: `docker compose logs -f orchestrator`
+2. **Run diagnostics**: `./scripts/auto_verify.sh`
+3. **Check system resources**: `free -h` and `df -h`
+4. **Restart services**: `make restart`
+5. **Clean restart**: `make down && make up`
+
+For more advanced troubleshooting, see the main troubleshooting section below.
+
+---
 
 ## ⚡ Solo Quickstart (Local Lite)
 ```bash

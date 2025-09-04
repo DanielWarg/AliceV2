@@ -1,11 +1,19 @@
 import hashlib
 import json
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 _CANON_ORDER = [
-    "intent", "prompt_core", "context_facts", "schema_version", "prompt_version",
-    "deps_version", "locale_user", "persona_mode", "time_bucket",
-    "safety_mode", "model_id"
+    "intent",
+    "prompt_core",
+    "context_facts",
+    "schema_version",
+    "prompt_version",
+    "deps_version",
+    "locale_user",
+    "persona_mode",
+    "time_bucket",
+    "safety_mode",
+    "model_id",
 ]
 
 

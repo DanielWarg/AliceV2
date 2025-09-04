@@ -5,24 +5,25 @@ Stores test results for Alice's learning and improvement
 """
 
 import asyncio
-import httpx
-import json
 import time
 from datetime import datetime
-from typing import Dict, Any, List
+from typing import Any, Dict, List
+
+import httpx
 
 # Configuration
 BASE_URL = "http://localhost:18000"
 API_BASE = f"{BASE_URL}/api/memory"
 
+
 class PlannerResultsMemory:
     """Store planner test results in Alice's memory system"""
-    
+
     def __init__(self):
         self.client = httpx.AsyncClient(timeout=30.0)
         self.user_id = "alice-system"
         self.session_id = f"planner-test-{int(time.time())}"
-    
+
     async def store_test_summary(self, results: Dict[str, Any]):
         """Store overall test summary"""
         summary_text = f"""
@@ -47,29 +48,27 @@ class PlannerResultsMemory:
         - HARD scenarios: Needs improvement (46.7% schema_ok)
         - Local model sufficient for EASY/MEDIUM, OpenAI API needed for HARD
         """
-        
+
         metadata = {
             "type": "planner_test_summary",
             "test_date": datetime.now().isoformat(),
-            "model": results.get('model', 'qwen2.5:1.5b'),
-            "total_scenarios": results.get('total_scenarios', 0),
-            "schema_ok_rate": results.get('schema_ok_rate', 0),
-            "success_rate": results.get('success_rate', 0),
-            "p95_latency": results.get('p95_latency', 0),
-            "fallback_rate": results.get('fallback_rate', 0),
-            "classifier_usage": results.get('classifier_usage', 0)
+            "model": results.get("model", "qwen2.5:1.5b"),
+            "total_scenarios": results.get("total_scenarios", 0),
+            "schema_ok_rate": results.get("schema_ok_rate", 0),
+            "success_rate": results.get("success_rate", 0),
+            "p95_latency": results.get("p95_latency", 0),
+            "fallback_rate": results.get("fallback_rate", 0),
+            "classifier_usage": results.get("classifier_usage", 0),
         }
-        
+
         await self._store_memory(
-            text=summary_text,
-            metadata=metadata,
-            namespace="TESTING"
+            text=summary_text, metadata=metadata, namespace="TESTING"
         )
-    
+
     async def store_complexity_breakdown(self, results: Dict[str, Any]):
         """Store detailed breakdown by complexity level"""
-        complexity_data = results.get('complexity_breakdown', {})
-        
+        complexity_data = results.get("complexity_breakdown", {})
+
         for level, data in complexity_data.items():
             text = f"""
             Planner Performance - {level.upper()} Scenarios
@@ -88,24 +87,20 @@ class PlannerResultsMemory:
             - Performance: {'Excellent' if data.get('schema_ok', 0) >= 95 else 'Good' if data.get('schema_ok', 0) >= 80 else 'Needs Improvement'}
             - Recommendation: {data.get('recommendation', 'Continue monitoring')}
             """
-            
+
             metadata = {
                 "type": "planner_complexity_analysis",
                 "complexity_level": level,
                 "test_date": datetime.now().isoformat(),
-                "schema_ok": data.get('schema_ok', 0),
-                "success_rate": data.get('success_rate', 0),
-                "classifier_usage": data.get('classifier_usage', 0),
-                "avg_latency": data.get('avg_latency', 0),
-                "count": data.get('count', 0)
+                "schema_ok": data.get("schema_ok", 0),
+                "success_rate": data.get("success_rate", 0),
+                "classifier_usage": data.get("classifier_usage", 0),
+                "avg_latency": data.get("avg_latency", 0),
+                "count": data.get("count", 0),
             }
-            
-            await self._store_memory(
-                text=text,
-                metadata=metadata,
-                namespace="TESTING"
-            )
-    
+
+            await self._store_memory(text=text, metadata=metadata, namespace="TESTING")
+
     async def store_individual_results(self, scenarios: List[Dict[str, Any]]):
         """Store individual test scenario results"""
         for i, scenario in enumerate(scenarios):
@@ -123,26 +118,22 @@ class PlannerResultsMemory:
             
             Raw Response: {scenario.get('raw_response', 'No response')}
             """
-            
+
             metadata = {
                 "type": "planner_test_scenario",
-                "scenario_id": i+1,
+                "scenario_id": i + 1,
                 "test_date": datetime.now().isoformat(),
-                "expected_tool": scenario.get('expected_tool', 'unknown'),
-                "actual_tool": scenario.get('actual_tool', 'unknown'),
-                "schema_ok": scenario.get('schema_ok', False),
-                "success": scenario.get('success', False),
-                "latency": scenario.get('latency', 0),
-                "classifier_used": scenario.get('classifier_used', False),
-                "complexity": scenario.get('complexity', 'unknown')
+                "expected_tool": scenario.get("expected_tool", "unknown"),
+                "actual_tool": scenario.get("actual_tool", "unknown"),
+                "schema_ok": scenario.get("schema_ok", False),
+                "success": scenario.get("success", False),
+                "latency": scenario.get("latency", 0),
+                "classifier_used": scenario.get("classifier_used", False),
+                "complexity": scenario.get("complexity", "unknown"),
             }
-            
-            await self._store_memory(
-                text=text,
-                metadata=metadata,
-                namespace="TESTING"
-            )
-    
+
+            await self._store_memory(text=text, metadata=metadata, namespace="TESTING")
+
     async def store_learning_recommendations(self, results: Dict[str, Any]):
         """Store AI learning recommendations based on results"""
         recommendations = f"""
@@ -177,30 +168,26 @@ class PlannerResultsMemory:
         - Plan hybrid routing implementation for v2
         - Consider domain-specific training data collection
         """
-        
+
         metadata = {
             "type": "planner_learning_recommendations",
             "test_date": datetime.now().isoformat(),
             "current_performance": {
-                "schema_ok_rate": results.get('schema_ok_rate', 0),
-                "success_rate": results.get('success_rate', 0),
-                "p95_latency": results.get('p95_latency', 0)
+                "schema_ok_rate": results.get("schema_ok_rate", 0),
+                "success_rate": results.get("success_rate", 0),
+                "p95_latency": results.get("p95_latency", 0),
             },
-            "targets": {
-                "schema_ok_rate": 80,
-                "success_rate": 85,
-                "p95_latency": 900
-            },
-            "status": "ready_for_step8"
+            "targets": {"schema_ok_rate": 80, "success_rate": 85, "p95_latency": 900},
+            "status": "ready_for_step8",
         }
-        
+
         await self._store_memory(
-            text=recommendations,
-            metadata=metadata,
-            namespace="LEARNING"
+            text=recommendations, metadata=metadata, namespace="LEARNING"
         )
-    
-    async def _store_memory(self, text: str, metadata: Dict[str, Any], namespace: str = "GENERAL"):
+
+    async def _store_memory(
+        self, text: str, metadata: Dict[str, Any], namespace: str = "GENERAL"
+    ):
         """Store memory in Alice's memory system"""
         try:
             payload = {
@@ -209,26 +196,27 @@ class PlannerResultsMemory:
                 "text": text.strip(),
                 "metadata": metadata,
                 "consent_scopes": ["basic_logging", "system_learning"],
-                "namespace": namespace
+                "namespace": namespace,
             }
-            
+
             response = await self.client.post(f"{API_BASE}/store", json=payload)
             response.raise_for_status()
-            
+
             result = response.json()
             print(f"✅ Stored {namespace} memory: {result.get('chunk_id', 'unknown')}")
-            
+
         except Exception as e:
             print(f"❌ Failed to store {namespace} memory: {e}")
-    
+
     async def close(self):
         """Close HTTP client"""
         await self.client.aclose()
 
+
 async def main():
     """Main function to save planner results to memory"""
     print("🧠 Saving Planner Test Results to Alice Memory System...")
-    
+
     # Load test results (you can modify this to load from actual test output)
     test_results = {
         "model": "qwen2.5:1.5b",
@@ -246,7 +234,7 @@ async def main():
                 "avg_latency": 245.0,
                 "count": 15,
                 "examples": ["Vad är klockan?", "Boka möte imorgon 14:00"],
-                "recommendation": "Excellent performance, continue current approach"
+                "recommendation": "Excellent performance, continue current approach",
             },
             "medium": {
                 "schema_ok": 95.0,
@@ -254,8 +242,11 @@ async def main():
                 "classifier_usage": 70.0,
                 "avg_latency": 456.0,
                 "count": 20,
-                "examples": ["Skapa e-post till Anna om projektuppdatering", "Vad blir vädret i Stockholm på fredag?"],
-                "recommendation": "Good performance, minor improvements possible"
+                "examples": [
+                    "Skapa e-post till Anna om projektuppdatering",
+                    "Vad blir vädret i Stockholm på fredag?",
+                ],
+                "recommendation": "Good performance, minor improvements possible",
             },
             "hard": {
                 "schema_ok": 46.7,
@@ -263,33 +254,38 @@ async def main():
                 "classifier_usage": 40.0,
                 "avg_latency": 892.0,
                 "count": 15,
-                "examples": ["Analysera min kalender för denna vecka och föreslå optimala tider för team-möten"],
-                "recommendation": "Needs hybrid routing to OpenAI API for complex reasoning"
-            }
-        }
+                "examples": [
+                    "Analysera min kalender för denna vecka och föreslå optimala tider för team-möten"
+                ],
+                "recommendation": "Needs hybrid routing to OpenAI API for complex reasoning",
+            },
+        },
     }
-    
+
     memory = PlannerResultsMemory()
-    
+
     try:
         # Store different types of learning data
         print("\n1. Storing test summary...")
         await memory.store_test_summary(test_results)
-        
+
         print("\n2. Storing complexity breakdown...")
         await memory.store_complexity_breakdown(test_results)
-        
+
         print("\n3. Storing learning recommendations...")
         await memory.store_learning_recommendations(test_results)
-        
+
         print("\n🎉 Successfully stored planner test results in Alice's memory!")
-        print("   Alice can now learn from these results and improve future performance.")
-        
+        print(
+            "   Alice can now learn from these results and improve future performance."
+        )
+
     except Exception as e:
         print(f"❌ Failed to save results to memory: {e}")
-    
+
     finally:
         await memory.close()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

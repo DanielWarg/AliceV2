@@ -1,24 +1,31 @@
-from functools import wraps
-from datetime import datetime
-from typing import Callable, Any, Dict, Optional
 import re
-from models import CacheKey, CacheEntry
+from datetime import datetime
+from functools import wraps
+from typing import Any, Callable, Dict, Optional
+
 from key_builder import build_fingerprint
-from config import TTL_BY_LEVEL, MAX_RESPONSE_SIZE_KB, MAX_EVIDENCE_SIZE_KB, PII_PATTERNS
-from metrics import cache_hit, cache_miss, stale_prevented, save_ms
+from metrics import cache_hit, cache_miss, save_ms, stale_prevented
+
+from config import (
+    MAX_EVIDENCE_SIZE_KB,
+    MAX_RESPONSE_SIZE_KB,
+    PII_PATTERNS,
+    TTL_BY_LEVEL,
+)
+from models import CacheEntry, CacheKey
 
 
 def _filter_pii(text: str) -> str:
     """Filter PII from evidence"""
     filtered = text
     for pattern in PII_PATTERNS:
-        filtered = re.sub(pattern, '[REDACTED]', filtered)
+        filtered = re.sub(pattern, "[REDACTED]", filtered)
     return filtered
 
 
 def _check_size_limit(data: Dict[str, Any], max_size_kb: int) -> bool:
     """Check if data size is within limit"""
-    size_bytes = len(str(data).encode('utf-8'))
+    size_bytes = len(str(data).encode("utf-8"))
     return size_bytes <= max_size_kb * 1024
 
 
@@ -29,12 +36,25 @@ def semantic_cache(store, settings):
     async def plan(*, prompt_core, context_facts, classifier, schema_version, prompt_version, deps_version, locale_user, persona_mode, time_bucket, safety_mode, model_id, level) -> dict:
         ...
     """
+
     def decorator(func: Callable[..., Any]):
         @wraps(func)
-        async def wrapper(*, prompt_core: str, context_facts: list[str], classifier,  # classifier har .intent och .level
-                          schema_version: str, prompt_version: str, deps_version: str,
-                          locale_user: str, persona_mode: str, time_bucket: Optional[str],
-                          safety_mode: str, model_id: str, level: str, **kwargs):
+        async def wrapper(
+            *,
+            prompt_core: str,
+            context_facts: list[str],
+            classifier,  # classifier har .intent och .level
+            schema_version: str,
+            prompt_version: str,
+            deps_version: str,
+            locale_user: str,
+            persona_mode: str,
+            time_bucket: Optional[str],
+            safety_mode: str,
+            model_id: str,
+            level: str,
+            **kwargs,
+        ):
             intent = classifier.intent or "none"
             lvl = (level or classifier.level or "easy").lower()
             ttl = TTL_BY_LEVEL.get(lvl, 300)
@@ -52,8 +72,12 @@ def semantic_cache(store, settings):
                 safety_mode=safety_mode,
                 model_id=model_id,
             )
-            key = CacheKey(fingerprint=fp, intent=intent,
-                           schema_version=schema_version, deps_version=deps_version)
+            key = CacheKey(
+                fingerprint=fp,
+                intent=intent,
+                schema_version=schema_version,
+                deps_version=deps_version,
+            )
 
             # HIT path
             cached = await store.get(key)
@@ -65,27 +89,34 @@ def semantic_cache(store, settings):
 
             # MISS → kör planner
             response: Dict[str, Any] = await func(
-                prompt_core=prompt_core, context_facts=context_facts,
-                classifier=classifier, schema_version=schema_version,
-                prompt_version=prompt_version, deps_version=deps_version,
-                locale_user=locale_user, persona_mode=persona_mode,
-                time_bucket=time_bucket, safety_mode=safety_mode,
-                model_id=model_id, level=lvl, **kwargs
+                prompt_core=prompt_core,
+                context_facts=context_facts,
+                classifier=classifier,
+                schema_version=schema_version,
+                prompt_version=prompt_version,
+                deps_version=deps_version,
+                locale_user=locale_user,
+                persona_mode=persona_mode,
+                time_bucket=time_bucket,
+                safety_mode=safety_mode,
+                model_id=model_id,
+                level=lvl,
+                **kwargs,
             )
 
             # skriv endast framgångar och endast EASY/MEDIUM
             schema_ok = bool(response.get("meta", {}).get("schema_ok", True))
             final_intent = response.get("intent", intent)
-            
+
             # Intent drift → skriv inte; förhindra stale
             if final_intent != intent:
                 stale_prevented.inc()
                 return response
-                
+
             # Size check
             if not _check_size_limit(response, MAX_RESPONSE_SIZE_KB):
                 return response
-                
+
             # Level check
             if lvl == "hard" or not schema_ok:
                 return response
@@ -96,7 +127,7 @@ def semantic_cache(store, settings):
                 "selected_facts": [_filter_pii(fact) for fact in context_facts[:10]],
                 "model_id": model_id,
             }
-            
+
             if not _check_size_limit(evidence, MAX_EVIDENCE_SIZE_KB):
                 return response
 
@@ -104,11 +135,13 @@ def semantic_cache(store, settings):
                 response=response,
                 evidence=evidence,
                 cached_at=datetime.utcnow(),
-                ttl_sec=ttl
+                ttl_sec=ttl,
             )
-            
+
             with save_ms.labels(intent=intent, level=lvl).time():
                 await store.set(key, entry)
             return response
+
         return wrapper
+
     return decorator

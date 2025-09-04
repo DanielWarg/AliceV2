@@ -1,7 +1,8 @@
-import yaml, pathlib
+import pathlib
 
-def load_policy(path: str|pathlib.Path) -> dict:
+import yaml
+
+
+def load_policy(path: str | pathlib.Path) -> dict:
     p = pathlib.Path(path)
     return yaml.safe_load(p.read_text())
-
-

@@ -1,0 +1,449 @@
+name: Alice v2 - Clean CI Pipeline
+
+on:
+  push:
+    branches: [main, stabilize/main]
+  pull_request:
+    branches: [main]
+
+# Förhindra parallella builds som konkurrerar  
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Låsta versioner för reproducerbarhet
+  NODE_VERSION: '20'
+  PYTHON_VERSION: '3.11'
+  PNPM_VERSION: '8'
+  
+  # Standardiserade portar (ingen port-drift)
+  ORCHESTRATOR_PORT: 18000
+  GUARDIAN_PORT: 8787
+  NLU_PORT: 9002
+  REDIS_PORT: 6379
+  
+  # SLO Targets - HÅRDA KRAV
+  TARGET_TOOL_PRECISION: 85
+  TARGET_P95_LATENCY_MS: 900
+  TARGET_SUCCESS_RATE: 95
+
+jobs:
+  # STEG 1: Bygg images
+  build:
+    name: "🔨 Build Images"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build images
+        run: |
+          echo "🔨 Building Alice v2 images..."
+          docker compose build --pull
+          echo "✅ Images built successfully"
+
+  # STEG 2: Starta stack + hård health-väntan
+  stack:
+    name: "🚀 Start Stack"
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 10
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Create directories
+        run: |
+          mkdir -p data/{telemetry,tests,embeddings}
+          chmod 777 data/{telemetry,tests}
+      
+      - name: Start services
+        run: |
+          echo "🚀 Starting core services..."
+          docker compose up -d guardian orchestrator alice-cache nlu
+      
+      - name: Wait for health (hard timeout)
+        run: |
+          echo "🏥 Waiting for all services to be healthy..."
+          
+          wait_for_health() {
+            local url=$1
+            local service=$2
+            local max_wait=300  # 5 minutes
+            local waited=0
+            
+            while [ $waited -lt $max_wait ]; do
+              if curl -sf --connect-timeout 5 --max-time 10 "$url"; then
+                echo "✅ $service is healthy"
+                return 0
+              fi
+              
+              echo "⏳ Waiting for $service... (${waited}s/${max_wait}s)"
+              sleep 10
+              waited=$((waited + 10))
+            done
+            
+            echo "❌ $service failed health check"
+            docker compose logs "$service" --tail=50
+            return 1
+          }
+          
+          # Vänta på alla kritiska services
+          wait_for_health "http://localhost:${ORCHESTRATOR_PORT}/health" "orchestrator"
+          wait_for_health "http://localhost:${GUARDIAN_PORT}/health" "guardian"  
+          wait_for_health "http://localhost:${NLU_PORT}/healthz" "nlu"
+          
+          # Verifiera Redis
+          docker compose exec -T alice-cache redis-cli ping | grep PONG || {
+            echo "❌ Redis not responding"
+            exit 1
+          }
+          
+          echo "✅ ALL SERVICES HEALTHY"
+      
+      - name: Service status
+        if: always()
+        run: |
+          echo "📊 Service Status:"
+          docker compose ps
+          echo "📋 Recent logs:"
+          docker compose logs --tail=10
+
+  # STEG 3: Code quality
+  quality:
+    name: "🧹 Code Quality"
+    runs-on: ubuntu-latest
+    needs: stack
+    timeout-minutes: 8
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      
+      - name: Setup Node.js
+        if: hashFiles('package.json') != ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      
+      - name: Setup pnpm
+        if: hashFiles('package.json') != ''
+        uses: pnpm/action-setup@v3
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      
+      - name: Install Python tools
+        run: pip install black flake8 pytest
+      
+      - name: Python format check
+        run: |
+          echo "🐍 Checking Python formatting..."
+          black --check --diff --line-length 100 services/ || {
+            echo "❌ Python formatting failed"
+            echo "Fix with: black --line-length 100 services/"
+            exit 1
+          }
+      
+      - name: Python lint
+        run: |
+          echo "🧹 Python linting..."
+          flake8 services/ \
+            --max-line-length=100 \
+            --extend-ignore=E203,W503 \
+            --exclude=__pycache__,.venv
+      
+      - name: TypeScript check
+        if: hashFiles('package.json') != ''
+        run: |
+          echo "📦 Installing JS dependencies..."
+          pnpm install --frozen-lockfile
+          
+          echo "🔍 TypeScript check..."
+          pnpm run type-check --if-present
+          
+          echo "🧹 ESLint check..."
+          pnpm run lint --if-present -- --max-warnings=0
+
+  # STEG 4: Security (ZERO tolerance för CRITICAL/HIGH)
+  security:
+    name: "🔒 Security Scan"
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 10
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Trivy filesystem scan
+        run: |
+          echo "🔒 Scanning filesystem for vulnerabilities..."
+          docker run --rm -v "$PWD":/src aquasec/trivy fs /src \
+            --severity HIGH,CRITICAL \
+            --format table \
+            --exit-code 1
+          echo "✅ No HIGH/CRITICAL filesystem vulnerabilities"
+      
+      - name: Trivy image scan
+        run: |
+          echo "🔍 Scanning Docker images..."
+          for image in $(docker images --format "table {{.Repository}}:{{.Tag}}" | grep alice | grep -v REPOSITORY); do
+            echo "Scanning $image..."
+            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+              aquasec/trivy image --severity HIGH,CRITICAL --exit-code 1 "$image"
+          done
+          echo "✅ All images secure"
+
+  # STEG 5: Unit tests
+  tests:
+    name: "🧪 Tests"
+    runs-on: ubuntu-latest
+    needs: stack
+    timeout-minutes: 10
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      
+      - name: Install dependencies
+        run: |
+          pip install pytest pytest-asyncio httpx structlog
+          if [ -f "services/orchestrator/requirements.txt" ]; then
+            pip install -r services/orchestrator/requirements.txt
+          fi
+      
+      - name: Run tests
+        run: |
+          echo "🧪 Running unit tests..."
+          cd services/orchestrator
+          python -m pytest src/tests/ \
+            -v \
+            --tb=short \
+            --maxfail=3 \
+            --durations=5
+          echo "✅ All tests passed"
+
+  # STEG 6: EVAL HARNESS - Kritisk gate
+  eval:
+    name: "📊 Eval Harness (SLO Gate)"
+    runs-on: ubuntu-latest
+    needs: [stack, quality, security, tests]
+    timeout-minutes: 25
+    
+    outputs:
+      tool_precision: ${{ steps.extract.outputs.tool_precision }}
+      p95_latency: ${{ steps.extract.outputs.p95_latency }}
+      gate_passed: ${{ steps.gate.outputs.passed }}
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Pre-eval health check
+        run: |
+          echo "🏥 Pre-eval health verification..."
+          curl -sf "http://localhost:${ORCHESTRATOR_PORT}/health" || {
+            echo "❌ Orchestrator unhealthy before eval"
+            exit 1
+          }
+      
+      - name: Run eval harness
+        run: |
+          echo "📊 Running eval harness..."
+          mkdir -p data/tests
+          chmod 777 data/tests
+          
+          # Kör eval med retry
+          for attempt in 1 2; do
+            echo "Eval attempt $attempt/2..."
+            if timeout 20m docker compose run --rm eval; then
+              echo "✅ Eval completed"
+              break
+            else
+              echo "⚠️ Eval attempt $attempt failed"
+              if [ $attempt -eq 2 ]; then
+                echo "❌ All eval attempts failed"
+                exit 1
+              fi
+              
+              # Clean restart för nästa attempt
+              docker compose restart orchestrator
+              sleep 30
+            fi
+          done
+      
+      - name: Extract metrics
+        id: extract
+        run: |
+          echo "📈 Extracting eval results..."
+          
+          # Hitta results fil
+          result_file=$(find data/tests -name "*.json" -type f | head -1)
+          
+          if [ -f "$result_file" ]; then
+            echo "📄 Found: $result_file"
+            cat "$result_file"
+            
+            # Extrahera metrics (med fallbacks)
+            tool_precision=$(jq -r '.tool_precision // 0.6' "$result_file")
+            p95_latency=$(jq -r '.p95_latency_ms // 1000' "$result_file")
+            success_rate=$(jq -r '.success_rate // 0.8' "$result_file")
+          else
+            echo "⚠️ No eval file found, using fallback values"
+            tool_precision=0.6
+            p95_latency=1000
+            success_rate=0.8
+          fi
+          
+          # Konvertera till rätt format
+          if (( $(echo "$tool_precision < 1" | bc -l) )); then
+            tool_precision=$(echo "$tool_precision * 100" | bc -l)
+          fi
+          
+          echo "📊 Results:"
+          echo "  Tool Precision: ${tool_precision}%"
+          echo "  P95 Latency: ${p95_latency}ms"
+          echo "  Success Rate: ${success_rate}%"
+          
+          # Outputs
+          echo "tool_precision=$tool_precision" >> $GITHUB_OUTPUT
+          echo "p95_latency=$p95_latency" >> $GITHUB_OUTPUT
+          echo "success_rate=$success_rate" >> $GITHUB_OUTPUT
+      
+      - name: SLO Gate
+        id: gate
+        run: |
+          echo "🚪 SLO Gate Check..."
+          
+          tool_precision=${{ steps.extract.outputs.tool_precision }}
+          p95_latency=${{ steps.extract.outputs.p95_latency }}
+          success_rate=${{ steps.extract.outputs.success_rate }}
+          
+          echo "🎯 Targets vs Actual:"
+          echo "  Tool Precision: ≥${TARGET_TOOL_PRECISION}% (${tool_precision}%)"
+          echo "  P95 Latency: ≤${TARGET_P95_LATENCY_MS}ms (${p95_latency}ms)"  
+          echo "  Success Rate: ≥${TARGET_SUCCESS_RATE}% (${success_rate}%)"
+          
+          # Gate logic
+          passed=true
+          
+          if (( $(echo "$tool_precision < $TARGET_TOOL_PRECISION" | bc -l) )); then
+            echo "❌ GATE FAILED: Tool precision too low"
+            passed=false
+          fi
+          
+          if (( $(echo "$p95_latency > $TARGET_P95_LATENCY_MS" | bc -l) )); then
+            echo "❌ GATE FAILED: P95 latency too high"  
+            passed=false
+          fi
+          
+          if (( $(echo "$success_rate < $TARGET_SUCCESS_RATE" | bc -l) )); then
+            echo "❌ GATE FAILED: Success rate too low"
+            passed=false
+          fi
+          
+          if [ "$passed" = "true" ]; then
+            echo "✅ SLO GATE PASSED"
+          else
+            echo "🚨 SLO GATE FAILED - DO NOT MERGE"
+            exit 1
+          fi
+          
+          echo "passed=$passed" >> $GITHUB_OUTPUT
+      
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-results
+          path: |
+            data/tests/
+            data/telemetry/
+          retention-days: 30
+
+  # STEG 7: Final health check
+  final:
+    name: "🏁 Final Check"
+    runs-on: ubuntu-latest
+    needs: eval
+    if: needs.eval.outputs.gate_passed == 'true'
+    timeout-minutes: 3
+    
+    steps:
+      - name: Final system verification
+        run: |
+          echo "🏁 Final system health check..."
+          
+          # Verifiera alla services en sista gång
+          for service in "orchestrator:${ORCHESTRATOR_PORT}/health" "guardian:${GUARDIAN_PORT}/health" "nlu:${NLU_PORT}/healthz"; do
+            service_name=$(echo $service | cut -d: -f1)
+            health_url="http://localhost:$(echo $service | cut -d: -f2-)"
+            
+            if curl -sf --max-time 5 "$health_url"; then
+              echo "✅ $service_name healthy"
+            else
+              echo "❌ $service_name unhealthy"
+              exit 1
+            fi
+          done
+          
+          echo "🟢 ALL SYSTEMS GREEN"
+
+  # SUCCESS: Sammanfattning
+  success:
+    name: "🎉 Success"
+    runs-on: ubuntu-latest
+    needs: [build, stack, quality, security, tests, eval, final]
+    if: success()
+    
+    steps:
+      - name: Success summary
+        run: |
+          echo "🎉 ALL GATES PASSED"
+          echo ""
+          echo "📊 Results:"
+          echo "  🔒 Security: ✅ No vulnerabilities"
+          echo "  🧹 Quality: ✅ All checks passed"
+          echo "  🧪 Tests: ✅ All tests passed"
+          echo "  📊 Eval: ✅ Tool precision ${{ needs.eval.outputs.tool_precision }}%"
+          echo "  ⚡ Performance: ✅ P95 ${{ needs.eval.outputs.p95_latency }}ms"
+          echo ""
+          echo "🟢 READY FOR MERGE"
+          echo "Next: RL deployment safe to proceed"
+
+  # CLEANUP: Alltid körs
+  cleanup:
+    name: "🧹 Cleanup"  
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [build, stack, quality, security, tests, eval, final, success]
+    
+    steps:
+      - name: Docker cleanup
+        run: |
+          echo "🧹 Cleaning up..."
+          docker compose down --volumes --remove-orphans || true
+          docker system prune -f || true
+          echo "✅ Cleanup done"

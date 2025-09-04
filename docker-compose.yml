@@ -17,6 +17,8 @@ services:
       - GUARD_CPU_SOFT=0.80
       - GUARD_TEMP_C_HARD=85
       - GUARD_BATTERY_PCT_HARD=25
+    ports:
+      - "8787:8787"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8787/health"]
       interval: 10s
@@ -34,6 +36,8 @@ services:
         condition: service_healthy
       alice-cache:
         condition: service_started
+      nlu:
+        condition: service_healthy
     restart: unless-stopped
     init: true
     tty: false
@@ -81,6 +85,8 @@ services:
       - PLANNER_SCHEMA_VERSION=4
       - CACHE_ENABLED=1
       - REDIS_URL=redis://alice-cache:6379
+    ports:
+      - "18000:8000"
     volumes:
       - ./data/telemetry:/data/telemetry
     healthcheck:

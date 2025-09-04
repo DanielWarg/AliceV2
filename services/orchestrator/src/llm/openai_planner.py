@@ -2,25 +2,28 @@
 OpenAI Planner Driver - GPT-4o-mini with tool enum-only schema
 """
 
-import os
 import json
+import os
 import time
+from typing import Any, Dict
+
 import httpx
 import structlog
-from typing import Dict, Any, Optional
+
 from .planner_base import PlannerDriver
 
 logger = structlog.get_logger(__name__)
 
+
 class OpenAIPlannerDriver(PlannerDriver):
     """OpenAI GPT-4o-mini planner driver with tool enum-only schema"""
-    
+
     def __init__(self):
         super().__init__()
         self.api_key = os.getenv("OPENAI_API_KEY")
         self.api_base = "https://api.openai.com/v1"
         self.model = "gpt-4o-mini"
-        
+
         # Tool enum-only schema
         self.system_prompt = """You are Alice, an AI assistant that plans and executes actions.
 You must respond ONLY with JSON format to structure your plans and tool calls.
@@ -47,51 +50,55 @@ Rules:
 
         if not self.api_key:
             raise ValueError("OPENAI_API_KEY environment variable required")
-        
+
         logger.info("OpenAI planner driver initialized", model=self.model)
-    
+
     def generate(self, message: str) -> Dict[str, Any]:
         """Generate tool selection using OpenAI"""
         start_time = time.perf_counter()
-        
+
         try:
             # Prepare request
             payload = {
                 "model": self.model,
                 "messages": [
                     {"role": "system", "content": self.system_prompt},
-                    {"role": "user", "content": message}
+                    {"role": "user", "content": message},
                 ],
                 "temperature": 0.0,
                 "max_tokens": 100,
-                "response_format": {"type": "json_object"}
+                "response_format": {"type": "json_object"},
             }
-            
+
             headers = {
                 "Authorization": f"Bearer {self.api_key}",
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
             }
-            
+
             # Make API call
             with httpx.Client(timeout=10.0) as client:
                 response = client.post(
-                    f"{self.api_base}/chat/completions",
-                    json=payload,
-                    headers=headers
+                    f"{self.api_base}/chat/completions", json=payload, headers=headers
                 )
                 response.raise_for_status()
-                
+
                 data = response.json()
                 content = data["choices"][0]["message"]["content"]
-                
+
                 # Parse JSON response
                 try:
                     tool_selection = json.loads(content)
                     tool = tool_selection.get("tool")
                     reason = tool_selection.get("reason", "")
-                    
+
                     # Validate tool enum
-                    valid_tools = ["calendar.create", "email.draft", "weather.get", "time.get", "n8n.run"]
+                    valid_tools = [
+                        "calendar.create",
+                        "email.draft",
+                        "weather.get",
+                        "time.get",
+                        "n8n.run",
+                    ]
                     if tool not in valid_tools:
                         return {
                             "success": False,
@@ -99,14 +106,16 @@ Rules:
                             "tool": None,
                             "reason": reason,
                             "latency_ms": (time.perf_counter() - start_time) * 1000,
-                            "provider": "openai"
+                            "provider": "openai",
                         }
-                    
+
                     # Calculate tokens (rough estimate)
-                    input_tokens = len(self.system_prompt.split()) + len(message.split())
+                    input_tokens = len(self.system_prompt.split()) + len(
+                        message.split()
+                    )
                     output_tokens = len(content.split())
                     total_tokens = input_tokens + output_tokens
-                    
+
                     return {
                         "success": True,
                         "tool": tool,
@@ -114,9 +123,9 @@ Rules:
                         "latency_ms": (time.perf_counter() - start_time) * 1000,
                         "provider": "openai",
                         "tokens_used": total_tokens,
-                        "raw_response": content
+                        "raw_response": content,
                     }
-                    
+
                 except json.JSONDecodeError as e:
                     return {
                         "success": False,
@@ -125,9 +134,9 @@ Rules:
                         "reason": "",
                         "latency_ms": (time.perf_counter() - start_time) * 1000,
                         "provider": "openai",
-                        "raw_response": content
+                        "raw_response": content,
                     }
-                    
+
         except httpx.TimeoutException:
             return {
                 "success": False,
@@ -135,7 +144,7 @@ Rules:
                 "tool": None,
                 "reason": "",
                 "latency_ms": (time.perf_counter() - start_time) * 1000,
-                "provider": "openai"
+                "provider": "openai",
             }
         except httpx.HTTPStatusError as e:
             return {
@@ -144,7 +153,7 @@ Rules:
                 "tool": None,
                 "reason": "",
                 "latency_ms": (time.perf_counter() - start_time) * 1000,
-                "provider": "openai"
+                "provider": "openai",
             }
         except Exception as e:
             return {
@@ -153,5 +162,5 @@ Rules:
                 "tool": None,
                 "reason": "",
                 "latency_ms": (time.perf_counter() - start_time) * 1000,
-                "provider": "openai"
+                "provider": "openai",
             }
