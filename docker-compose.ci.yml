@@ -1,0 +1,29 @@
+services:
+  orchestrator:
+    profiles: ["ci"]
+    environment:
+      - CLOUD_OK=false
+      - OLLAMA_DISABLE=true
+      - OPENAI_API_KEY=fake-key-for-ci
+      - N8N_WEBHOOK_SECRET=fake-webhook-for-ci
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
+      interval: 3s
+      timeout: 1s
+      retries: 20
+
+  guardian:
+    profiles: ["ci"]
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8787/health"]
+      interval: 3s
+      timeout: 1s
+      retries: 20
+
+  alice-cache:
+    profiles: ["ci"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 1s
+      retries: 20

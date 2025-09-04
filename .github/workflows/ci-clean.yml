@@ -69,47 +69,55 @@ jobs:
           mkdir -p data/{telemetry,tests,embeddings}
           chmod 777 data/{telemetry,tests}
       
-      - name: Start services
+      - name: Export env for CI
         run: |
-          echo "🚀 Starting core services..."
-          docker compose up -d guardian orchestrator alice-cache
+          echo "CLOUD_OK=false" >> $GITHUB_ENV
+          echo "OLLAMA_DISABLE=true" >> $GITHUB_ENV
+          echo "OPENAI_API_KEY=fake-key-for-ci" >> $GITHUB_ENV
+          echo "N8N_WEBHOOK_SECRET=fake-webhook-for-ci" >> $GITHUB_ENV
       
-      - name: Wait for health (hard timeout)
+      - name: Start services (CI profile)
         run: |
-          echo "🏥 Waiting for all services to be healthy..."
+          echo "🚀 Starting core services with CI profile..."
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml --profile ci up -d
+      
+      - name: Wait for orchestrator health  
+        run: |
+          echo "🏥 Waiting for orchestrator..."
+          for i in {1..60}; do
+            if curl -fsS http://localhost:${ORCHESTRATOR_PORT}/health >/dev/null 2>&1; then
+              echo "✅ orchestrator healthy"; break
+            fi
+            echo "⏳ Attempt $i/60..."
+            sleep 2
+          done
+          if ! curl -fsS http://localhost:${ORCHESTRATOR_PORT}/health >/dev/null 2>&1; then
+            echo "❌ orchestrator not healthy"
+            docker compose ps; docker compose logs orchestrator --tail=50; exit 1
+          fi
+
+      - name: Wait for guardian health
+        run: |
+          echo "🏥 Waiting for guardian..."
+          for i in {1..60}; do
+            if curl -fsS http://localhost:${GUARDIAN_PORT}/health >/dev/null 2>&1; then
+              echo "✅ guardian healthy"; break
+            fi
+            echo "⏳ Attempt $i/60..."
+            sleep 2
+          done
+          if ! curl -fsS http://localhost:${GUARDIAN_PORT}/health >/dev/null 2>&1; then
+            echo "❌ guardian not healthy"
+            docker compose logs guardian --tail=50; exit 1
+          fi
           
-          wait_for_health() {
-            local url=$1
-            local service=$2
-            local max_wait=300  # 5 minutes
-            local waited=0
-            
-            while [ $waited -lt $max_wait ]; do
-              if curl -sf --connect-timeout 5 --max-time 10 "$url"; then
-                echo "✅ $service is healthy"
-                return 0
-              fi
-              
-              echo "⏳ Waiting for $service... (${waited}s/${max_wait}s)"
-              sleep 10
-              waited=$((waited + 10))
-            done
-            
-            echo "❌ $service failed health check"
-            docker compose logs "$service" --tail=50
-            return 1
-          }
-          
-          # Vänta på alla kritiska services
-          wait_for_health "http://localhost:${ORCHESTRATOR_PORT}/health" "orchestrator"
-          wait_for_health "http://localhost:${GUARDIAN_PORT}/health" "guardian"
-          
-          # Verifiera Redis
+      - name: Verify Redis
+        run: |
+          echo "🏥 Verifying Redis..."
           docker compose exec -T alice-cache redis-cli ping | grep PONG || {
             echo "❌ Redis not responding"
-            exit 1
+            docker compose logs alice-cache --tail=20; exit 1
           }
-          
           echo "✅ ALL SERVICES HEALTHY"
       
       - name: Service status
