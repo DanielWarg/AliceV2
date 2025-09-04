@@ -144,14 +144,23 @@ class RealMicroClient(MicroClient):
         self.base_url = base_url.rstrip("/")
         self.model = model
         
-        # Micro-specific settings
-        self.temperature = 0.3
-        self.max_tokens = 150
-        self.top_p = 0.9
+        # Micro-specific settings for enum-only responses
+        self.temperature = 0.0  # Deterministic for enum selection
+        self.max_tokens = 1     # Only one word response
+        self.top_p = 0.1       # Very focused sampling
         
-        # Swedish system prompt
-        self.system_prompt = """Du är Alice, en hjälpsam AI-assistent som alltid svarar på svenska.
-Var kort och koncis (max 2-3 meningar). Var hjälpsam och vänlig."""
+        # Enum-only system prompt for precise tool selection
+        self.system_prompt = """Du är Alice, en AI-assistent som väljer verktyg.
+Svara ENDAST med exakt ett av följande ord:
+- time (för tidsfrågor)
+- weather (för väderfrågor) 
+- memory (för minnesfrågor)
+- greeting (för hälsningar)
+- calendar (för kalender/bokning)
+- email (för e-post)
+- none (för allt annat)
+
+Inga andra ord, inga förklaringar."""
     
     def generate(self, prompt: str, **kwargs) -> Dict[str, Any]:
         """Generate response using real Ollama model"""
@@ -165,9 +174,12 @@ Var kort och koncis (max 2-3 meningar). Var hjälpsam och vänlig."""
                 "system": kwargs.get("system", self.system_prompt)
             }
             
+            # Truncate prompt to 128 tokens for speed
+            truncated_prompt = prompt[:128] if len(prompt) > 128 else prompt
+            
             payload = {
                 "model": self.model,
-                "prompt": prompt,
+                "prompt": truncated_prompt,
                 "stream": False
             }
             payload.update(micro_kwargs)

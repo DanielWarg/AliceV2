@@ -50,7 +50,7 @@ services:
       - OLLAMA_HOST=http://host.docker.internal:11434
       - MICRO_MODEL=llama3:8b
       - MICRO_DRIVER_VERSION=2
-      - FEATURE_MICRO_MOCK=1
+      - FEATURE_MICRO_MOCK=0
       - LLM_PLANNER=llama3.2:1b-instruct-q4_K_M
       - PLANNER_TIMEOUT_MS=8000
       - PLANNER_REPAIR_TIMEOUT_MS=200
