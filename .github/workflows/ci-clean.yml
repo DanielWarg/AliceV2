@@ -48,7 +48,8 @@ jobs:
         run: |
           echo "🔨 Building Alice v2 images..."
           # GitHub Actions uses modern docker compose (with space)
-          docker compose build --pull
+          # Only build essential services for stabilization (skip voice to save space)
+          docker compose build --pull orchestrator guardian nlu alice-cache
           echo "✅ Images built successfully"
 
   # STEG 2: Starta stack + hård health-väntan
