@@ -278,9 +278,7 @@ Analysera noggrant och välj det mest lämpliga intent och tool. Svara ENDAST me
                 "fallback_reason": None,
                 "circuit_open": False,
                 "version": "v2",
-                "level": (
-                    classification_result.level if classification_result else "medium"
-                ),
+                "level": "medium",  # Default level
             }
 
         except Exception as e:

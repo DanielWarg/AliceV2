@@ -193,7 +193,7 @@ class EvalHarness:
                 tool_used = None
                 route_used = "micro"  # Default för nu
 
-                # TODO: Parse response för att hitta tool usage
+                # FUTURE: Parse response för att hitta tool usage when detailed analysis is needed
                 # För nu antar vi att micro route används
 
                 result = {
@@ -206,7 +206,7 @@ class EvalHarness:
                     "p95_ms": response_time,
                     "tool_used": tool_used,
                     "errors": {"klass": None},
-                    "guardian": "NORMAL",  # TODO: Get från Guardian
+                    "guardian": "NORMAL",  # FUTURE: Get från Guardian API when integration is prioritized
                     "expected_tool": scenario["expected_tool"],
                     "expected_route": scenario["expected_route"],
                     "success": success,

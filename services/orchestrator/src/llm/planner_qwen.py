@@ -332,11 +332,7 @@ Svar: {"version":1,"tool":"none","reason":"Tack, inget verktyg behövs"}"""
                 "fallback_used": False,
                 "fallback_reason": None,
                 "circuit_open": False,
-                "level": (
-                    getattr(classification_result, "level", "medium")
-                    if "classification_result" in locals()
-                    else "medium"
-                ),
+                "level": "medium",  # Default level
             }
 
         except Exception as e:

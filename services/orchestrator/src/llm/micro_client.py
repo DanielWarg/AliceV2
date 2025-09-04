@@ -163,6 +163,13 @@ class RealMicroClient(MicroClient):
         self.temperature = 0.0  # Deterministic
         self.top_p = 0.1  # Focused sampling
         self.repeat_penalty = 1.0
+        self.max_tokens = 20  # Short responses for tool selection
+        
+        # System prompt for tool selection
+        self.system_prompt = """Du är en precis AI som klassificerar svenska frågor till rätt verktyg.
+
+Fråga: "{text}"
+Svara ENDAST med ett verktyg:"""
 
         # Few-shot examples for Swedish intent classification
         self.few_shot_examples = """Du är en precis AI som klassificerar svenska frågor till rätt verktyg. Svara ENDAST med verktygsnamnet.
@@ -207,143 +214,6 @@ Verktyg: search.query"""
             "search.query": {"intent": "search", "tool": "search.query"},
         }
 
-    def generate(self, prompt: str, **kwargs) -> Dict[str, Any]:
-        """Generate with few-shot prompting for maximum precision"""
-        import json
-        import time
-
-        import httpx
-
-        # Build few-shot prompt
-        full_prompt = f"""{self.few_shot_examples}
-
-Fråga: "{prompt}"
-Verktyg:"""
-
-        # Make Ollama request with strict settings
-        payload = {
-            "model": self.model,
-            "prompt": full_prompt,
-            "stream": False,
-            "options": {
-                "temperature": self.temperature,
-                "top_p": self.top_p,
-                "repeat_penalty": self.repeat_penalty,
-                "num_predict": 20,  # Short response
-                "stop": ["\n", "Fråga:", "Verktyg:"],
-            },
-        }
-
-        start_time = time.perf_counter()
-
-        try:
-            with httpx.Client(timeout=5.0) as client:
-                response = client.post(f"{self.base_url}/api/generate", json=payload)
-                response.raise_for_status()
-
-                data = response.json()
-                raw_response = data.get("response", "").strip()
-
-                # Extract tool name from response
-                tool_name = self._extract_tool_name(raw_response)
-
-                # Map to structured output
-                if tool_name in self.tool_mapping:
-                    mapping = self.tool_mapping[tool_name]
-
-                    # Generate structured JSON response
-                    if tool_name == "greeting.hello":
-                        structured_response = {
-                            "intent": "greeting",
-                            "tool": None,
-                            "args": {},
-                            "render_instruction": {
-                                "type": "text",
-                                "content": "Hej! Jag är Alice, din AI-assistent. Hur kan jag hjälpa dig?",
-                            },
-                            "meta": {
-                                "version": "4.0",
-                                "model_id": self.model,
-                                "schema_version": "v4",
-                                "tool_precision": 1.0,
-                                "schema_ok": True,
-                            },
-                        }
-                    else:
-                        # Standard tool response template
-                        structured_response = {
-                            "intent": mapping["intent"],
-                            "tool": mapping["tool"],
-                            "args": self._generate_default_args(tool_name, prompt),
-                            "render_instruction": {
-                                "type": "text",
-                                "content": f"Utför {mapping['intent']}-operation...",
-                            },
-                            "meta": {
-                                "version": "4.0",
-                                "model_id": self.model,
-                                "schema_version": "v4",
-                                "tool_precision": 1.0,
-                                "schema_ok": True,
-                            },
-                        }
-
-                else:
-                    # Fallback for unknown tools
-                    structured_response = {
-                        "intent": "general",
-                        "tool": None,
-                        "args": {},
-                        "render_instruction": {
-                            "type": "text",
-                            "content": "Jag förstår inte riktigt, kan du formulera om din fråga?",
-                        },
-                        "meta": {
-                            "version": "4.0",
-                            "model_id": self.model,
-                            "schema_version": "v4",
-                            "tool_precision": 0.5,
-                            "schema_ok": True,
-                        },
-                    }
-
-                elapsed_ms = (time.perf_counter() - start_time) * 1000
-
-                return {
-                    "text": json.dumps(structured_response, ensure_ascii=False),
-                    "model": self.model,
-                    "tokens_used": data.get("eval_count", 0),
-                    "prompt_tokens": data.get("prompt_eval_count", 0),
-                    "response_tokens": data.get("eval_count", 0),
-                    "temperature": self.temperature,
-                    "route": "micro",
-                    "raw_response": raw_response,
-                    "tool_detected": tool_name,
-                    "latency_ms": elapsed_ms,
-                    "schema_ok": True,
-                }
-
-        except Exception as e:
-            logger.error("Micro model failed", error=str(e), model=self.model)
-            # Return fallback response
-            return {
-                "text": json.dumps(
-                    {
-                        "intent": "error",
-                        "tool": None,
-                        "args": {},
-                        "render_instruction": {
-                            "type": "text",
-                            "content": "Ursäkta, jag hade tekniska problem. Försök igen.",
-                        },
-                        "meta": {"version": "4.0", "schema_ok": False},
-                    }
-                ),
-                "model": self.model,
-                "route": "micro",
-                "error": str(e),
-                "schema_ok": False,
-            }
 
     def _extract_tool_name(self, response: str) -> str:
         """Extract tool name from model response"""
@@ -466,7 +336,7 @@ Verktyg:"""
                 neg_key = f"neg:{cache_key}"
                 redis_client.setex(neg_key, 60, "1")  # 60 second TTL
                 logger.info("Set negative cache", cache_key=cache_key)
-            except:
+            except Exception:
                 pass
             raise
 

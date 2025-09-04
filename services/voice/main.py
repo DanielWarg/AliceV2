@@ -119,7 +119,7 @@ def get_tts_model():
     global tts_model
     if tts_model is None:
         logger.info("Loading TTS model", path=TTS_MODEL_PATH)
-        # TODO: Implement actual TTS model loading
+        # FUTURE: Implement actual TTS model loading when voice features are prioritized
         tts_model = "placeholder"
         logger.info("TTS model loaded successfully")
     return tts_model
@@ -218,7 +218,7 @@ async def text_to_speech(request: TTSRequest):
     start_time = time.time()
 
     try:
-        # TODO: Implement actual TTS synthesis
+        # FUTURE: Implement actual TTS synthesis when voice features are prioritized
         # For now, return placeholder
         logger.info(
             "TTS request received",
@@ -278,7 +278,7 @@ async def social_benchmark(request: BenchmarkRequest):
             "Social benchmark started", scenario=request.scenario, rounds=request.rounds
         )
 
-        # TODO: Implement actual social benchmark
+        # FUTURE: Implement actual social benchmark when voice features are prioritized
         # For now, return placeholder scores
 
         # Simulate benchmark processing

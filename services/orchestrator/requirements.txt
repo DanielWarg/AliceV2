@@ -36,5 +36,8 @@ pytest-cov==6.0.0
 ruff==0.8.5
 mypy==1.14.1
 
+# String matching (for tool selection)
+rapidfuzz==3.6.1
+
 # API generation
 openapi-generator-cli==7.10.0
