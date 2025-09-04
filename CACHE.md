@@ -1,9 +1,11 @@
 # Alice v2 Cache System
-*Robust semantic cache with deterministic fingerprinting and intent-aware caching*
+
+_Robust semantic cache with deterministic fingerprinting and intent-aware caching_
 
 ## 🎯 Overview
 
 The Alice v2 cache system provides intelligent caching for planner responses with:
+
 - **Deterministic fingerprinting** - Same input → same cache key
 - **Intent-aware caching** - Prevents cross-contamination between intents
 - **Versioned invalidation** - Safe cache clearing for schema/deps updates
@@ -27,6 +29,7 @@ Cache Request Flow:
 ## 📋 Key Components
 
 ### 1. Deterministic Fingerprint (`key_builder.py`)
+
 ```python
 def build_fingerprint(
     intent: str,
@@ -45,12 +48,14 @@ def build_fingerprint(
 ```
 
 **Features:**
+
 - Fixed field order for 100% determinism
 - Intent-aware (different intents → different hashes)
 - Context normalization (sorted, deduplicated)
 - Time-bucket support for time-sensitive intents
 
 ### 2. Versioned Redis Keys (`models.py`)
+
 ```python
 class CacheKey(BaseModel):
     fingerprint: str
@@ -63,12 +68,14 @@ class CacheKey(BaseModel):
 ```
 
 **Benefits:**
+
 - Namespace isolation (`sc:v1`)
 - Schema version separation
 - Intent-specific invalidation
 - Short fingerprint (24 chars) for key length
 
 ### 3. Semantic Cache Decorator (`decorators.py`)
+
 ```python
 @semantic_cache(store, settings)
 async def plan(*, prompt_core, context_facts, classifier, ...) -> dict:
@@ -76,21 +83,24 @@ async def plan(*, prompt_core, context_facts, classifier, ...) -> dict:
 ```
 
 **Guards:**
+
 - Intent drift detection (prevent stale writes)
 - Size limits (max 128KB response)
 - Level gating (EASY/MEDIUM only)
 - Schema validation (schema_ok=true required)
 
 ### 4. Redis Store (`redis_store.py`)
+
 ```python
 class RedisCacheStore(ICacheStore):
-    async def invalidate(self, intent: Optional[str] = None, 
-                        schema_version: Optional[str] = None, 
+    async def invalidate(self, intent: Optional[str] = None,
+                        schema_version: Optional[str] = None,
                         deps_version: Optional[str] = None) -> int:
         # Efficient pattern-based invalidation
 ```
 
 **Features:**
+
 - Async Redis operations
 - Pattern-based invalidation
 - Batch delete support
@@ -99,12 +109,14 @@ class RedisCacheStore(ICacheStore):
 ## 🔧 Configuration
 
 ### Environment Variables
+
 ```bash
 CACHE_ENABLED=1                    # Enable/disable cache
 REDIS_URL=redis://alice-cache:6379 # Redis connection
 ```
 
 ### TTL by Level
+
 ```python
 TTL_BY_LEVEL = {
     "easy": 3600,    # 1 hour
@@ -114,12 +126,14 @@ TTL_BY_LEVEL = {
 ```
 
 ### Size Limits
+
 ```python
 MAX_RESPONSE_SIZE_KB = 128  # Max response size
 MAX_EVIDENCE_SIZE_KB = 64   # Max evidence size
 ```
 
 ### PII Patterns
+
 ```python
 PII_PATTERNS = [
     r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b',  # email
@@ -131,12 +145,14 @@ PII_PATTERNS = [
 ## 📊 Telemetry
 
 ### Metrics
+
 - `cache_hit_total{intent,level}` - Cache hits per intent/level
 - `cache_miss_total{intent,level}` - Cache misses per intent/level
 - `cache_stale_prevented_total` - Stale writes prevented
 - `cache_save_duration_seconds{intent,level}` - Save performance
 
 ### Monitoring
+
 ```bash
 # View cache metrics in HUD
 open http://localhost:3001
@@ -153,18 +169,21 @@ curl -X POST http://localhost:18000/api/cache/invalidate \
 ## 🧪 Testing
 
 ### Unit Tests
+
 ```bash
 # Run cache tests
 python3 test_cache.py
 ```
 
 **Test Coverage:**
+
 - ✅ Deterministic fingerprinting
 - ✅ Intent-aware key generation
 - ✅ Redis store operations
 - ✅ Cache metrics
 
 ### Integration Tests
+
 ```bash
 # Test with Redis
 docker compose up alice-cache
@@ -178,6 +197,7 @@ make test-all
 ## 🚀 Usage
 
 ### Basic Integration
+
 ```python
 from services.cache.src import semantic_cache, RedisCacheStore
 
@@ -190,6 +210,7 @@ async def plan(*, prompt_core, context_facts, classifier, ...):
 ```
 
 ### Cache Invalidation
+
 ```python
 # Invalidate by intent
 await store.invalidate(intent="weather.lookup")
@@ -204,16 +225,19 @@ await store.invalidate()
 ## 🔒 Security & Safety
 
 ### PII Protection
+
 - Automatic email/phone/date filtering
 - Evidence sanitization
 - No PII in cache keys
 
 ### Size Protection
+
 - Response size limits (128KB)
 - Evidence size limits (64KB)
 - Automatic rejection of oversized entries
 
 ### Intent Safety
+
 - Intent drift detection
 - Cross-contamination prevention
 - Stale write blocking
@@ -221,11 +245,13 @@ await store.invalidate()
 ## 📈 Performance
 
 ### Expected Hit Rates
+
 - **EASY**: 80-90% (stable intents)
 - **MEDIUM**: 60-80% (moderate complexity)
 - **HARD**: 0-20% (minimal caching)
 
 ### Latency Impact
+
 - **Cache hit**: ~5-10ms (Redis lookup)
 - **Cache miss**: ~50-100ms (save operation)
 - **Overall**: 20-40% latency reduction for cached responses
@@ -233,6 +259,7 @@ await store.invalidate()
 ## 🔄 Migration & Versioning
 
 ### Schema Updates
+
 ```python
 # Bump namespace for clean cutover
 CACHE_NS = "sc:v2"  # New schema version
@@ -242,6 +269,7 @@ CACHE_NS = "sc:v2"  # New schema version
 ```
 
 ### Intent Changes
+
 ```python
 # Invalidate specific intent
 await store.invalidate(intent="old.intent")
@@ -252,12 +280,14 @@ await store.invalidate(intent="old.intent")
 ## 🐛 Troubleshooting
 
 ### Common Issues
+
 1. **Low hit rate**: Check intent classification accuracy
 2. **Stale responses**: Verify intent drift detection
 3. **Redis connection**: Check `REDIS_URL` and network
 4. **Size limits**: Review response/evidence sizes
 
 ### Debug Commands
+
 ```bash
 # Check Redis health
 redis-cli -h localhost -p 6379 ping

@@ -1,5 +1,6 @@
 # Alice v2 Testing Strategy
-*Autonomous RealOps Testing Architecture with Self-Healing Capabilities*
+
+_Autonomous RealOps Testing Architecture with Self-Healing Capabilities_
 
 ## 🎯 Overview
 
@@ -12,6 +13,7 @@ Alice v2 implements a **RealOps testing approach** - no mocks, only real data fl
 ## 🏗️ Testing Architecture
 
 ### Core Components ✅ IMPLEMENTED
+
 ```
 services/eval/                    # ✅ Autonomous E2E testing harness
 ├── eval.py                       # ✅ 20 realistic scenarios execution
@@ -46,6 +48,7 @@ test-results/                     # ✅ Historical test data
 ### **🎯 NEW FEATURES COMPLETED**
 
 **🧪 Autonomous E2E Testing:**
+
 - **Self-contained validation**: `scripts/auto_verify.sh` runs complete system validation
 - **20 realistic scenarios**: Swedish conversations covering micro/planner/deep routes
 - **SLO validation**: Automatic P95 threshold checking with Node.js integration
@@ -53,6 +56,7 @@ test-results/                     # ✅ Historical test data
 - **Artifact preservation**: All test results saved to `data/tests/` and `test-results/`
 
 **📊 Complete Observability:**
+
 - **RAM-peak per turn**: Process and system memory tracking in every turn event
 - **Energy per turn (Wh)**: Energy consumption with configurable baseline
 - **Tool error classification**: Timeout/5xx/429/schema/other categorization with Prometheus metrics
@@ -60,6 +64,7 @@ test-results/                     # ✅ Historical test data
 - **Real-time dashboard**: Streamlit HUD (proxied via /hud) shows RAM, energy, latency, tool errors and Guardian status
 
 ### Legacy Components (Replaced)
+
 ```
 services/tester/                  # ❌ OBSOLETE - Replaced by services/eval/
 ├── main.py                       # ❌ Replaced by eval.py
@@ -75,6 +80,7 @@ services/tester/                  # ❌ OBSOLETE - Replaced by services/eval/
 ## 📊 SLO Targets & Validation
 
 ### Performance SLOs (P95 measurements) ✅ IMPLEMENTED
+
 - **Voice Pipeline**: End-to-end <2000ms
 - **ASR Partial**: <300ms after speech detected
 - **ASR Final**: <800ms after silence
@@ -86,6 +92,7 @@ services/tester/                  # ❌ OBSOLETE - Replaced by services/eval/
 - **TTS Uncached**: <800ms (≤40 characters)
 
 ### Quality SLOs ✅ IMPLEMENTED
+
 - **Swedish WER**: ≤7% clean audio, ≤11% with background noise
 - **Intent Classification**: ≥92% accuracy on test suite
 - **Tool Success Rate**: ≥95% for email/calendar/HA operations
@@ -93,12 +100,14 @@ services/tester/                  # ❌ OBSOLETE - Replaced by services/eval/
 - **RTSP Reconnection**: <2s after connection drop
 
 ### Resource SLOs ✅ IMPLEMENTED
+
 - **Memory Usage**: <15GB total system RAM ✅
 - **Guardian Protection**: 0 system crashes from overload ✅
 - **Concurrent Deep Jobs**: Maximum 1 at any time ✅
 - **Energy Efficiency**: Smart scheduling during low battery ✅
 
 ### **NEW: Observability SLO** ✅ IMPLEMENTED
+
 - **Metrics Collection**: <10ms overhead per turn ✅
 - **Cost/Token Tracking**: per-turn tokens (prompt/completion), kostnad (SEK), provider ✅
 - **Dashboard Load**: <2s for complete HUD ✅
@@ -106,17 +115,19 @@ services/tester/                  # ❌ OBSOLETE - Replaced by services/eval/
 - **SLO Validation**: Automatic P95 threshold checking ✅
 
 ### CI Gates (fail build om ej uppfyllt)
-| Gate | Tröskel | Källa |
-|---|---:|---|
-| E2E pass rate | ≥ 80% | `data/tests/summary.json` |
-| Fast route P95 (first) | ≤ 250 ms | turn events |
-| Planner P95 (full) | ≤ 1500 ms | turn events |
-| Tool success rate | ≥ 95% | tool events |
-| Guardian EMERGENCY | 0 händelser | guardian logs |
+
+| Gate                   |     Tröskel | Källa                     |
+| ---------------------- | ----------: | ------------------------- |
+| E2E pass rate          |       ≥ 80% | `data/tests/summary.json` |
+| Fast route P95 (first) |    ≤ 250 ms | turn events               |
+| Planner P95 (full)     |   ≤ 1500 ms | turn events               |
+| Tool success rate      |       ≥ 95% | tool events               |
+| Guardian EMERGENCY     | 0 händelser | guardian logs             |
 
 ## 🧪 Test Scenarios
 
 ### Real Data Sources ✅ IMPLEMENTED
+
 **No synthetic data - everything uses production-equivalent inputs:**
 
 1. **Swedish Voice Data**: Common Voice dataset with native speakers
@@ -127,12 +138,25 @@ services/tester/                  # ❌ OBSOLETE - Replaced by services/eval/
 6. **LLM Prompts**: Actual Swedish conversation patterns and tasks
 
 ### **NEW: Autonomous E2E Scenarios** ✅ IMPLEMENTED
+
 ```json
 // services/eval/scenarios.json - 20 NLU/route scenarios (v1 fokus micro/planner)
 [
-  {"id":"nlu-1","text":"Hej Alice!","expect":{"route":"micro","intent":"greeting.hello"}},
-  {"id":"nlu-2","text":"Vad är klockan nu?","expect":{"route":"micro","intent":"smalltalk.time"}},
-  {"id":"nlu-3","text":"Boka möte med Anna imorgon klockan 14","expect":{"route":"planner","intent":"calendar.create"}},
+  {
+    "id": "nlu-1",
+    "text": "Hej Alice!",
+    "expect": { "route": "micro", "intent": "greeting.hello" }
+  },
+  {
+    "id": "nlu-2",
+    "text": "Vad är klockan nu?",
+    "expect": { "route": "micro", "intent": "smalltalk.time" }
+  },
+  {
+    "id": "nlu-3",
+    "text": "Boka möte med Anna imorgon klockan 14",
+    "expect": { "route": "planner", "intent": "calendar.create" }
+  }
   // ... 17 more (se repo)
 ]
 ```
@@ -140,6 +164,7 @@ services/tester/                  # ❌ OBSOLETE - Replaced by services/eval/
 ### Scenario Categories
 
 #### Voice Pipeline Testing
+
 ```yaml
 - Swedish Clean Speech: WER measurement with ground truth transcripts
 - Noisy Environments: SNR 10dB café noise, traffic, rain backgrounds
@@ -149,6 +174,7 @@ services/tester/                  # ❌ OBSOLETE - Replaced by services/eval/
 ```
 
 #### NLU & Intent Classification
+
 ```yaml
 - Swedish Intent Recognition: Real user utterances from different regions
 - Slot Extraction: Dates, times, names, locations in Swedish context
@@ -157,12 +183,14 @@ services/tester/                  # ❌ OBSOLETE - Replaced by services/eval/
 ```
 
 #### LLM Routing & Performance
+
 ```yaml
 - Simple Queries: Weather, time, basic math → Micro LLM
 - Planning Tasks: Email composition, calendar scheduling → Planner LLM
 ```
 
 #### Vision & Multimodal
+
 ```yaml
 - RTSP Stream Processing: Object detection, reconnection resilience
 - Still Image Analysis: Photo description, object counting
@@ -171,6 +199,7 @@ services/tester/                  # ❌ OBSOLETE - Replaced by services/eval/
 ```
 
 #### Chaos Engineering
+
 ```yaml
 - Network Partitions: DNS blackholing for 5-10 seconds
 - Service Failures: Guardian emergency state simulation
@@ -182,25 +211,27 @@ services/tester/                  # ❌ OBSOLETE - Replaced by services/eval/
 ## 🔧 Autonomous Remediation System
 
 ### Safe Remediation Actions
+
 **Only evidence-based, reversible changes with safety limits:**
 
 #### Performance Optimization
+
 ```python
 # ASR Performance Issues
 if wer_rate > threshold:
     adjust_vad_thresholds(start=-0.1, stop=+0.1)  # More sensitive detection
     increase_eos_timeout(+100ms)  # Allow longer pauses
-    
-# NLU Accuracy Issues  
+
+# NLU Accuracy Issues
 if intent_accuracy < 0.92:
     enable_regex_fallback_for_top5_intents()
     switch_embedding_model("multilingual-e5-small")
-    
+
 # LLM Latency Issues
 if planner_latency > slo_target:
     reduce_rag_top_k(from=8, to=3)  # Faster context retrieval
     enable_strict_schema_validation()  # Prevent retry loops
-    
+
 # Resource Management
 if ram_usage > 14000MB:
     disable_deep_llm_temporarily()
@@ -209,6 +240,7 @@ if ram_usage > 14000MB:
 ```
 
 #### Service Recovery
+
 ```python
 # Guardian State Management
 if guardian_state == "EMERGENCY":
@@ -216,19 +248,20 @@ if guardian_state == "EMERGENCY":
     wait_for_recovery_or_timeout(45s)
     if still_emergency:
         create_incident_report()
-        
+
 # Tool Integration Failures
 if email_tool_failure_rate > 0.05:
     activate_circuit_breaker(duration=300s)
     enable_fallback_to_draft_mode()
-    
-# Vision System Issues  
+
+# Vision System Issues
 if rtsp_reconnect_time > 2000ms:
     prewarm_vision_system(2s_before_request)
     enable_snapshot_fallback_after(2_failures)
 ```
 
 ### Remediation Safety Limits
+
 - **Maximum 1 remediation per test loop** to avoid oscillation
 - **No code changes** - only parameter adjustments and feature toggles
 - **All changes logged** with before/after values and rollback commands
@@ -236,6 +269,7 @@ if rtsp_reconnect_time > 2000ms:
 - **Manual intervention required** signal after 3 consecutive failures
 
 **Remediation guardrails**
+
 - Max 1 remediation per loop
 - Remediation whitelist: {`vad_thresholds`,`eos_timeout`,`rag_top_k`,`strict_schema`}
 - Cooldown 15 min per parameter
@@ -244,10 +278,11 @@ if rtsp_reconnect_time > 2000ms:
 ## 📈 Continuous Testing Loop
 
 ### Execution Cycle (Every 15 minutes)
+
 ```
 1. Pre-flight Checks (30s)
    - Guardian health status
-   - MCP tool registry validation  
+   - MCP tool registry validation
    - Service endpoint availability
    - Resource usage baseline
 
@@ -278,6 +313,7 @@ if rtsp_reconnect_time > 2000ms:
 ```
 
 ### Test Data Management
+
 ```bash
 # Automatic dataset updates
 if [ ! -d "datasources/common_voice" ]; then
@@ -302,40 +338,48 @@ fi
 ## 🎯 Test Reporting & Metrics
 
 ### Automated Report Generation
+
 **Every test run produces comprehensive documentation:**
 
 #### Run Summary (`runs/YYYYMMDD_HHMM/summary.md`)
+
 ```markdown
 # Alice v2 Test Run Summary
+
 **Date**: 2024-08-31 16:30:00  
 **Duration**: 12 minutes 34 seconds  
 **Overall Status**: ⚠️ DEGRADED (2 SLO violations)
 
 ## SLO Compliance
-| Metric | Target | Actual | Status |
-|--------|--------|--------|--------|
-| Voice E2E P95 | <2000ms | 1847ms | ✅ PASS |
-| Swedish WER Clean | <7% | 5.2% | ✅ PASS |
-| Swedish WER Noisy | <11% | 12.8% | ❌ FAIL |
-| Guardian Response | <150ms | 134ms | ✅ PASS |
-| Tool Success Rate | >95% | 97.3% | ✅ PASS |
+
+| Metric            | Target  | Actual | Status  |
+| ----------------- | ------- | ------ | ------- |
+| Voice E2E P95     | <2000ms | 1847ms | ✅ PASS |
+| Swedish WER Clean | <7%     | 5.2%   | ✅ PASS |
+| Swedish WER Noisy | <11%    | 12.8%  | ❌ FAIL |
+| Guardian Response | <150ms  | 134ms  | ✅ PASS |
+| Tool Success Rate | >95%    | 97.3%  | ✅ PASS |
 
 ## Issues Identified
+
 1. **Swedish WER degraded in café noise**: 12.8% vs target 11%
    - **Root Cause**: VAD end-of-speech timeout too aggressive
    - **Remediation Applied**: Increased EOS timeout from 700ms to 850ms
    - **Validation**: Re-test shows 10.1% WER ✅
 
 ## Manual Actions Required
+
 - None - all issues automatically remediated
 
 ## Resource Usage
+
 - **Peak RAM**: 12.8GB (target <15GB) ✅
 - **Guardian State**: NORMAL throughout test ✅
 - **Energy Consumption**: 2.4Wh (baseline: 2.1Wh)
 ```
 
 #### Detailed Metrics (`runs/YYYYMMDD_HHMM/metrics.csv`)
+
 ```csv
 timestamp,scenario_id,metric,value,unit,status
 2024-08-31T16:30:01,asr_clean,wer,0.052,percent,pass
@@ -346,6 +390,7 @@ timestamp,scenario_id,metric,value,unit,status
 ```
 
 #### Event Log (`runs/YYYYMMDD_HHMM/log.jsonl`)
+
 ```json
 {"timestamp":"2024-08-31T16:30:01","event":"test_start","scenario":"asr_clean","trace_id":"abc123"}
 {"timestamp":"2024-08-31T16:30:15","event":"asr_partial","text":"hej alice","confidence":0.89,"latency_ms":245}
@@ -357,31 +402,33 @@ timestamp,scenario_id,metric,value,unit,status
 ### Performance Monitoring Dashboard
 
 #### Real-time Metrics Display
+
 - **SLO Compliance Dashboard**: Green/Yellow/Red status for all metrics
 - **Performance Trends**: P50/P95 latency over time
-- **Resource Utilization**: Memory, CPU, Guardian state history  
+- **Resource Utilization**: Memory, CPU, Guardian state history
 - **Quality Metrics**: WER rates, intent accuracy, tool success rates
 - **Remediation History**: Actions taken, success rates, rollbacks
 
 #### Alert Integration
+
 ```yaml
 # Alert Rules (integrate with existing monitoring)
-- name: "Voice Pipeline SLO Violation"
+- name: 'Voice Pipeline SLO Violation'
   condition: voice_e2e_p95 > 2000ms
   severity: warning
   action: trigger_immediate_retest
 
-- name: "Swedish WER Degradation"  
+- name: 'Swedish WER Degradation'
   condition: wer_rate > 0.11
   severity: critical
   action: [apply_remediation, notify_team]
 
-- name: "Guardian Emergency State"
-  condition: guardian_state == "EMERGENCY"  
+- name: 'Guardian Emergency State'
+  condition: guardian_state == "EMERGENCY"
   severity: critical
   action: [collect_diagnostics, create_incident]
 
-- name: "OpenAI Cost Budget"
+- name: 'OpenAI Cost Budget'
   condition: daily_cost_sek > ${OPENAI_DAILY_BUDGET_SEK}
   severity: warning
   action: [switch_to_local_provider, notify_team]
@@ -390,6 +437,7 @@ timestamp,scenario_id,metric,value,unit,status
 ## 🚀 Implementation & Deployment
 
 ### Docker Integration
+
 ```yaml
 # Add to docker-compose.yml
 services:
@@ -398,7 +446,7 @@ services:
     container_name: alice-eval
     depends_on:
       - orchestrator
-      - guardian  
+      - guardian
       - voice
       - redis
     environment:
@@ -406,7 +454,7 @@ services:
       - WS_ASR=ws://orchestrator:8000/ws/asr
       - GUARDIAN_URL=http://guardian:8787
       - EMAIL_SMTP_URL=${TEST_SMTP_URL}
-      - CALDAV_URL=${TEST_CALDAV_URL} 
+      - CALDAV_URL=${TEST_CALDAV_URL}
       - RTSP_URL=${TEST_CAMERA_URL}
     volumes:
       - ./services/eval/datasources:/data
@@ -415,6 +463,7 @@ services:
 ```
 
 ### Environment Configuration
+
 ```bash
 # Required environment variables for sandbox testing
 export TEST_SMTP_URL="smtp://testuser:pass@sandbox-mail.example.com:587"
@@ -425,6 +474,7 @@ export CONSENT_SCOPES="memory:write,email:metadata,calendar:read"
 ```
 
 ### Startup & Operation
+
 ```bash
 # 1. Start Alice v2 services
 docker compose up -d orchestrator guardian voice redis
@@ -444,6 +494,7 @@ open services/eval/runs/latest/summary.md
 ## 🔒 Security & Privacy
 
 ### Test Data Protection
+
 - **Sandbox Accounts**: Never use production email/calendar credentials
 - **PII Masking**: Automatic detection and redaction in all logs
 - **Audio Retention**: Generated TTS samples deleted after manual review
@@ -451,6 +502,7 @@ open services/eval/runs/latest/summary.md
 - **Data Isolation**: Test data never mixed with production user data
 
 ### Safe Remediation Boundaries
+
 - **No Production Changes**: All remediations affect only test environment
 - **Parameter Limits**: Safe ranges for all adjustable parameters
 - **Rollback Capability**: Every change includes automatic rollback mechanism
@@ -463,11 +515,13 @@ open services/eval/runs/latest/summary.md
 ### Data Pipeline Architecture (Bronze → Silver → Gold)
 
 Alice v2 implements a **multi-tier data collection system** that captures all test interactions for three purposes:
+
 1. **Telemetry & Debugging** - Real-time operational insights
-2. **SLO Monitoring & Evaluation** - Performance tracking and regression detection  
+2. **SLO Monitoring & Evaluation** - Performance tracking and regression detection
 3. **Training & Fine-tuning** - SFT/LoRA, DPO, and RAG improvement
 
 #### Directory Structure
+
 ```
 /data/
   telemetry/                 # BRONZE: Raw JSONL events (append-only)
@@ -491,12 +545,13 @@ Alice v2 implements a **multi-tier data collection system** that captures all te
 ```
 
 ### Retention
-| Dataset | Syfte | Retention |
-|---|---|---|
-| Telemetry (bronze) | Operativ felsökning | 7 dagar |
-| Silver | Eval & modellering | 30 dagar |
-| Gold | Handgranskad träningsdata | Tills manuellt borttagen |
-| Audio artifacts | QA av röst | 24 h (om `audio:store` scope) |
+
+| Dataset            | Syfte                     | Retention                     |
+| ------------------ | ------------------------- | ----------------------------- |
+| Telemetry (bronze) | Operativ felsökning       | 7 dagar                       |
+| Silver             | Eval & modellering        | 30 dagar                      |
+| Gold               | Handgranskad träningsdata | Tills manuellt borttagen      |
+| Audio artifacts    | QA av röst                | 24 h (om `audio:store` scope) |
 
 ### Unified Event Format (JSONL)
 
@@ -507,48 +562,48 @@ All modules write structured events with **schema versioning** and **hash-based 
   "v": "1",
   "event": "orchestrator.turn",
   "ts": "2025-08-31T11:23:45.120Z",
-  "user_id": "anon_c2f1",        // Pseudonymized
+  "user_id": "anon_c2f1", // Pseudonymized
   "session_id": "test_session_42",
   "turn_id": "t-00042",
   "lang": "sv",
   "input": {
     "text": "boka med Anders imorgon 10",
-    "audio_ref": null,           // artifacts/audio/..wav if permitted
+    "audio_ref": null, // artifacts/audio/..wav if permitted
     "asr": { "partial_ms": 210, "final_ms": 640, "wer_ref": null }
   },
   "nlu": {
-    "intent": "TIME.BOOK", 
+    "intent": "TIME.BOOK",
     "confidence": 0.88,
     "slots": { "contact": "Anders", "date": "2025-09-01", "time": "10:00" }
   },
   "guardian": { "state": "NORMAL", "ram_pct": 61.2, "brownout": "NONE" },
-  "route": "planner",             // micro|planner|deep
-  "rag": { 
-    "query": "möte Anders 10:00", 
-    "top_k": 3, 
-    "hits": [{"doc_id":"cal_001","score":0.52}] 
+  "route": "planner", // micro|planner|deep
+  "rag": {
+    "query": "möte Anders 10:00",
+    "top_k": 3,
+    "hits": [{ "doc_id": "cal_001", "score": 0.52 }]
   },
   "tool_calls": [
-    { 
-      "name": "calendar.create", 
-      "args": {"when":"2025-09-01T10:00","with":"Anders"}, 
-      "ok": true, 
-      "lat_ms": 220 
+    {
+      "name": "calendar.create",
+      "args": { "when": "2025-09-01T10:00", "with": "Anders" },
+      "ok": true,
+      "lat_ms": 220
     }
   ],
-  "llm": { 
-    "model": "qwen2.5-7b-moe", 
-    "first_ms": 180, 
-    "full_ms": 740, 
-    "tokens": 146 
+  "llm": {
+    "model": "qwen2.5-7b-moe",
+    "first_ms": 180,
+    "full_ms": 740,
+    "tokens": 146
   },
   "output": {
     "text_en": "Scheduled meeting with Anders at 10:00 on Sep 1",
-    "tts": { 
-      "voice": "alice_neutral", 
-      "cache": "HIT", 
-      "lat_ms": 118, 
-      "audio_ref": "artifacts/tts/response_042.mp3" 
+    "tts": {
+      "voice": "alice_neutral",
+      "cache": "HIT",
+      "lat_ms": 118,
+      "audio_ref": "artifacts/tts/response_042.mp3"
     }
   },
   "metrics": {
@@ -563,7 +618,7 @@ All modules write structured events with **schema versioning** and **hash-based 
     "slo_compliance": true,
     "regression_flag": false
   },
-  "consent_scopes": ["memory:write","calendar:read"],
+  "consent_scopes": ["memory:write", "calendar:read"],
   "pii_masked": true,
   "hash": "sha256:2f0a...ef"
 }
@@ -572,6 +627,7 @@ All modules write structured events with **schema versioning** and **hash-based 
 ### PII Protection & Consent Management
 
 #### Automatic PII Masking
+
 ```python
 def mask_pii(text: str) -> tuple[str, bool]:
     """Mask PII in text, return (masked_text, was_modified)"""
@@ -581,17 +637,18 @@ def mask_pii(text: str) -> tuple[str, bool]:
         r'\b\d{6,8}-\d{4}\b': '<PERSONNUMMER>',
         r'\b[A-ZÅÄÖ][a-zåäö]+ [A-ZÅÄÖ][a-zåäö]+\b': '<FULLNAME>'
     }
-    
+
     modified = False
     for pattern, replacement in patterns.items():
         if re.search(pattern, text):
             text = re.sub(pattern, replacement, text)
             modified = True
-    
+
     return text, modified
 ```
 
 #### Consent Scope Management
+
 - `audio:store` - Permission to save raw audio
 - `memory:write` - Allow long-term memory updates
 - `email:full` - Access full email content (not just metadata)
@@ -601,46 +658,48 @@ def mask_pii(text: str) -> tuple[str, bool]:
 ### Data Processing Pipelines
 
 #### Bronze → Silver (Automated Hourly)
+
 ```python
 def process_bronze_to_silver():
     """Clean and normalize raw telemetry data"""
-    
+
     # 1. Deduplication via hash
     seen_hashes = load_seen_hashes()
-    
+
     # 2. PII masking and normalization
     for event in read_bronze_events():
         if event['hash'] in seen_hashes:
             continue
-            
+
         # Normalize Swedish relative dates to ISO
         if 'input' in event and 'text' in event['input']:
             event['input']['text'] = normalize_swedish_dates(event['input']['text'])
-            
+
         # Build training datasets
         turns_data.append(extract_turn_data(event))
-        
+
         if event.get('tool_calls'):
             tool_calls_data.extend(extract_tool_calls(event))
-            
+
         if event.get('rag', {}).get('hits'):
             rag_pairs_data.append(extract_rag_pairs(event))
-    
+
     # Write to silver datasets
     write_jsonl('silver/turns.jsonl', turns_data)
-    write_jsonl('silver/tool_calls.jsonl', tool_calls_data)  
+    write_jsonl('silver/tool_calls.jsonl', tool_calls_data)
     write_jsonl('silver/rag_pairs.jsonl', rag_pairs_data)
 ```
 
 #### Silver → Gold (Manual/Semi-Automatic)
+
 Active learning pipeline identifies high-value samples:
 
 ```python
 def identify_gold_candidates():
     """Flag samples for manual review and labeling"""
-    
+
     candidates = []
-    
+
     for turn in read_silver_turns():
         # Low confidence NLU results
         if turn.get('nlu', {}).get('confidence', 1.0) < 0.6:
@@ -649,23 +708,23 @@ def identify_gold_candidates():
                 'data': turn,
                 'priority': 'HIGH'
             })
-            
+
         # Tool call failures
         if any(not call.get('ok', True) for call in turn.get('tool_calls', [])):
             candidates.append({
-                'type': 'tool_failure', 
+                'type': 'tool_failure',
                 'data': turn,
                 'priority': 'CRITICAL'
             })
-            
+
         # SLO violations
         if turn.get('metrics', {}).get('e2e_full_ms', 0) > turn.get('test_metadata', {}).get('slo_target_ms', 2000):
             candidates.append({
                 'type': 'slo_violation',
-                'data': turn, 
+                'data': turn,
                 'priority': 'MEDIUM'
             })
-            
+
         # Guardian state changes
         if turn.get('guardian', {}).get('state') != 'NORMAL':
             candidates.append({
@@ -673,7 +732,7 @@ def identify_gold_candidates():
                 'data': turn,
                 'priority': 'HIGH'
             })
-    
+
     return candidates
 ```
 
@@ -683,7 +742,7 @@ Capture "hard negatives" for embedding fine-tuning:
 
 ```json
 {
-  "query": "ytterdörr kamera", 
+  "query": "ytterdörr kamera",
   "positive": "doc:cam_frontdoor.md",
   "hard_negatives": ["doc:cam_kitchen.md", "doc:random_doc.md"],
   "context": {
@@ -697,10 +756,11 @@ Capture "hard negatives" for embedding fine-tuning:
 ### Test-Specific Data Collection
 
 #### Performance Baselines
+
 ```python
 def log_performance_baseline(test_name: str, metrics: dict):
     """Log performance metrics for regression detection"""
-    
+
     baseline_event = {
         "v": "1",
         "event": "test.baseline",
@@ -719,17 +779,18 @@ def log_performance_baseline(test_name: str, metrics: dict):
             "success_rate": metrics.get('success_rate', 0) >= 0.95
         }
     }
-    
+
     log_event(baseline_event)
 ```
 
 #### Failure Pattern Detection
+
 ```python
 def log_test_failure(test_name: str, failure_info: dict):
     """Log detailed failure information for learning"""
-    
+
     failure_event = {
-        "v": "1", 
+        "v": "1",
         "event": "test.failure",
         "ts": datetime.utcnow().isoformat(),
         "test_name": test_name,
@@ -748,13 +809,14 @@ def log_test_failure(test_name: str, failure_info: dict):
             "system_stability": assess_system_stability()
         }
     }
-    
+
     log_event(failure_event)
 ```
 
 ### Data Quality Governance
 
 #### Privacy & Security Checklist
+
 - [ ] **Consent logging**: All `consent_scopes` recorded per session
 - [ ] **PII masking**: Email, phone, personnummer, full names masked
 - [ ] **Right to forget**: `/memory/forget` endpoint clears logs + artifacts
@@ -766,18 +828,19 @@ def log_test_failure(test_name: str, failure_info: dict):
 - [ ] **Data subject rights**: `/memory/forget` rensar även `datasets/silver` via referens-hash
 
 #### Data Quality Validation
+
 ```python
 def validate_data_quality():
     """Ensure collected data meets quality standards"""
-    
+
     quality_metrics = {
         "schema_compliance": validate_schema_compliance(),
-        "pii_masking_rate": check_pii_masking_coverage(), 
+        "pii_masking_rate": check_pii_masking_coverage(),
         "deduplication_rate": calculate_duplicate_percentage(),
         "consent_coverage": verify_consent_logging(),
         "retention_compliance": check_retention_policy()
     }
-    
+
     # Alert if quality drops below thresholds
     for metric, value in quality_metrics.items():
         if value < QUALITY_THRESHOLDS[metric]:
@@ -787,10 +850,11 @@ def validate_data_quality():
 ### Alice's Learning Integration
 
 #### Model Fine-tuning Preparation
+
 ```python
 def prepare_training_data():
     """Convert gold data to training formats"""
-    
+
     # SFT conversations for tool use
     sft_data = []
     for conv in read_gold_conversations():
@@ -802,17 +866,17 @@ def prepare_training_data():
                 {"role": "assistant", "content": conv['final_response']}
             ]
         })
-    
+
     # DPO preference pairs
     dpo_data = []
     for pref in read_gold_preferences():
         dpo_data.append({
             "prompt": pref['user_input'],
-            "chosen": pref['preferred_response'], 
+            "chosen": pref['preferred_response'],
             "rejected": pref['alternative_response'],
             "reason": pref['preference_reason']
         })
-    
+
     # RAG training pairs
     rag_data = []
     for pair in read_rag_pairs():
@@ -821,13 +885,14 @@ def prepare_training_data():
             "positive_doc": pair['positive'],
             "hard_negatives": pair['hard_negatives']
         })
-    
+
     return sft_data, dpo_data, rag_data
 ```
 
 ### Implementation in Testing Framework
 
 #### Drop-in Logging Function
+
 ```python
 import json, time, hashlib, os, pathlib
 from datetime import datetime
@@ -838,44 +903,45 @@ log_file = open(LOG_DIR / "events.jsonl", "a", buffering=1)
 
 def log_event(payload: dict):
     """Thread-safe event logging with PII protection"""
-    
+
     # Ensure schema version
     payload["v"] = payload.get("v", "1")
     payload["ts"] = datetime.utcnow().isoformat() + "Z"
-    
+
     # PII masking
     if "input" in payload and "text" in payload["input"]:
         original_text = payload["input"]["text"]
         masked_text, was_masked = mask_pii(original_text)
         payload["input"]["text"] = masked_text
         payload["pii_masked"] = was_masked
-    
+
     # Hash for deduplication
     hash_content = json.dumps(payload, sort_keys=True, ensure_ascii=False)
     payload["hash"] = f"sha256:{hashlib.sha256(hash_content.encode()).hexdigest()}"
-    
+
     # Atomic write
     log_file.write(json.dumps(payload, ensure_ascii=False) + "\n")
     log_file.flush()
 ```
 
 #### Integration with Test Framework
+
 ```python
 # In test_orchestrator_comprehensive.py
 def test_chat_api_with_logging(client, test_metrics):
     """Enhanced test with structured data collection"""
-    
+
     start_time = time.perf_counter()
-    
+
     request_payload = {
         "v": "1",
-        "session_id": "test_chat_logging_001", 
+        "session_id": "test_chat_logging_001",
         "message": "Boka möte med Anna imorgon kl 14"
     }
-    
+
     response = client.post("/api/chat", json=request_payload)
     end_time = time.perf_counter()
-    
+
     # Log structured test event
     log_event({
         "event": "test.orchestrator.chat",
@@ -896,7 +962,7 @@ def test_chat_api_with_logging(client, test_metrics):
         },
         "consent_scopes": ["calendar:read", "memory:write"]
     })
-    
+
     # Original test assertions
     assert response.status_code == 200
     test_metrics("chat_with_logging_ms", (end_time - start_time) * 1000)
@@ -919,6 +985,7 @@ Alice v2 collects comprehensive, structured data for continuous learning and imp
 ### **📊 Structured Learning Data**
 
 #### **1. Turn Events (data/telemetry/events_YYYY-MM-DD.jsonl)**
+
 ```json
 {
   "v": "1",
@@ -928,17 +995,17 @@ Alice v2 collects comprehensive, structured data for continuous learning and imp
   "route": "micro",
   "e2e_first_ms": 0,
   "e2e_full_ms": 0,
-  "ram_peak_mb": {"proc_mb": 80.6, "sys_mb": 12194.1},
+  "ram_peak_mb": { "proc_mb": 80.6, "sys_mb": 12194.1 },
   "tool_calls": [
     {
       "name": "calendar.create",
-      "normalized_name": "calendar.create", 
+      "normalized_name": "calendar.create",
       "ok": true,
       "klass": null,
       "lat_ms": 150
     }
   ],
-  "rag": {"top_k": 0, "hits": 0},
+  "rag": { "top_k": 0, "hits": 0 },
   "energy_wh": 0.0,
   "guardian_state": "NORMAL",
   "pii_masked": true,
@@ -947,6 +1014,7 @@ Alice v2 collects comprehensive, structured data for continuous learning and imp
 ```
 
 **Learning Value:**
+
 - **Performance patterns**: Latency trends, resource usage optimization
 - **Route selection**: Which queries go to which models
 - **Tool usage**: Success/failure patterns for different tools
@@ -954,6 +1022,7 @@ Alice v2 collects comprehensive, structured data for continuous learning and imp
 - **Guardian behavior**: System health patterns
 
 #### **2. E2E Test Results (data/tests/results.jsonl)**
+
 ```json
 {
   "v": "1",
@@ -967,22 +1036,45 @@ Alice v2 collects comprehensive, structured data for continuous learning and imp
 ```
 
 **Learning Value:**
+
 - **Scenario success rates**: Which types of queries work best
 - **Route accuracy**: Model selection validation
 - **Performance baselines**: Latency expectations per scenario
 - **Failure patterns**: Common failure modes and edge cases
 
 #### **3. Swedish Language Patterns (services/eval/scenarios.json)**
+
 ```json
 [
-  {"id":"fast_time","kind":"chat","text":"Hej Alice, vad är klockan?","expect":{"route":"micro"}},
-  {"id":"planner_meeting","kind":"chat","text":"Boka möte med Anna imorgon kl 14","expect":{"route":"planner"}},
-  {"id":"weather_today","kind":"chat","text":"Vad är vädret idag?","expect":{"route":"planner"}},
-  {"id":"deep_summary","kind":"chat","text":"Summarize the following text in 1500 words: Lorem ipsum ...","expect":{"route":"deep"}}
+  {
+    "id": "fast_time",
+    "kind": "chat",
+    "text": "Hej Alice, vad är klockan?",
+    "expect": { "route": "micro" }
+  },
+  {
+    "id": "planner_meeting",
+    "kind": "chat",
+    "text": "Boka möte med Anna imorgon kl 14",
+    "expect": { "route": "planner" }
+  },
+  {
+    "id": "weather_today",
+    "kind": "chat",
+    "text": "Vad är vädret idag?",
+    "expect": { "route": "planner" }
+  },
+  {
+    "id": "deep_summary",
+    "kind": "chat",
+    "text": "Summarize the following text in 1500 words: Lorem ipsum ...",
+    "expect": { "route": "deep" }
+  }
 ]
 ```
 
 **Learning Value:**
+
 - **Swedish intent patterns**: Natural language understanding
 - **Route classification**: Query complexity assessment
 - **User intent mapping**: Real Swedish conversation patterns
@@ -991,24 +1083,28 @@ Alice v2 collects comprehensive, structured data for continuous learning and imp
 ### **🎯 Learning Objectives for Alice**
 
 #### **1. Swedish Language Mastery**
+
 - **Intent Recognition**: Learn Swedish conversation patterns
 - **Context Understanding**: Grasp cultural and linguistic nuances
 - **Query Classification**: Distinguish between simple, planning, and complex tasks
 - **Response Optimization**: Improve Swedish language generation
 
 #### **2. Performance Optimization**
+
 - **Resource Management**: Learn optimal RAM/CPU usage patterns
 - **Energy Efficiency**: Understand power consumption patterns
 - **Latency Optimization**: Identify performance bottlenecks
 - **Tool Selection**: Learn which tools work best for which tasks
 
 #### **3. User Behavior Understanding**
+
 - **Session Patterns**: Learn user interaction flows
 - **Query Patterns**: Understand common user intents
 - **Failure Recovery**: Learn from failed interactions
 - **Success Patterns**: Replicate successful interactions
 
 #### **4. System Health Awareness**
+
 - **Guardian Integration**: Learn system health patterns
 - **Brownout Behavior**: Understand degradation strategies
 - **Recovery Patterns**: Learn from system recovery events
@@ -1017,12 +1113,14 @@ Alice v2 collects comprehensive, structured data for continuous learning and imp
 ### **🔒 Privacy & Ethics**
 
 #### **PII Protection**
+
 - **Automatic Masking**: Email addresses, phone numbers, personal names
 - **Consent Management**: Explicit user consent for data collection
 - **Data Retention**: 7-day session logs, 30-day aggregated metrics
 - **Right to Forget**: Complete data deletion capability
 
 #### **Ethical Data Collection**
+
 - **No Synthetic Data**: All data from real user interactions
 - **Swedish Focus**: Optimized for Swedish language and culture
 - **Transparent Collection**: Clear data usage policies
@@ -1031,48 +1129,50 @@ Alice v2 collects comprehensive, structured data for continuous learning and imp
 ### **📈 Learning Pipeline**
 
 #### **Real-time Learning**
+
 ```python
 # Alice learns from every interaction
 def process_turn_event(event):
     """Extract learning insights from turn events"""
-    
+
     # Performance learning
     if event["e2e_first_ms"] > 250:
         learn_slow_response_pattern(event)
-    
+
     # Route selection learning
     if event["route"] != expected_route(event["session_id"]):
         learn_route_misclassification(event)
-    
+
     # Tool usage learning
     for tool_call in event["tool_calls"]:
         if not tool_call["ok"]:
             learn_tool_failure_pattern(tool_call)
-    
+
     # Energy optimization
     if event["energy_wh"] > baseline_energy:
         learn_high_energy_pattern(event)
 ```
 
 #### **Batch Learning**
+
 ```python
 # Daily learning from aggregated data
 def daily_learning_cycle():
     """Process daily learning data"""
-    
+
     # Load today's events
     events = load_daily_events()
-    
+
     # Extract patterns
     performance_patterns = analyze_latency_trends(events)
     route_patterns = analyze_route_selection(events)
     tool_patterns = analyze_tool_usage(events)
-    
+
     # Update Alice's knowledge
     update_performance_models(performance_patterns)
     update_route_classifier(route_patterns)
     update_tool_selection(tool_patterns)
-    
+
     # Generate insights
     generate_learning_report()
 ```
@@ -1080,18 +1180,21 @@ def daily_learning_cycle():
 ### **🎯 Success Metrics for Alice's Learning**
 
 #### **Language Learning**
+
 - **Swedish Intent Accuracy**: ≥95% on test scenarios
 - **Route Classification**: ≥90% correct model selection
 - **Response Quality**: User satisfaction ≥4.2/5
 - **Cultural Understanding**: Context-appropriate responses
 
 #### **Performance Learning**
+
 - **Latency Optimization**: P95 improvement ≥10%
 - **Resource Efficiency**: RAM usage reduction ≥15%
 - **Energy Optimization**: Power consumption reduction ≥20%
 - **Tool Success Rate**: Tool usage success ≥95%
 
 #### **System Learning**
+
 - **Guardian Integration**: Zero system crashes
 - **Brownout Prediction**: Proactive resource management
 - **Recovery Speed**: Faster system recovery
@@ -1100,12 +1203,14 @@ def daily_learning_cycle():
 ### **🚀 Future Learning Enhancements**
 
 #### **Advanced Learning Features**
+
 - **Multi-modal Learning**: Voice + text + vision patterns
 - **Context Retention**: Long-term conversation memory
 - **Proactive Learning**: Predictive user needs
 - **Personalization**: User-specific learning patterns
 
 #### **Learning Validation**
+
 - **A/B Testing**: Validate learning improvements
 - **User Feedback**: Direct user satisfaction metrics
 - **Performance Monitoring**: Track learning impact

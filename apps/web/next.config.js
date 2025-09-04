@@ -1,16 +1,16 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: ['@alice/ui', '@alice/api', '@alice/types'],
+  transpilePackages: ["@alice/ui", "@alice/api", "@alice/types"],
   experimental: {
     turbo: {
       rules: {
-        '*.css': {
-          loaders: ['css-loader'],
-          as: '*.css',
+        "*.css": {
+          loaders: ["css-loader"],
+          as: "*.css",
         },
       },
     },
   },
-}
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;

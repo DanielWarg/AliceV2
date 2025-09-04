@@ -16,4 +16,3 @@ modes:
 risk:
   high_risk_intents: [email.send, home.operate, vision.open, file.delete]
   injection_threshold: 0.62
-

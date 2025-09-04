@@ -10,18 +10,18 @@ Alice v2 tar säkerhet, integritet och transparens på största allvar. Denna po
 
 Kontakta istället:
 
-* **Email**: [daniel@postboxen.se](mailto:daniel@postboxen.se)
-* **Svarstid**: Inom 24 timmar
+- **Email**: [daniel@postboxen.se](mailto:daniel@postboxen.se)
+- **Svarstid**: Inom 24 timmar
 
 Vid behov kan kryptering med PGP erbjudas.
 
 ### Vad som ska inkluderas i en rapport
 
-* Detaljerad beskrivning av problemet
-* Steg för reproduktion
-* Bedömning av potentiell påverkan
-* Eventuella förslag på lösning
-* Kontaktinformation
+- Detaljerad beskrivning av problemet
+- Steg för reproduktion
+- Bedömning av potentiell påverkan
+- Eventuella förslag på lösning
+- Kontaktinformation
 
 ### Vår responsprocess
 
@@ -37,27 +37,27 @@ Vid behov kan kryptering med PGP erbjudas.
 
 ### Guardian System (deterministisk säkerhet)
 
-* Hårdkodade trösklar (RAM, CPU, temp, batteri)
-* Automatisk brownout och fallback
-* Rate limiting: max 3 kills/30min
-* Ingen AI-inblandning i säkerhetsloopar
+- Hårdkodade trösklar (RAM, CPU, temp, batteri)
+- Automatisk brownout och fallback
+- Rate limiting: max 3 kills/30min
+- Ingen AI-inblandning i säkerhetsloopar
 
 ### Webhook Security (n8n)
 
-* HMAC-SHA256 signaturer med timestamp (`X-Alice-Timestamp`, `X-Alice-Signature`)
-* Tillåten tidsdrift: ±300s
-* Replay-skydd: Redis SETNX med TTL 600s
-* Secret: `ALICE_WEBHOOK_HMAC_SECRET`
+- HMAC-SHA256 signaturer med timestamp (`X-Alice-Timestamp`, `X-Alice-Signature`)
+- Tillåten tidsdrift: ±300s
+- Replay-skydd: Redis SETNX med TTL 600s
+- Secret: `ALICE_WEBHOOK_HMAC_SECRET`
 
 ### API Security
 
-* Alla endpoints kräver giltig API-nyckel (`X-API-Key`)
-* Rollbaserad åtkomst: Admin, User, Service, Monitor
+- Alla endpoints kräver giltig API-nyckel (`X-API-Key`)
+- Rollbaserad åtkomst: Admin, User, Service, Monitor
 
 ### Network Security
 
-* Intern nätverksisolering i Docker/K8s
-* Rate limiting:
+- Intern nätverksisolering i Docker/K8s
+- Rate limiting:
   – API: 100 req/min per nyckel
   – Voice: 10 WebSocket-anslutningar per IP
   – Guardian health: 1000 req/min
@@ -68,24 +68,24 @@ Vid behov kan kryptering med PGP erbjudas.
 
 ### Principer
 
-* **Data minimization**: Endast nödvändig data lagras
-* **Purpose limitation**: Data används enbart för AI-assistentens funktioner
-* **Storage limitation**: Session memory (Redis) raderas automatiskt efter 7 dagar
-* **User control**: Användare kan radera minne omedelbart med `POST /memory/forget` (<1s)
-* **Privacy by design**: Local-first, inget lämnar enheten utan aktivt samtycke
+- **Data minimization**: Endast nödvändig data lagras
+- **Purpose limitation**: Data används enbart för AI-assistentens funktioner
+- **Storage limitation**: Session memory (Redis) raderas automatiskt efter 7 dagar
+- **User control**: Användare kan radera minne omedelbart med `POST /memory/forget` (<1s)
+- **Privacy by design**: Local-first, inget lämnar enheten utan aktivt samtycke
 
 ### Data Classification
 
-* **Public**: Systemstatus, Guardian state
-* **Internal**: Prestandamått, felkoder
-* **Restricted**: Konversationer, röstdata
-* **Secret**: API-nycklar, tokens
+- **Public**: Systemstatus, Guardian state
+- **Internal**: Prestandamått, felkoder
+- **Restricted**: Konversationer, röstdata
+- **Secret**: API-nycklar, tokens
 
 ### Logging & PII
 
-* PII (t.ex. email, personnummer) maskas i loggar
-* Ingen röst eller text sparas permanent utan samtycke
-* Strukturerad JSONL-loggning med trace-ID
+- PII (t.ex. email, personnummer) maskas i loggar
+- Ingen röst eller text sparas permanent utan samtycke
+- Strukturerad JSONL-loggning med trace-ID
 
 ---
 
@@ -93,11 +93,11 @@ Vid behov kan kryptering med PGP erbjudas.
 
 Alice v2 följer EU:s AI-förordning (AI Act) genom:
 
-* **Transparens**: HUD visar alltid vilken modell som används (lokal eller OpenAI)
-* **Opt-in för moln**: `cloud_ok` krävs innan något skickas till externa API:er
-* **User confirmation**: Planner bekräftar tool-calls med användaren innan exekvering
-* **Audit logs**: Alla AI-beslut loggas i `data/telemetry/` för spårbarhet
-* **Explainability**: Intent + route badges i UI gör systemets beslut begripliga
+- **Transparens**: HUD visar alltid vilken modell som används (lokal eller OpenAI)
+- **Opt-in för moln**: `cloud_ok` krävs innan något skickas till externa API:er
+- **User confirmation**: Planner bekräftar tool-calls med användaren innan exekvering
+- **Audit logs**: Alla AI-beslut loggas i `data/telemetry/` för spårbarhet
+- **Explainability**: Intent + route badges i UI gör systemets beslut begripliga
 
 ---
 
@@ -105,17 +105,17 @@ Alice v2 följer EU:s AI-förordning (AI Act) genom:
 
 ### Threat Detection
 
-* Misslyckad autentisering → rate limiting + alert
-* Ovanliga trafikmönster → blockering
-* Guardian triggers → automatiskt skydd
-* Exfiltreringsförsök → avvikelsedetektering
+- Misslyckad autentisering → rate limiting + alert
+- Ovanliga trafikmönster → blockering
+- Guardian triggers → automatiskt skydd
+- Exfiltreringsförsök → avvikelsedetektering
 
 ### Security Metrics
 
-* `authentication_failure`
-* `rate_limit_exceeded`
-* `guardian_emergency_triggered`
-* `memory_consent_violation`
+- `authentication_failure`
+- `rate_limit_exceeded`
+- `guardian_emergency_triggered`
+- `memory_consent_violation`
 
 ### Audit Logging Example
 
@@ -135,23 +135,23 @@ Alice v2 följer EU:s AI-förordning (AI Act) genom:
 
 ### Python
 
-* Typanoteringar på alla funktioner
-* Pydantic för validering
-* `secrets` för nycklar
-* `ruff`, `mypy`, `pytest` för kvalitet
+- Typanoteringar på alla funktioner
+- Pydantic för validering
+- `secrets` för nycklar
+- `ruff`, `mypy`, `pytest` för kvalitet
 
 ### TypeScript
 
-* Zod för inputvalidering
-* DOMPurify för HTML-sanering
-* ESLint + Prettier för kodstil
+- Zod för inputvalidering
+- DOMPurify för HTML-sanering
+- ESLint + Prettier för kodstil
 
 ### Dependencies
 
-* `safety check`, `bandit` för Python
-* `npm audit`, `yarn audit` för Node.js
-* `docker scout cves` för images
-* Kritiska sårbarheter patchas inom 24h
+- `safety check`, `bandit` för Python
+- `npm audit`, `yarn audit` för Node.js
+- `docker scout cves` för images
+- Kritiska sårbarheter patchas inom 24h
 
 ---
 
@@ -168,13 +168,13 @@ Alice v2 följer EU:s AI-förordning (AI Act) genom:
 
 ### Security Team
 
-* **Primary**: [daniel@postboxen.se](mailto:daniel@postboxen.se)
+- **Primary**: [daniel@postboxen.se](mailto:daniel@postboxen.se)
 
 ### External Resources
 
-* **CERT-SE**: Computer Emergency Response Team Sweden
-* **Police**: Cybercrime division (if criminal activity)
-* **Legal**: Data protection authority (for GDPR incidents)
+- **CERT-SE**: Computer Emergency Response Team Sweden
+- **Police**: Cybercrime division (if criminal activity)
+- **Legal**: Data protection authority (for GDPR incidents)
 
 ---
 

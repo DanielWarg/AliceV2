@@ -1,8 +1,8 @@
 id: 005
 tags: [HARD, complex]
-prompt_sv: "Analysera mina senaste 10 mail och skapa en sammanfattning av de viktigaste punkterna, boka sedan ett möte med teamet för att diskutera resultaten"
+prompt_sv: 'Analysera mina senaste 10 mail och skapa en sammanfattning av de viktigaste punkterna, boka sedan ett möte med teamet för att diskutera resultaten'
 expected_intent: memory.query
-expected_tools: ["memory.query", "calendar.create_draft"]
+expected_tools: ['memory.query', 'calendar.create_draft']
 max_latency_ms: 1500
 schema_ok_first: false
 fallback_allowed: true

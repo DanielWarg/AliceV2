@@ -1,23 +1,19 @@
-import { useState, useEffect } from 'react'
-import { Card, CardContent } from './Card'
-import { Badge } from './Badge'
-import { Progress } from './Progress'
-import { cn } from '../lib/utils'
-import type { PerformanceMetrics } from '@alice/types'
+import { useState, useEffect } from 'react';
+import { Card, CardContent } from './Card';
+import { Badge } from './Badge';
+import { Progress } from './Progress';
+import { cn } from '../lib/utils';
+import type { PerformanceMetrics } from '@alice/types';
 
 interface PerformanceHUDProps {
-  className?: string
-  isVisible?: boolean
-  onToggle?: () => void
+  className?: string;
+  isVisible?: boolean;
+  onToggle?: () => void;
 }
 
-export function PerformanceHUD({ 
-  className, 
-  isVisible = false, 
-  onToggle 
-}: PerformanceHUDProps) {
-  const [metrics, setMetrics] = useState<PerformanceMetrics | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+export function PerformanceHUD({ className, isVisible = false, onToggle }: PerformanceHUDProps) {
+  const [metrics, setMetrics] = useState<PerformanceMetrics | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Mock data - in real implementation, this would come from API
   useEffect(() => {
@@ -31,20 +27,20 @@ export function PerformanceHUD({
           response_time_ms: Math.floor(Math.random() * 150) + 50,
           cache_hit_rate: Math.random() * 0.3 + 0.7,
           active_connections: Math.floor(Math.random() * 10) + 2,
-          requests_per_minute: Math.floor(Math.random() * 50) + 25
-        })
-        setIsLoading(false)
-      }, 500)
-    }
+          requests_per_minute: Math.floor(Math.random() * 50) + 25,
+        });
+        setIsLoading(false);
+      }, 500);
+    };
 
-    fetchMetrics()
-    
+    fetchMetrics();
+
     // Update every 5 seconds when visible
     if (isVisible) {
-      const interval = setInterval(fetchMetrics, 5000)
-      return () => clearInterval(interval)
+      const interval = setInterval(fetchMetrics, 5000);
+      return () => clearInterval(interval);
     }
-  }, [isVisible])
+  }, [isVisible]);
 
   if (!isVisible) {
     return (
@@ -55,31 +51,35 @@ export function PerformanceHUD({
       >
         📊
       </button>
-    )
+    );
   }
 
   const formatBytes = (bytes: number) => {
-    if (bytes < 1024) return `${bytes}MB`
-    return `${(bytes / 1024).toFixed(1)}GB`
-  }
+    if (bytes < 1024) return `${bytes}MB`;
+    return `${(bytes / 1024).toFixed(1)}GB`;
+  };
 
-  const getPerformanceStatus = (value: number, thresholds: { good: number, warning: number }) => {
-    if (value <= thresholds.good) return 'good'
-    if (value <= thresholds.warning) return 'warning'
-    return 'critical'
-  }
+  const getPerformanceStatus = (value: number, thresholds: { good: number; warning: number }) => {
+    if (value <= thresholds.good) return 'good';
+    if (value <= thresholds.warning) return 'warning';
+    return 'critical';
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'good': return 'text-green-600'
-      case 'warning': return 'text-yellow-600'
-      case 'critical': return 'text-red-600'
-      default: return 'text-gray-600'
+      case 'good':
+        return 'text-green-600';
+      case 'warning':
+        return 'text-yellow-600';
+      case 'critical':
+        return 'text-red-600';
+      default:
+        return 'text-gray-600';
     }
-  }
+  };
 
   return (
-    <Card className={cn("fixed bottom-4 right-4 z-50 w-80 shadow-xl", className)}>
+    <Card className={cn('fixed bottom-4 right-4 z-50 w-80 shadow-xl', className)}>
       <CardContent className="p-4">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-sm">Performance Monitor</h3>
@@ -109,39 +109,45 @@ export function PerformanceHUD({
             <div>
               <div className="flex justify-between text-xs mb-1">
                 <span>RAM Usage</span>
-                <span className={getStatusColor(getPerformanceStatus(metrics.ram_usage_mb, { good: 1500, warning: 2500 }))}>
+                <span
+                  className={getStatusColor(
+                    getPerformanceStatus(metrics.ram_usage_mb, { good: 1500, warning: 2500 }),
+                  )}
+                >
                   {formatBytes(metrics.ram_usage_mb)}
                 </span>
               </div>
-              <Progress 
-                value={(metrics.ram_usage_mb / 4000) * 100} 
-                className="h-2"
-              />
+              <Progress value={(metrics.ram_usage_mb / 4000) * 100} className="h-2" />
             </div>
 
             {/* CPU Usage */}
             <div>
               <div className="flex justify-between text-xs mb-1">
                 <span>CPU Usage</span>
-                <span className={getStatusColor(getPerformanceStatus(metrics.cpu_usage_pct, { good: 30, warning: 60 }))}>
+                <span
+                  className={getStatusColor(
+                    getPerformanceStatus(metrics.cpu_usage_pct, { good: 30, warning: 60 }),
+                  )}
+                >
                   {metrics.cpu_usage_pct}%
                 </span>
               </div>
-              <Progress 
-                value={metrics.cpu_usage_pct} 
-                className="h-2"
-              />
+              <Progress value={metrics.cpu_usage_pct} className="h-2" />
             </div>
 
             {/* Response Time */}
             <div>
               <div className="flex justify-between text-xs mb-1">
                 <span>Response Time</span>
-                <span className={getStatusColor(getPerformanceStatus(metrics.response_time_ms, { good: 100, warning: 300 }))}>
+                <span
+                  className={getStatusColor(
+                    getPerformanceStatus(metrics.response_time_ms, { good: 100, warning: 300 }),
+                  )}
+                >
                   {metrics.response_time_ms}ms
                 </span>
               </div>
-              <Progress 
+              <Progress
                 value={Math.min((metrics.response_time_ms / 500) * 100, 100)}
                 className="h-2"
               />
@@ -171,5 +177,5 @@ export function PerformanceHUD({
         ) : null}
       </CardContent>
     </Card>
-  )
+  );
 }

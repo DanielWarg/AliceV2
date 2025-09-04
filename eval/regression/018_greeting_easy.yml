@@ -1,7 +1,7 @@
 id: 018
 tags:
-- EASY
-- greeting
+  - EASY
+  - greeting
 prompt_sv: Trevligt att träffas
 expected_intent: greeting.hello
 expected_tools: []

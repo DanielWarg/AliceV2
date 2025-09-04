@@ -1,5 +1,6 @@
 # LOOSE THREADS INVENTORY - Alice v2
-*Alla lösa trådar, buggar och skräp som måste fixas innan nästa AI*
+
+_Alla lösa trådar, buggar och skräp som måste fixas innan nästa AI_
 
 ---
 
@@ -8,6 +9,7 @@
 ### **✅ MAJOR ACCOMPLISHMENTS (2025-08-31)**
 
 **🚀 Complete Observability System:**
+
 - [x] **RAM-peak per turn**: Process och system memory tracking i varje turn event
 - [x] **Energy per turn (Wh)**: Energikonsumtion med konfigurerbar baseline
 - [x] **Tool error classification**: Timeout/5xx/429/schema/other kategorisering med Prometheus metrics
@@ -15,6 +17,7 @@
 - [x] **Real-time dashboard**: Streamlit HUD visar RAM, energi, latens, tool-fel och Guardian status
 
 **🧪 Autonomous E2E Testing:**
+
 - [x] **Self-contained validation**: `scripts/auto_verify.sh` kör komplett systemvalidering
 - [x] **20 realistiska scenarier**: Svenska samtal som täcker micro/planner/deep routes
 - [x] **SLO validation**: Automatisk P95 threshold checking med Node.js integration
@@ -22,6 +25,7 @@
 - [x] **Artifact preservation**: Alla testresultat sparas till `data/tests/` och `test-results/`
 
 **🔧 New Services & Components:**
+
 - [x] `services/eval/` - Komplett eval harness med 20 scenarier
 - [x] `scripts/auto_verify.sh` - Autonomt E2E test automation
 - [x] `monitoring/mini_hud.py` - Streamlit dashboard för eval results
@@ -36,6 +40,7 @@
 ### **1. OBSOLETE DIRECTORIES & FILES** ✅ FIXED
 
 **❌ `services/tester/` - OLD TESTER SERVICE** ✅ REMOVED
+
 - **Problem**: Gammal tester service som inte längre används
 - **Solution**: ✅ Borttagen hela directoryn
 - **Impact**: ✅ Cleanup completed, förvirring för nästa AI eliminated
@@ -43,13 +48,15 @@
 ### **2. CODE TODOS & FIXMES** ✅ FIXED
 
 **❌ TODO i `test_nightly_scenarios.py:261`** ✅ RESOLVED
-- **Problem**: `# TODO: Get real Guardian state` 
+
+- **Problem**: `# TODO: Get real Guardian state`
 - **Solution**: ✅ Replaced med faktisk Guardian client call
 - **Impact**: ✅ Real Guardian integration i test logging
 
 ### **3. DOCKER COMPOSE WARNINGS** ✅ FIXED
 
 **⚠️ Obsolete version warning** ✅ RESOLVED
+
 - **Problem**: `version` attribute i docker-compose.yml
 - **Solution**: ✅ Borttagen version line
 - **Impact**: ✅ Clean docker-compose output
@@ -57,6 +64,7 @@
 ### **4. MISSING ORCHESTRATOR DOCKERFILE** ✅ FIXED
 
 **❌ Missing Dockerfile för services/orchestrator** ✅ CREATED
+
 - **Problem**: Loadgen och Guardian har Dockerfile, men orchestrator saknade
 - **Solution**: ✅ Skapad orchestrator/Dockerfile
 - **Impact**: ✅ Can deploy orchestrator via Docker
@@ -64,6 +72,7 @@
 ### **5. IMPORT PATH INCONSISTENCIES** ✅ FIXED
 
 **⚠️ Relative vs absolute imports** ✅ RESOLVED
+
 - **Problem**: Några filer använde relative imports, andra absolute
 - **Location**: ✅ Fixed in status_router.py, mw_metrics.py, main.py
 - **Solution**: ✅ Konsistent import style
@@ -71,6 +80,7 @@
 ### **6. MISSING HEALTH CHECKS** ✅ FIXED
 
 **❌ Missing curl i Docker images** ✅ RESOLVED
+
 - **Problem**: Healthcheck använde curl men images installerade det inte
 - **Location**: ✅ Guardian och loadgen Dockerfiles
 - **Solution**: ✅ Added `RUN apt-get update && apt-get install -y curl`
@@ -80,17 +90,19 @@
 ## 🚨 **CRITICAL FIXES NEEDED** ✅ ALL COMPLETED
 
 ### **Fix 1: Remove Old Tester Service** ✅ DONE
+
 ```bash
 rm -rf services/tester/
 ```
 
 ### **Fix 2: Create Orchestrator Dockerfile** ✅ DONE
+
 ```dockerfile
 FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies  
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
@@ -114,6 +126,7 @@ CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
 ```
 
 ### **Fix 3: Add curl to Guardian Dockerfile** ✅ DONE
+
 ```dockerfile
 # Added after line 6 in services/guardian/Dockerfile:
 RUN apt-get update && apt-get install -y \
@@ -122,6 +135,7 @@ RUN apt-get update && apt-get install -y \
 ```
 
 ### **Fix 4: Fix TODO in test_nightly_scenarios.py** ✅ DONE
+
 ```python
 def _get_guardian_state(self):
     """Get real Guardian state"""
@@ -138,14 +152,14 @@ guardian_state=self._get_guardian_state(),
 ```
 
 ### **Fix 5: Remove version from docker-compose.yml** ✅ DONE
+
 ```yaml
 # Removed this line:
 version: '3.8'
 
 # Kept only:
 services:
-  guardian:
-    ...
+  guardian: ...
 ```
 
 ---
@@ -153,8 +167,9 @@ services:
 ## ✅ **VERIFICATION CHECKLIST** ✅ ALL PASSED
 
 After fixes, verify:
+
 - [x] `docker compose config` runs without warnings
-- [x] `docker compose up -d` builds all services successfully  
+- [x] `docker compose up -d` builds all services successfully
 - [x] `curl http://localhost:8000/health` works (orchestrator)
 - [x] `curl http://localhost:8787/health` works (guardian)
 - [x] `pytest src/tests/test_nightly_scenarios.py -v` runs without TODO warnings
@@ -169,9 +184,10 @@ After fixes, verify:
 ## 🎯 **POST-FIX STATUS** ✅ ACHIEVED
 
 After alla fixes är klara:
+
 - ✅ Clean Docker deployment stack
 - ✅ No obsolete code or directories
-- ✅ All services have proper Dockerfiles  
+- ✅ All services have proper Dockerfiles
 - ✅ Guardian state properly integrated in tests
 - ✅ No TODOs or FIXMEs in critical paths
 - ✅ Complete observability system operational
@@ -186,7 +202,7 @@ After alla fixes är klara:
 
 ### **HIGH PRIORITY (Ready for Next AI Agent)**
 
-1. **🔌 Real LLM Integration** 
+1. **🔌 Real LLM Integration**
    - **Current**: Orchestrator returnerar mock responses
    - **Next**: Integrera faktiska LLM calls (OpenAI, Anthropic, lokala modeller)
    - **Location**: `services/orchestrator/src/routers/orchestrator.py`
@@ -194,7 +210,7 @@ After alla fixes är klara:
 
 2. **🎤 Voice Pipeline Implementation**
    - **Current**: Arkitektur klar, services stubbed
-   - **Next**: ASR→NLU→TTS pipeline med WebSocket connections  
+   - **Next**: ASR→NLU→TTS pipeline med WebSocket connections
    - **Location**: `services/voice/` (needs implementation)
    - **Swedish Focus**: Whisper ASR, svenska språkmodeller
    - **Testing**: Utöka `services/eval/scenarios.json` med voice scenarios
@@ -207,4 +223,4 @@ After alla fixes är klara:
 
 ---
 
-*Inventory completed 2025-08-31 by Claude Code - Observability + Eval-Harness v1 COMPLETED! 🚀*
+_Inventory completed 2025-08-31 by Claude Code - Observability + Eval-Harness v1 COMPLETED! 🚀_

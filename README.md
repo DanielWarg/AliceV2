@@ -1,5 +1,6 @@
 # Alice v2 AI Assistant
-*AI assistant with Guardian safety system, real-time observability, and autonomous E2E testing*
+
+_AI assistant with Guardian safety system, real-time observability, and autonomous E2E testing_
 
 ![E2E](https://img.shields.io/badge/E2E-Auto--verify-green)
 ![SLO](https://img.shields.io/badge/SLO-Per--route%20P95-green)
@@ -33,6 +34,7 @@ Alice v2 is a robust AI assistant featuring:
 - **🔧 Automated Setup** - One-command setup with `make up` including venv, dependencies, models, and testing
 
 ## 📚 Index (Solo Edition)
+
 - Solo Quickstart – see below
 - Demo Guide – see below
 - Windows Setup Guide – see below
@@ -57,6 +59,7 @@ alice-v2/
 ```
 
 ### Architecture at a glance (Solo Edition)
+
 - Fast-route for time/weather/memory/smalltalk (utan LLM i loopen)
 - ToolSelector (local 3B, enum-only, strict JSON)
 - Hybrid Planner: **OpenAI 4o-mini primary** (function-calling, temp=0, max_tokens=40) **+ Local ToolSelector fallback**
@@ -68,6 +71,7 @@ alice-v2/
 ## 🚀 Quick Start
 
 ### Minimal Setup (Demo)
+
 ```bash
 git clone https://github.com/DanielWarg/AliceV2.git
 cd alice-v2
@@ -78,6 +82,7 @@ open http://localhost:3001
 ### Full Setup (Development)
 
 **Prerequisites:**
+
 - Docker Desktop (installed and running)
 - Python 3.11+ (for local development)
 - pnpm (for frontend: `npm install -g pnpm`)
@@ -113,12 +118,14 @@ make up
 ```
 
 **After the first time, just run:**
+
 ```bash
 git pull
 make up
 ```
 
 ### 🎯 One-Command Setup (Recommended)
+
 ```bash
 # Clone and enter directory
 git clone <repository>
@@ -148,6 +155,7 @@ This comprehensive guide covers setting up Alice v2 on Windows using WSL2 (Windo
 ### Step 1: Enable WSL2 and Install Ubuntu
 
 #### 1.1 Enable WSL2 Feature
+
 Open PowerShell as Administrator and run:
 
 ```powershell
@@ -160,10 +168,12 @@ Restart-Computer
 ```
 
 #### 1.2 Install WSL2 Kernel Update
+
 1. Download the WSL2 Linux kernel update package from Microsoft
 2. Run the installer: `wsl_update_x64.msi`
 
 #### 1.3 Set WSL2 as Default and Install Ubuntu
+
 ```powershell
 # Set WSL2 as default version
 wsl --set-default-version 2
@@ -175,9 +185,11 @@ wsl --install -d Ubuntu-22.04
 ```
 
 #### 1.4 Complete Ubuntu Setup
+
 1. Launch Ubuntu from Start menu
 2. Create your UNIX username and password
 3. Update the system:
+
 ```bash
 sudo apt update && sudo apt upgrade -y
 ```
@@ -185,12 +197,14 @@ sudo apt update && sudo apt upgrade -y
 ### Step 2: Docker Desktop Setup for Windows
 
 #### 2.1 Install Docker Desktop
+
 1. Download Docker Desktop for Windows from: https://www.docker.com/products/docker-desktop/
 2. Run the installer with default settings
 3. **Important**: Enable "Use WSL 2 based engine" during installation
 4. Restart Windows after installation
 
 #### 2.2 Configure Docker for WSL2
+
 1. Start Docker Desktop
 2. Go to Settings → General
 3. Ensure "Use the WSL 2 based engine" is checked
@@ -199,7 +213,9 @@ sudo apt update && sudo apt upgrade -y
 6. Click "Apply & Restart"
 
 #### 2.3 Verify Docker in WSL2
+
 Open Ubuntu terminal and verify:
+
 ```bash
 # Check Docker is available in WSL2
 docker --version
@@ -212,6 +228,7 @@ docker run hello-world
 ### Step 3: Install Required Dependencies in WSL2
 
 #### 3.1 Install Python 3.11+
+
 ```bash
 # Add deadsnakes PPA for latest Python versions
 sudo apt update
@@ -228,6 +245,7 @@ sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 
 ```
 
 #### 3.2 Install Node.js and pnpm
+
 ```bash
 # Install Node.js 18+ via NodeSource
 curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
@@ -242,6 +260,7 @@ pnpm --version
 ```
 
 #### 3.3 Install Ollama for Local AI Models
+
 ```bash
 # Install Ollama
 curl -fsSL https://ollama.ai/install.sh | sh
@@ -260,6 +279,7 @@ ollama list
 ### Step 4: Clone and Setup Alice v2
 
 #### 4.1 Choose Your Setup Location
+
 ```bash
 # Option 1: WSL2 home directory (better performance)
 cd ~
@@ -276,6 +296,7 @@ cd alice-v2
 **Recommendation**: Use WSL2 home directory (`~`) for better performance, access files via `\\wsl$\Ubuntu-22.04\home\yourusername` in Windows Explorer.
 
 #### 4.2 Set Up Environment Variables
+
 ```bash
 # Create .env file from template
 cp .env.example .env
@@ -285,6 +306,7 @@ nano .env
 ```
 
 Add these Windows/WSL2 specific settings to `.env`:
+
 ```env
 # N8N Configuration
 N8N_ENCRYPTION_KEY=change-me-to-secure-key
@@ -303,6 +325,7 @@ LOG_LEVEL=INFO
 ### Step 5: Start Alice v2
 
 #### 5.1 Automated Setup (Recommended)
+
 ```bash
 # Make sure you're in the alice-v2 directory
 cd ~/alice-v2  # or wherever you cloned it
@@ -312,6 +335,7 @@ make up
 ```
 
 The `make up` command will automatically:
+
 - Create Python virtual environment
 - Install all Python dependencies
 - Install Node.js dependencies with pnpm
@@ -320,7 +344,9 @@ The `make up` command will automatically:
 - Launch the frontend HUD
 
 #### 5.2 Manual Setup (Alternative)
+
 If you prefer step-by-step setup:
+
 ```bash
 # Create and activate virtual environment
 python3 -m venv .venv
@@ -346,6 +372,7 @@ cd apps/hud && pnpm dev
 ### Step 6: Access Alice v2
 
 #### 6.1 Verify Services Are Running
+
 ```bash
 # Check service health
 curl http://localhost:18000/health
@@ -356,12 +383,14 @@ curl http://localhost:8787/health
 ```
 
 #### 6.2 Access Web Interfaces
+
 - **Main HUD**: http://localhost:3001 (Primary dashboard)
 - **API Gateway**: http://localhost:18000 (API access)
 - **n8n Workflows**: http://localhost:5678 (Automation platform)
 - **Monitoring Dashboard**: http://localhost:8501 (when enabled)
 
 #### 6.3 Test the AI Assistant
+
 ```bash
 # Test basic chat functionality
 curl -s -X POST http://localhost:18000/api/chat \
@@ -373,6 +402,7 @@ curl -s -X POST http://localhost:18000/api/chat \
 ### Step 7: Windows-Specific Configuration
 
 #### 7.1 Port Forwarding and Networking
+
 WSL2 uses its own network interface. To access Alice v2 from Windows applications:
 
 ```bash
@@ -384,11 +414,13 @@ hostname -I
 ```
 
 #### 7.2 File System Integration
+
 - **Access WSL2 files from Windows**: `\\wsl$\Ubuntu-22.04\home\yourusername\alice-v2`
 - **Access Windows files from WSL2**: `/mnt/c/Users/YourUsername/...`
 - **VS Code integration**: Install "WSL" extension for seamless development
 
 #### 7.3 Performance Optimization
+
 ```bash
 # Increase WSL2 memory limit (optional)
 # Create/edit ~/.wslconfig in Windows home directory
@@ -396,6 +428,7 @@ notepad.exe ~/.wslconfig
 ```
 
 Add to `.wslconfig`:
+
 ```ini
 [wsl2]
 memory=8GB
@@ -404,6 +437,7 @@ swap=2GB
 ```
 
 Restart WSL2 after changes:
+
 ```powershell
 wsl --shutdown
 wsl
@@ -412,6 +446,7 @@ wsl
 ### Step 8: Troubleshooting Common Windows/WSL Issues
 
 #### 8.1 Docker Issues
+
 ```bash
 # Docker daemon not running
 sudo service docker start
@@ -425,6 +460,7 @@ sudo usermod -aG docker $USER
 ```
 
 #### 8.2 Port Conflicts
+
 ```bash
 # Kill conflicting processes
 ./scripts/ports-kill.sh
@@ -435,6 +471,7 @@ sudo netstat -tulpn | grep :3001
 ```
 
 #### 8.3 Ollama Issues
+
 ```bash
 # Ollama not responding
 pkill ollama
@@ -450,6 +487,7 @@ sudo systemctl restart ollama  # if installed as service
 ```
 
 #### 8.4 Memory Issues
+
 ```bash
 # Check memory usage
 free -h
@@ -463,6 +501,7 @@ docker compose down
 ```
 
 #### 8.5 WSL2 Networking Issues
+
 ```powershell
 # Reset WSL2 network (run in Windows PowerShell as Admin)
 wsl --shutdown
@@ -474,11 +513,13 @@ netsh int ip reset
 ### Step 9: Development Workflow on Windows
 
 #### 9.1 Recommended IDE Setup
+
 - **VS Code with WSL extension**: Best integration, works seamlessly with WSL2
 - **JetBrains IDEs**: Configure to use WSL2 Python interpreter
 - **Windows Terminal**: Modern terminal with WSL2 tab support
 
 #### 9.2 Daily Development Commands
+
 ```bash
 # Start development environment
 make up
@@ -497,6 +538,7 @@ make restart
 ```
 
 #### 9.3 Git Configuration
+
 ```bash
 # Configure Git in WSL2
 git config --global user.name "Your Name"
@@ -508,12 +550,14 @@ git config --global core.filemode false
 ### Step 10: Production Considerations
 
 #### 10.1 Security
+
 - Change default passwords in `.env` file
 - Use strong N8N encryption keys
 - Configure proper firewall rules if exposing services
 - Regular updates: `sudo apt update && sudo apt upgrade`
 
 #### 10.2 Backup Strategy
+
 ```bash
 # Backup configuration and data
 tar -czf alice-v2-backup-$(date +%Y%m%d).tar.gz \
@@ -524,6 +568,7 @@ cp alice-v2-backup-*.tar.gz /mnt/c/Users/YourUsername/Backups/
 ```
 
 #### 10.3 Performance Monitoring
+
 ```bash
 # Monitor system resources
 htop
@@ -548,6 +593,7 @@ For more advanced troubleshooting, see the main troubleshooting section below.
 ---
 
 ## ⚡ Solo Quickstart (Local Lite)
+
 ```bash
 # Start Ollama locally first (not in Docker)
 ollama serve &
@@ -566,6 +612,7 @@ open http://localhost:3001
 ```
 
 ### n8n Setup
+
 ```bash
 # UI: http://localhost:5678 (create account with email)
 # Import flows: services/n8n/flows/*.json
@@ -584,6 +631,7 @@ open http://localhost:3001                  # HUD
 ```
 
 ### 🔧 Manual Setup (Alternative)
+
 ```bash
 # Clone and enter directory
 git clone <repository>
@@ -604,6 +652,7 @@ open http://localhost:3001
 ```
 
 ### 🧪 Development Workflow
+
 ```bash
 # Complete development workflow (up + all tests)
 make dev
@@ -618,6 +667,7 @@ make test-integration # Integration tests only
 ```
 
 ### 🛠️ Available Commands
+
 ```bash
 make help           # Show all available commands
 make up             # Start development stack (auto-setup)
@@ -639,14 +689,16 @@ make fetch-models   # Download required models
 - Cost budget: ≤$3/day för OpenAI; user opt-in för cloud processing
 
 ## 🎬 Demo Guide (3 scenarier)
-1) Boka möte i morgon 14:00
+
+1. Boka möte i morgon 14:00
    - Förväntan: confirmation‑kort (JSON‑plan), därefter n8n `calendar_draft` svar
-2) Vad sa vi om leveransen?
+2. Vad sa vi om leveransen?
    - Förväntan: memory.query + kort RAG‑citat i svaret
-3) Läs upp det
+3. Läs upp det
    - Förväntan: TTS via Piper (svenska)
 
 ### Daily Automation (14:00)
+
 ```bash
 # Install cron job to run auto-verify daily at 14:00 and log to logs/auto_verify.log
 chmod +x scripts/setup-cron.sh
@@ -668,22 +720,26 @@ crontab -l | grep auto_verify
 ### Next steps
 
 #### Step 4 – NLU + XNLI
+
 - [ ] Export XNLI to ONNX (int8) → `models/xnli/`
 - [ ] Connect entailment for low margin in NLU
 - [ ] Add 4–6 challenging test scenarios to eval-harness
 - [ ] Intent accuracy ≥92%, P95 ≤80ms
 
 #### Step 5 – Micro-LLM (Phi-3.5-mini via Ollama)
+
 - [ ] Enable micro-driver in `/api/chat`
 - [ ] Set `X-Route=micro` for simple intents
 - [ ] Measure P95 <250ms (first token)
 
 #### Step 6 – Memory (Redis TTL + FAISS user memory)
+
 - [ ] Session memory TTL=7 days
 - [ ] FAISS hot/cold index config (HNSW+ondisk)
 - [ ] "Forget me" <1s tested in eval
 
 #### Step 7 – Planner (OpenAI 4o-mini + MCP tools)
+
 - [ ] Tool schema = enum-only; deterministic arg-builders + error taxonomy
 - [ ] OpenAI rate limit + circuit breaker + budget guard
 - [ ] cloud_ok per session (opt-in) + audit log
@@ -692,16 +748,18 @@ crontab -l | grep auto_verify
 - [ ] Tool success ≥95%
 
 #### Step 8 – Text E2E hard test
+
 - [ ] Fast: P95 ≤250ms
 - [ ] Planner: P95 ≤900ms (first) / ≤1.5s (full)
 
 ## 🔧 Development
+
 ## 📦 Release Tags
 
 - `v2.7.0-planner-hardening`: Deterministic JSON planner via Ollama (format=json), strict budgets (600/400/150/1500ms), circuit breakers, fast fallback; telemetry gating and per-route SLOs added to auto_verify; docs updated from artifacts.
 
-
 ### Local Development
+
 ```bash
 # Start services
 docker compose up -d guardian orchestrator
@@ -723,6 +781,7 @@ cd monitoring && streamlit run mini_hud.py
 ```
 
 ### Testing Strategy
+
 - **E2E Testing**: `./scripts/auto_verify.sh` - Complete system validation
 - **Unit Testing**: `pytest` with realistic expectations (80-95% success rates)
 - **Load Testing**: `services/loadgen/main.py` - Brownout validation
@@ -731,6 +790,7 @@ cd monitoring && streamlit run mini_hud.py
 ## 📊 Monitoring & Observability
 
 ### Real-time Dashboard
+
 ```bash
 # Start HUD
 cd monitoring && streamlit run mini_hud.py
@@ -740,12 +800,14 @@ open http://localhost:18000/hud
 ```
 
 ### Key Metrics
+
 - **Performance**: P50/P95 latency per route, RAM peak per turn
 - **Reliability**: Guardian state, error rates, SLO compliance
 - **Security**: Injection attempts, tool denials, security mode
 - **Quality**: Intent accuracy, tool success rates, eval pass rates
 
 ### Data Collection
+
 - **Telemetry**: Structured JSONL logging under `data/telemetry/`
 - **Test Results**: E2E validation artifacts under `data/tests/`
 - **Trends**: Nightly validation trends under `test-results/`
@@ -768,6 +830,7 @@ open http://localhost:18000/hud
 - **`SECURITY_AND_PRIVACY.md`** - Security measures, GDPR compliance, and AI Act transparency
 
 ### 🔧 For Maintainers
+
 - **`docs/REPO_SETUP.md`** - GitHub repository setup and configuration guide
 
 ## 🤝 Contributing

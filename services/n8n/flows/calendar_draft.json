@@ -8,17 +8,12 @@
         "options": {
           "responseMode": "lastNode"
         },
-        "methods": [
-          "POST"
-        ]
+        "methods": ["POST"]
       },
       "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
-      "position": [
-        240,
-        300
-      ]
+      "position": [240, 300]
     },
     {
       "parameters": {
@@ -35,14 +30,10 @@
       "name": "Set",
       "type": "n8n-nodes-base.set",
       "typeVersion": 2,
-      "position": [
-        520,
-        300
-      ]
+      "position": [520, 300]
     }
   ],
   "connections": {
     "Webhook": { "main": [[{ "node": "Set", "type": "main", "index": 0 }]] }
   }
 }
-

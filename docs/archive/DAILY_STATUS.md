@@ -1,9 +1,11 @@
 # Alice v2 - Daily Status & Next Steps
-*Uppdaterad: 2025-09-01 - Eftermiddagsrapport*
+
+_Uppdaterad: 2025-09-01 - Eftermiddagsrapport_
 
 ## 🎯 **DAGENS SLUTSTATUS**
 
 ### ✅ **VAD VI HAR GJORT IDAG**
+
 Kort: Docker-only dev-proxy, Observability+HUD klart, `/metrics` exponerad, NLU-service scaffoldad, curator/scheduler pipeline på plats (scheduler optional), Orchestrator↔Guardian URL fix, NLU-proxy routing, auto_verify uppdaterad.
 
 1. **🤖 LLM Drivers Implementerade:**
@@ -55,6 +57,7 @@ Kort: Docker-only dev-proxy, Observability+HUD klart, `/metrics` exponerad, NLU-
 Alla tidigare portkrockar eliminerade med Docker-only + dev-proxy. Scheduler-bild är optional (kan lämnas av tillsvidare). Ollama tillagd i compose; modell-pull och val av mikro-modell sker i nästa steg.
 
 ### **Kvarstående småsaker:**
+
 1. NLU ONNX (multilingual-e5-small) + XNLI (int8) och threshold-tuning
 2. Micro-LLM (Phi-mini) via Ollama (modell-pull och sanity)
 3. Scheduler-image (cron) kan bytas till publik om nattkörningar önskas i dev
@@ -62,6 +65,7 @@ Alla tidigare portkrockar eliminerade med Docker-only + dev-proxy. Scheduler-bil
 ## 🚀 **NÄSTA STEG (IMORGON)**
 
 ### **Steg 1: Start & Sanity**
+
 ```bash
 scripts/dev_up.sh
 curl -s http://localhost:18000/health | jq .
@@ -69,6 +73,7 @@ curl -s http://localhost:18000/api/status/routes | jq .
 ```
 
 ### **Steg 2: NLU + Mikro-LLM**
+
 ```bash
 # NLU sanity
 curl -s -X POST http://localhost:18000/api/nlu/parse -H 'Content-Type: application/json' \
@@ -80,6 +85,7 @@ curl -s -X POST http://localhost:18000/api/orchestrator/chat -H 'Content-Type: a
 ```
 
 ### **Steg 3: Validera System**
+
 ```bash
 ./scripts/auto_verify.sh
 cat data/tests/summary.json | jq .
@@ -87,7 +93,9 @@ open http://localhost:18000/hud
 ```
 
 ### **Steg 4: Nästa Prioritet**
+
 Om LLM integration fungerar → **Voice Pipeline Implementation**
+
 - ASR→NLU→TTS pipeline med WebSocket connections
 - Svenska språkmodeller (Whisper ASR)
 - Utöka `services/eval/scenarios.json` med voice scenarios
@@ -95,6 +103,7 @@ Om LLM integration fungerar → **Voice Pipeline Implementation**
 ## 📋 **ACCEPTANSKRITERIER**
 
 ### **LLM Integration v1 är klar när:**
+
 - [ ] **Routing fungerar**: micro/planner/deep routes väljs korrekt
 - [ ] **LLM drivers fungerar**: Ollama integration med proper timeouts
 - [ ] **Planner execution**: JSON schema validation + tool execution
@@ -106,9 +115,11 @@ Om LLM integration fungerar → **Voice Pipeline Implementation**
 ## 🔧 **TEKNISKA DETALJER**
 
 ### **Branch:**
+
 - `feat/llm-integration-v1` - Alla ändringar committade
 
 ### **Nyckelfiler:**
+
 - `services/orchestrator/src/llm/` - LLM drivers
 - `services/orchestrator/src/router/` - Intelligent routing
 - `services/orchestrator/src/planner/` - Planner execution
@@ -116,6 +127,7 @@ Om LLM integration fungerar → **Voice Pipeline Implementation**
 - `scripts/start-llm-test.sh` - LLM test script
 
 ### **Miljövariabler:**
+
 ```bash
 OLLAMA_HOST=http://ollama:11434
 LLM_MICRO=phi3.5:mini
@@ -127,12 +139,14 @@ LLM_TIMEOUT_MS=1800
 ## 🎯 **SUCCESS METRICS**
 
 ### **Tekniska:**
+
 - Routing accuracy: ≥90% korrekt route selection
 - LLM response time: Inom SLO (≤250ms, ≤1500ms, ≤3000ms)
 - Guardian integration: Deep blocked under brownout
 - Fallback success: ≥80% fallback success rate
 
 ### **Business:**
+
 - E2E test success: ≥80% pass rate
 - System stability: Inga crashes under normal load
 - Observability: Alla metrics loggade korrekt

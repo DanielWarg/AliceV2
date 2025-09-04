@@ -3,25 +3,28 @@
 ## 🚨 **Problem vi stötte på**
 
 ### **Symptom:**
+
 - Kod-ändringar tog inte effekt i containern
 - `docker compose restart` fungerade inte för kod-ändringar
 - Containern hade gammal kod trots att host-filen var uppdaterad
 - Vi gick runt i cirklar med små fel som inte löstes
 
 ### **Exempel på problem:**
+
 ```bash
 # Host hade rätt kod:
 sed -n '288,292p' services/orchestrator/src/routers/chat.py
 # Visade: if orchestrator_response and hasattr(orchestrator_response, 'metadata')
 
 # Container hade fel kod:
-docker exec alice-orchestrator sed -n '288,292p' /app/src/routers/chat.py  
+docker exec alice-orchestrator sed -n '288,292p' /app/src/routers/chat.py
 # Visade: if hasattr(orchestrator_response, 'metadata')
 ```
 
 ## 🔍 **Roten till problemet**
 
 ### **1. Docker Cache Problem**
+
 ```bash
 # Detta fungerar INTE för kod-ändringar:
 docker compose restart orchestrator
@@ -36,9 +39,11 @@ docker compose build --no-cache orchestrator
 **Orsak**: Docker använder cached layers. När vi ändrar Python-kod, kopieras den gamla koden från cache istället för den nya.
 
 ### **2. Fil-synkronisering Problem**
+
 **Orsak**: Docker COPY-kommandot kopierar inte alltid de senaste ändringarna.
 
 ### **3. Dependency Chain Problem**
+
 ```python
 # Vi ändrar ModelType enum
 class ModelType(str, Enum):
@@ -54,6 +59,7 @@ class ChatResponse(BaseResponse):
 ## 🛠️ **Lösningar som fungerar**
 
 ### **Lösning 1: Fullständig Rebuild**
+
 ```bash
 docker compose down
 docker compose build --no-cache
@@ -61,6 +67,7 @@ docker compose up -d
 ```
 
 ### **Lösning 2: Volym Mount (Development)**
+
 ```yaml
 # I docker-compose.yml
 volumes:
@@ -68,6 +75,7 @@ volumes:
 ```
 
 ### **Lösning 3: Hot Reload**
+
 ```python
 # Använd uvicorn med --reload
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
@@ -97,6 +105,7 @@ docker compose logs -f [service]
 ```
 
 ### **Snabb utveckling:**
+
 ```bash
 # Snabb utveckling (bara kärntjänster):
 make dev-fast
@@ -110,23 +119,26 @@ docker compose restart orchestrator
 
 ## 📊 **Prestanda-jämförelse**
 
-| Kommando | Tid | Tjänster | Användning |
-|----------|-----|----------|------------|
-| `make up` | ~5 min | Alla | Full stack |
-| `make dev-fast` | ~2 min | Kärntjänster | Snabb utveckling |
-| `docker compose restart` | ~15 sek | En tjänst | Konfiguration |
+| Kommando                 | Tid     | Tjänster     | Användning       |
+| ------------------------ | ------- | ------------ | ---------------- |
+| `make up`                | ~5 min  | Alla         | Full stack       |
+| `make dev-fast`          | ~2 min  | Kärntjänster | Snabb utveckling |
+| `docker compose restart` | ~15 sek | En tjänst    | Konfiguration    |
 
 ## 🔧 **Vad vi implementerade**
 
 ### **1. Snabb utvecklingsmiljö**
+
 - `scripts/dev_up_fast.sh` - Startar bara kärntjänster
 - `make dev-fast` - Snabb utveckling utan voice/memory/redis
 
 ### **2. Tydlig separation**
+
 - **Kärntjänster**: guardian, orchestrator, nlu, dev-proxy
 - **Valfria tjänster**: voice, memory, redis, dashboard, etc.
 
 ### **3. Bättre feedback**
+
 - Tydliga meddelanden om vad som startar
 - Varningar om vad som saknas
 - Snabbare health checks

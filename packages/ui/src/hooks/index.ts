@@ -1,2 +1,2 @@
-export { useGuardian } from './useGuardian'
-export { useAliceAPI } from './useAliceAPI'
+export { useGuardian } from './useGuardian';
+export { useAliceAPI } from './useAliceAPI';

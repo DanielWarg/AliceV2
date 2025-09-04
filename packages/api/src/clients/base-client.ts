@@ -4,12 +4,7 @@
  */
 
 import { z } from 'zod';
-import { 
-  APIError, 
-  APIErrorSchema, 
-  isApiError, 
-  API_VERSION 
-} from '@alice/types';
+import { APIError, APIErrorSchema, isApiError, API_VERSION } from '@alice/types';
 import { withRetry, CircuitBreaker, isRetriableHttpError, getRetryDelay } from '../utils/retry';
 
 export interface BaseClientOptions {
@@ -32,7 +27,7 @@ export class AliceAPIError extends Error {
     message: string,
     public readonly details?: any,
     public readonly traceId?: string,
-    public readonly retryAfter?: number
+    public readonly retryAfter?: number,
   ) {
     super(message);
     this.name = 'AliceAPIError';
@@ -76,7 +71,7 @@ export class BaseClient {
   protected async request<T>(
     method: 'GET' | 'POST' | 'PUT' | 'DELETE',
     path: string,
-    options: RequestOptions = {}
+    options: RequestOptions = {},
   ): Promise<Response> {
     const url = `${this.baseURL}${path}`;
     const timeout = options.timeout || this.timeout;
@@ -97,13 +92,13 @@ export class BaseClient {
         return response;
       } catch (error) {
         clearTimeout(timeoutId);
-        
+
         if (controller.signal.aborted) {
           const timeoutError = new Error(`Request timeout after ${timeout}ms`);
           timeoutError.name = 'TimeoutError';
           throw timeoutError;
         }
-        
+
         throw error;
       }
     };
@@ -116,7 +111,7 @@ export class BaseClient {
     // Apply retry logic
     return withRetry(executeRequest, {
       maxAttempts: maxRetries + 1,
-      retryCondition: (error) => {
+      retryCondition: error => {
         // Add custom retry delay for 429 responses
         if (error.status === 429) {
           const retryDelay = getRetryDelay(error.headers);
@@ -136,7 +131,7 @@ export class BaseClient {
     path: string,
     body: TRequest,
     responseSchema?: z.ZodSchema<TResponse>,
-    options: RequestOptions = {}
+    options: RequestOptions = {},
   ): Promise<TResponse> {
     const url = `${this.baseURL}${path}`;
     const timeout = options.timeout || this.timeout;
@@ -158,13 +153,13 @@ export class BaseClient {
         return response;
       } catch (error) {
         clearTimeout(timeoutId);
-        
+
         if (controller.signal.aborted) {
           const timeoutError = new Error(`Request timeout after ${timeout}ms`);
           timeoutError.name = 'TimeoutError';
           throw timeoutError;
         }
-        
+
         throw error;
       }
     };
@@ -189,7 +184,7 @@ export class BaseClient {
   protected async get<TResponse>(
     path: string,
     responseSchema?: z.ZodSchema<TResponse>,
-    options: RequestOptions = {}
+    options: RequestOptions = {},
   ): Promise<TResponse> {
     const response = await this.request<TResponse>('GET', path, options);
     return this.handleResponse<TResponse>(response, responseSchema, options);
@@ -201,7 +196,7 @@ export class BaseClient {
   private async handleResponse<T>(
     response: Response,
     schema?: z.ZodSchema<T>,
-    options: RequestOptions = {}
+    options: RequestOptions = {},
   ): Promise<T> {
     // Parse response body
     let data: any;
@@ -217,7 +212,7 @@ export class BaseClient {
       if (isApiError(data)) {
         throw AliceAPIError.fromAPIError(data);
       }
-      
+
       // Generic HTTP error
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
@@ -242,7 +237,7 @@ export class BaseClient {
    */
   public getCircuitBreakerStatus() {
     if (!this.circuitBreaker) return null;
-    
+
     return {
       state: this.circuitBreaker.getState(),
       failures: this.circuitBreaker.getFailureCount(),

@@ -35,6 +35,7 @@ docker run --rm -v "$PWD":/src aquasec/trivy fs /src --severity HIGH,CRITICAL
   - SLO gates: Tool precision ≥85%, P95 ≤900ms
 
 - [ ] **Disable gamla workflows**
+
   ```bash
   # Flytta gamla workflows till backup
   mkdir -p .github/workflows/backup
@@ -75,24 +76,27 @@ git push --tags
 ## 🚨 Common Root Causes & Fixes
 
 ### 1. **Health Check Failures**
+
 ```yaml
 # Problem: Services inte uppe när tests börjar
 # Fix: Hård wait-loop i CI
 wait_for_health() {
-  for i in {1..60}; do
-    curl -sf http://localhost:18000/health && break || sleep 5
-  done
+for i in {1..60}; do
+curl -sf http://localhost:18000/health && break || sleep 5
+done
 }
 ```
 
 ### 2. **Port Drift**
+
 ```bash
-# Problem: Lokalt :18000, CI :8002  
+# Problem: Lokalt :18000, CI :8002
 # Fix: Standardisera via env vars
 ORCHESTRATOR_PORT: 18000
 ```
 
 ### 3. **Package Lock Drift**
+
 ```bash
 # Problem: CI installerar andra dependencies än lokalt
 # Fix: Frozen lockfile
@@ -100,6 +104,7 @@ pnpm install --frozen-lockfile
 ```
 
 ### 4. **Trivy CVE Noise**
+
 ```bash
 # Problem: Debian base images får nya CVE:er
 # Fix: Slim images + pull latest
@@ -107,6 +112,7 @@ FROM python:3.11-slim-bookworm
 ```
 
 ### 5. **Flaky Tests**
+
 ```python
 # Problem: Externa nätverksanrop i tests
 # Fix: Mock dependencies
@@ -118,6 +124,7 @@ def test_with_mock(mock_client):
 ## 🔍 Debug Commands
 
 ### Lokala health checks
+
 ```bash
 # Verifiera stack
 docker compose ps
@@ -125,7 +132,7 @@ docker compose logs orchestrator --tail=50
 
 # Test endpoints
 curl -v http://localhost:18000/health
-curl -v http://localhost:8787/health  
+curl -v http://localhost:8787/health
 curl -v http://localhost:9002/healthz
 
 # Eval test
@@ -133,6 +140,7 @@ docker compose run --rm eval
 ```
 
 ### CI troubleshooting
+
 ```bash
 # Lokalt reproducera CI steps
 docker compose build --pull
@@ -146,12 +154,12 @@ done
 
 ## 📊 SLO Targets (Hårda krav)
 
-| Metric | Target | Current | Status |
-|--------|--------|---------|--------|
-| Tool Precision | ≥85% | 54.7% | 🔴 FAIL |
-| P95 Latency | ≤900ms | 9580ms | 🔴 FAIL |  
-| Success Rate | ≥95% | ~83% | 🔴 FAIL |
-| Health Check | 200 OK | ? | ❓ CHECK |
+| Metric         | Target | Current | Status   |
+| -------------- | ------ | ------- | -------- |
+| Tool Precision | ≥85%   | 54.7%   | 🔴 FAIL  |
+| P95 Latency    | ≤900ms | 9580ms  | 🔴 FAIL  |
+| Success Rate   | ≥95%   | ~83%    | 🔴 FAIL  |
+| Health Check   | 200 OK | ?       | ❓ CHECK |
 
 **Regel**: Ingen merge till main förrän ALLA targets är ✅.
 
@@ -159,7 +167,7 @@ done
 
 - ❌ Skapa nytt repo utan att fixa rotorsaker först
 - ❌ Hoppa över health-väntan i CI
-- ❌ Köra RL förrän SLO gates är gröna  
+- ❌ Köra RL förrän SLO gates är gröna
 - ❌ Merge PR med röda checks
 - ❌ Använd flaky tests som gates
 
@@ -169,7 +177,7 @@ När följande checklist är ✅, då är systemet redo för RL:
 
 - [ ] CI pipeline grönt (alla jobb pass)
 - [ ] Tool precision ≥85%
-- [ ] P95 latency ≤900ms  
+- [ ] P95 latency ≤900ms
 - [ ] Alla health endpoints 200 OK
 - [ ] Security scan 0 CRITICAL/HIGH
 - [ ] Branch protection aktiverat
@@ -189,7 +197,7 @@ Om stabiliseringen fastnar:
 När allt är ✅ grönt:
 
 ```bash
-# 1. Bootstrap RL data  
+# 1. Bootstrap RL data
 python services/rl/generate_bootstrap_data.py --episodes 1000 --out data/bootstrap.json
 
 # 2. Initial RL training
@@ -203,6 +211,7 @@ python services/rl/shadow_mode.py --action status
 ```
 
 ---
+
 **Status**: 🔄 IN PROGRESS  
 **Next Action**: Kör lokal health check och fix första röda flaggan  
 **ETA to Green**: 2-3 dagar om inget större hittas

@@ -1,7 +1,7 @@
 id: '003'
 tags:
-- EASY
-- time
+  - EASY
+  - time
 prompt_sv: Hur mycket är klockan?
 expected_intent: time.now
 expected_tools: []

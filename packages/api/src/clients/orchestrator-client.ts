@@ -31,7 +31,7 @@ export class OrchestratorClient extends BaseClient {
       ...options,
       baseURL: options.baseURL || 'http://localhost:8000',
     });
-    
+
     this.defaultSessionId = options.defaultSessionId;
   }
 
@@ -40,7 +40,7 @@ export class OrchestratorClient extends BaseClient {
    */
   async chat(
     request: Omit<ChatRequest, 'v'> | Omit<ChatRequest, 'v' | 'session_id'>,
-    options?: RequestOptions
+    options?: RequestOptions,
   ): Promise<ChatResponse> {
     // Add version and default session ID if needed
     const fullRequest: ChatRequest = {
@@ -53,12 +53,7 @@ export class OrchestratorClient extends BaseClient {
     // Validate request
     const validatedRequest = ChatRequestSchema.parse(fullRequest);
 
-    return this.post(
-      '/api/chat',
-      validatedRequest,
-      ChatResponseSchema,
-      options
-    );
+    return this.post('/api/chat', validatedRequest, ChatResponseSchema, options);
   }
 
   /**
@@ -66,7 +61,7 @@ export class OrchestratorClient extends BaseClient {
    */
   async ingest(
     request: Omit<IngestRequest, 'v'> | Omit<IngestRequest, 'v' | 'session_id'>,
-    options?: RequestOptions
+    options?: RequestOptions,
   ): Promise<IngestResponse> {
     // Add version and default session ID if needed
     const fullRequest: IngestRequest = {
@@ -79,12 +74,7 @@ export class OrchestratorClient extends BaseClient {
     // Validate request
     const validatedRequest = IngestRequestSchema.parse(fullRequest);
 
-    return this.post(
-      '/api/orchestrator/ingest',
-      validatedRequest,
-      IngestResponseSchema,
-      options
-    );
+    return this.post('/api/orchestrator/ingest', validatedRequest, IngestResponseSchema, options);
   }
 
   /**
@@ -115,7 +105,7 @@ export class OrchestratorClient extends BaseClient {
     message: string,
     sessionId?: string,
     model?: ModelType,
-    options?: RequestOptions
+    options?: RequestOptions,
   ): Promise<string> {
     const response = await this.chat(
       {
@@ -123,7 +113,7 @@ export class OrchestratorClient extends BaseClient {
         session_id: sessionId || this.defaultSessionId || 'default',
         model,
       },
-      options
+      options,
     );
 
     return response.response;
@@ -135,7 +125,7 @@ export class OrchestratorClient extends BaseClient {
   async checkRouting(
     text: string,
     sessionId?: string,
-    options?: RequestOptions
+    options?: RequestOptions,
   ): Promise<{
     accepted: boolean;
     model: ModelType;
@@ -147,7 +137,7 @@ export class OrchestratorClient extends BaseClient {
         text,
         session_id: sessionId || this.defaultSessionId || 'default',
       },
-      options
+      options,
     );
 
     return {
@@ -165,11 +155,11 @@ export class OrchestratorClient extends BaseClient {
     if ('session_id' in request && request.session_id) {
       return request.session_id;
     }
-    
+
     if (this.defaultSessionId) {
       return this.defaultSessionId;
     }
-    
+
     throw new Error('No session_id provided and no default session ID configured');
   }
 

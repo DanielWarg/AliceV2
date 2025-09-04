@@ -2,7 +2,7 @@ name: Repo Health
 
 on:
   pull_request:
-    branches: [ main, master, develop ]
+    branches: [main, master, develop]
 
 jobs:
   structure:
@@ -12,4 +12,3 @@ jobs:
       - name: Run repo health check
         run: |
           python3 scripts/repo_health.py
-

@@ -12,33 +12,32 @@ rules:
   - path: data/tests
     keep_days: 14
     compress_after_days: 7
-    patterns: ["*.json", "*.jsonl"]
+    patterns: ['*.json', '*.jsonl']
   - path: data/telemetry
     keep_days: 30
     compress_after_days: 7
-    patterns: ["**/*.jsonl"]
+    patterns: ['**/*.jsonl']
   - path: data/embeddings
     keep_days: 60
     compress_after_days: 30
-    patterns: ["*.pkl", "*.faiss"]
+    patterns: ['*.pkl', '*.faiss']
   - path: data/n8n
     keep_days: 7
     compress_after_days: 3
-    patterns: ["*.json", "*.log"]
+    patterns: ['*.json', '*.log']
   - path: data/n8n_db
     keep_days: 7
     compress_after_days: 3
-    patterns: ["*.db", "*.sqlite"]
+    patterns: ['*.db', '*.sqlite']
   - path: test-results
     keep_days: 30
     compress_after_days: 14
-    patterns: ["*.json", "*.log", "*.md"]
+    patterns: ['*.json', '*.log', '*.md']
   - path: logs
     keep_days: 14
     compress_after_days: 7
-    patterns: ["*.log"]
+    patterns: ['*.log']
   - path: services/*/data
     keep_days: 7
     compress_after_days: 3
-    patterns: ["*.jsonl", "*.log"]
-
+    patterns: ['*.jsonl', '*.log']

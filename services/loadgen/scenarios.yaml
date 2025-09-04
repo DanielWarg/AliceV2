@@ -1,41 +1,41 @@
 version: 1
-description: "Alice v2 Brownout Stress Test - Production Load Scenarios"
+description: 'Alice v2 Brownout Stress Test - Production Load Scenarios'
 
 steps:
   - id: warmup_deep
     kind: deep_bomb
-    description: "Warm up Deep-LLM with moderate load"
+    description: 'Warm up Deep-LLM with moderate load'
     seconds: 20
     params:
       concurrency: 1
-      
+
   - id: memory_push
     kind: memory_balloon
-    description: "Gradual RAM allocation to trigger soft thresholds"
+    description: 'Gradual RAM allocation to trigger soft thresholds'
     gb: 4
     hold_seconds: 60
-    
+
   - id: cpu_pulse
     kind: cpu_spin
-    description: "CPU burst to stress system resources"
+    description: 'CPU burst to stress system resources'
     threads: 4
     seconds: 30
-    
+
   - id: tools_burst
     kind: tool_storm
-    description: "Planner + tool storm (calendar/email)"
+    description: 'Planner + tool storm (calendar/email)'
     rps: 2
     seconds: 20
-    
+
   - id: vision_stress
     kind: vision_stress
-    description: "RTSP vision requests if camera available"
+    description: 'RTSP vision requests if camera available'
     seconds: 30
 
 # SLO targets for brownout testing
 brownout_slo:
-  trigger_budget_ms: 150  # Guardian must brownout within 150ms
-  recovery_budget_s: 60   # Must recover to NORMAL within 60s
+  trigger_budget_ms: 150 # Guardian must brownout within 150ms
+  recovery_budget_s: 60 # Must recover to NORMAL within 60s
   ram_soft_trigger_pct: 80
   ram_hard_trigger_pct: 92
   temp_max_c: 85
@@ -43,7 +43,7 @@ brownout_slo:
 
 # Safety limits
 safety:
-  max_duration_s: 300     # Kill test after 5 minutes
+  max_duration_s: 300 # Kill test after 5 minutes
   emergency_timeout_s: 10 # Stop if EMERGENCY state > 10s
-  temp_shutdown_c: 90     # Emergency shutdown temp
+  temp_shutdown_c: 90 # Emergency shutdown temp
   battery_shutdown_pct: 20 # Emergency shutdown battery

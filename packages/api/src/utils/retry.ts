@@ -19,7 +19,7 @@ export interface CircuitBreakerOptions {
 
 export enum CircuitBreakerState {
   CLOSED = 'closed',
-  OPEN = 'open', 
+  OPEN = 'open',
   HALF_OPEN = 'half-open',
 }
 
@@ -27,7 +27,7 @@ export class RetryError extends Error {
   constructor(
     public readonly attempts: number,
     public readonly lastError: Error,
-    message?: string
+    message?: string,
   ) {
     super(message || `Failed after ${attempts} attempts: ${lastError.message}`);
     this.name = 'RetryError';
@@ -37,7 +37,7 @@ export class RetryError extends Error {
 export class CircuitBreakerError extends Error {
   constructor(
     public readonly state: CircuitBreakerState,
-    message?: string
+    message?: string,
   ) {
     super(message || `Circuit breaker is ${state}`);
     this.name = 'CircuitBreakerError';
@@ -49,14 +49,14 @@ export class CircuitBreakerError extends Error {
  */
 export async function withRetry<T>(
   operation: () => Promise<T>,
-  options: Partial<RetryOptions> = {}
+  options: Partial<RetryOptions> = {},
 ): Promise<T> {
   const config: RetryOptions = {
     maxAttempts: 3,
     baseDelay: 100,
     maxDelay: 5000,
     backoffFactor: 2,
-    retryCondition: (error) => {
+    retryCondition: error => {
       // Retry on network errors, timeouts, and 5xx status codes
       if (error.name === 'TypeError' && error.message.includes('fetch')) {
         return true;
@@ -83,12 +83,12 @@ export async function withRetry<T>(
       return await operation();
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
-      
+
       // Don't retry if condition says no
       if (!config.retryCondition!(lastError)) {
         throw lastError;
       }
-      
+
       // Don't delay after last attempt
       if (attempt === config.maxAttempts) {
         break;
@@ -97,10 +97,10 @@ export async function withRetry<T>(
       // Calculate delay with exponential backoff + jitter
       const delay = Math.min(
         config.baseDelay * Math.pow(config.backoffFactor, attempt - 1),
-        config.maxDelay
+        config.maxDelay,
       );
       const jitter = delay * 0.1 * Math.random();
-      
+
       await new Promise(resolve => setTimeout(resolve, delay + jitter));
     }
   }
@@ -131,10 +131,10 @@ export class CircuitBreaker {
 
     try {
       const result = await operation();
-      
+
       // Success - reset failure count
       this.failures = 0;
-      
+
       if (this.state === CircuitBreakerState.HALF_OPEN) {
         this.successCount++;
         // Need multiple successes to fully close circuit
@@ -142,17 +142,17 @@ export class CircuitBreaker {
           this.state = CircuitBreakerState.CLOSED;
         }
       }
-      
+
       return result;
     } catch (error) {
       this.failures++;
       this.lastFailure = Date.now();
-      
+
       // Open circuit if failure threshold exceeded
       if (this.failures >= this.options.failureThreshold) {
         this.state = CircuitBreakerState.OPEN;
       }
-      
+
       throw error;
     }
   }
@@ -180,30 +180,30 @@ export function isRetriableHttpError(error: any): boolean {
   if (error.name === 'TypeError' && error.message.includes('fetch')) {
     return true;
   }
-  
+
   // Timeout errors
   if (error.name === 'TimeoutError') {
     return true;
   }
-  
+
   // HTTP status codes
   if (error.status) {
     // 5xx server errors are retriable
     if (error.status >= 500) {
       return true;
     }
-    
+
     // 429 rate limiting is retriable
     if (error.status === 429) {
       return true;
     }
-    
+
     // 408 request timeout is retriable
     if (error.status === 408) {
       return true;
     }
   }
-  
+
   return false;
 }
 
@@ -212,7 +212,7 @@ export function isRetriableHttpError(error: any): boolean {
  */
 export function getRetryDelay(headers?: Headers): number {
   if (!headers) return 0;
-  
+
   // Check Retry-After header
   const retryAfter = headers.get('retry-after');
   if (retryAfter) {
@@ -221,6 +221,6 @@ export function getRetryDelay(headers?: Headers): number {
       return delay * 1000; // Convert to milliseconds
     }
   }
-  
+
   return 0;
 }

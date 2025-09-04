@@ -3,11 +3,7 @@
  * Client for Alice v2 Guardian safety system monitoring
  */
 
-import {
-  GuardianHealth,
-  GuardianHealthSchema,
-  GuardianState,
-} from '@alice/types';
+import { GuardianHealth, GuardianHealthSchema, GuardianState } from '@alice/types';
 import { BaseClient, BaseClientOptions, RequestOptions } from './base-client';
 
 export interface GuardianClientOptions extends BaseClientOptions {
@@ -26,7 +22,7 @@ export class GuardianClient extends BaseClient {
       baseURL: options.baseURL || 'http://localhost:8787',
       timeout: options.timeout || 1000, // Faster timeout for Guardian
     });
-    
+
     this.pollInterval = options.pollInterval || 5000; // 5s default
   }
 
@@ -35,22 +31,18 @@ export class GuardianClient extends BaseClient {
    */
   async getHealth(useCache: boolean = true, options?: RequestOptions): Promise<GuardianHealth> {
     const now = Date.now();
-    
+
     // Return cached result if recent
-    if (useCache && this.healthCache && (now - this.lastHealthCheck) < 1000) {
+    if (useCache && this.healthCache && now - this.lastHealthCheck < 1000) {
       return this.healthCache;
     }
 
     try {
-      const health = await this.get(
-        '/guardian/health',
-        GuardianHealthSchema,
-        options
-      );
-      
+      const health = await this.get('/guardian/health', GuardianHealthSchema, options);
+
       this.healthCache = health;
       this.lastHealthCheck = now;
-      
+
       return health;
     } catch (error) {
       // Return degraded status on error
@@ -58,10 +50,10 @@ export class GuardianClient extends BaseClient {
         state: GuardianState.EMERGENCY,
         available: false,
       };
-      
+
       this.healthCache = degradedHealth;
       this.lastHealthCheck = now;
-      
+
       return degradedHealth;
     }
   }
@@ -72,9 +64,11 @@ export class GuardianClient extends BaseClient {
   async isSafe(options?: RequestOptions): Promise<boolean> {
     try {
       const health = await this.getHealth(true, options);
-      return health.available && 
-             health.state !== GuardianState.EMERGENCY && 
-             health.state !== GuardianState.LOCKDOWN;
+      return (
+        health.available &&
+        health.state !== GuardianState.EMERGENCY &&
+        health.state !== GuardianState.LOCKDOWN
+      );
     } catch {
       return false; // Fail-safe
     }
@@ -86,15 +80,15 @@ export class GuardianClient extends BaseClient {
   async getRetryDelay(options?: RequestOptions): Promise<number> {
     try {
       const health = await this.getHealth(true, options);
-      
+
       const delayMap: Record<GuardianState, number> = {
         [GuardianState.NORMAL]: 0,
-        [GuardianState.BROWNOUT]: 1000,   // 1s
-        [GuardianState.DEGRADED]: 5000,   // 5s
+        [GuardianState.BROWNOUT]: 1000, // 1s
+        [GuardianState.DEGRADED]: 5000, // 5s
         [GuardianState.EMERGENCY]: 30000, // 30s
-        [GuardianState.LOCKDOWN]: 60000,  // 60s
+        [GuardianState.LOCKDOWN]: 60000, // 60s
       };
-      
+
       return delayMap[health.state] || 5000;
     } catch {
       return 10000; // 10s default on error
@@ -149,10 +143,7 @@ export class GuardianClient extends BaseClient {
   /**
    * Wait until system is safe for requests
    */
-  async waitUntilSafe(
-    maxWaitTime: number = 30000,
-    checkInterval: number = 1000
-  ): Promise<boolean> {
+  async waitUntilSafe(maxWaitTime: number = 30000, checkInterval: number = 1000): Promise<boolean> {
     const startTime = Date.now();
 
     while (Date.now() - startTime < maxWaitTime) {
@@ -173,7 +164,7 @@ export class GuardianClient extends BaseClient {
   async getStatusMessage(options?: RequestOptions): Promise<string> {
     try {
       const health = await this.getHealth(true, options);
-      
+
       const messages: Record<GuardianState, string> = {
         [GuardianState.NORMAL]: 'System is operating normally',
         [GuardianState.BROWNOUT]: 'System is under moderate load, some features may be limited',
@@ -181,7 +172,7 @@ export class GuardianClient extends BaseClient {
         [GuardianState.EMERGENCY]: 'System is overloaded, most functions disabled',
         [GuardianState.LOCKDOWN]: 'System is in lockdown mode, all functions disabled',
       };
-      
+
       return messages[health.state] || 'System status unknown';
     } catch {
       return 'Unable to determine system status';

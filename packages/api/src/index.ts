@@ -5,16 +5,21 @@
 
 // Re-export types from @alice/types
 // Note: This creates a circular dependency, so we'll export specific types instead
-export type { 
-  ChatRequest, 
-  ChatResponse, 
-  ASREvent, 
-  ASRWebSocketMessage, 
-  VoiceSession 
+export type {
+  ChatRequest,
+  ChatResponse,
+  ASREvent,
+  ASRWebSocketMessage,
+  VoiceSession,
 } from '@alice/types';
 
 // Export clients
-export { BaseClient, BaseClientOptions, RequestOptions, AliceAPIError } from './clients/base-client';
+export {
+  BaseClient,
+  BaseClientOptions,
+  RequestOptions,
+  AliceAPIError,
+} from './clients/base-client';
 export { OrchestratorClient, OrchestratorClientOptions } from './clients/orchestrator-client';
 export { GuardianClient, GuardianClientOptions } from './clients/guardian-client';
 export { AliceAPIClient, type AliceAPIConfig } from './clients/alice-api-client';

@@ -6,7 +6,7 @@ Real brownout testing for Guardian SLO validation. Measures trigger latency (≤
 
 ```bash
 # Build and run loadgen
-docker compose build loadgen  
+docker compose build loadgen
 docker compose run --rm loadgen
 
 # View results
@@ -21,13 +21,15 @@ cat data/telemetry/loadgen_*/summary.json      # Detailed data
 ## Components
 
 **Stressors (burners/):**
+
 - `deep_bomb.py` - Heavy Swedish prompts to Deep-LLM
 - `memory_balloon.py` - Gradual RAM allocation (4GB default)
-- `cpu_spin.py` - Controlled CPU pulses  
+- `cpu_spin.py` - Controlled CPU pulses
 - `tool_storm.py` - Planner + calendar/email tools
 - `vision_stress.py` - RTSP camera requests if available
 
 **Monitoring:**
+
 - `watchers.py` - Measures Guardian brownout trigger/recovery
 - `hud.py` - Streamlit dashboard with real-time visualization
 
@@ -42,7 +44,7 @@ cat data/telemetry/loadgen_*/summary.json      # Detailed data
 
 ```bash
 API_BASE=http://orchestrator:8000
-GUARD_HEALTH=http://orchestrator:8000/guardian/health  
+GUARD_HEALTH=http://orchestrator:8000/guardian/health
 SLO_BROWNOUT_TRIGGER_MS=150    # Brownout trigger budget
 RECOVER_S=60                   # Recovery time budget
 MEMORY_BALLOON_GB=4            # RAM stress target
@@ -54,11 +56,13 @@ CAMERA_RTSP_URL=               # RTSP camera URL (optional)
 ## Expected Results
 
 ✅ **PASS Criteria:**
+
 - Brownout trigger: ≤150ms after RAM >90%
-- Recovery: ≤60s after load release  
+- Recovery: ≤60s after load release
 - Guardian: NORMAL→BROWNOUT→NORMAL cycle
 
 ❌ **FAIL Criteria:**
+
 - Trigger >150ms or no brownout
 - Recovery >60s or stuck in EMERGENCY
 - System crash or unhandled errors
@@ -66,6 +70,7 @@ CAMERA_RTSP_URL=               # RTSP camera URL (optional)
 ## HUD Dashboard
 
 Streamlit dashboard shows:
+
 - **Real-time timeline** with Guardian state transitions
 - **SLO metrics** with PASS/FAIL status against budgets
 - **Stress test breakdown** for all modules

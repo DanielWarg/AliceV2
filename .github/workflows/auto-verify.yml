@@ -37,15 +37,14 @@ jobs:
         uses: peter-evans/create-pull-request@v6
         with:
           branch: chore/docs-sync
-          title: "chore(docs): sync status efter auto-verify"
+          title: 'chore(docs): sync status efter auto-verify'
           body: |
             Auto-genererad uppdatering av styrdokument efter lyckad auto-verify.
             - Uppdaterade rader i README/ROADMAP/AGENTS
             - Källa: data/tests/summary.json
-          commit-message: "chore(docs): update status via auto-verify"
+          commit-message: 'chore(docs): update status via auto-verify'
           delete-branch: true
           add-paths: |
             README.md
             ROADMAP.md
             AGENTS.md
-

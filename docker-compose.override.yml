@@ -33,4 +33,4 @@ services:
       guardian: { condition: service_started }
     volumes:
       - ./data/telemetry:/data/telemetry
-    restart: "no"
+    restart: 'no'

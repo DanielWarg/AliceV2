@@ -1,11 +1,11 @@
 id: 039
 tags:
-- MEDIUM
-- calendar
+  - MEDIUM
+  - calendar
 prompt_sv: Schemalägg kodgranskning
 expected_intent: calendar.create_draft
 expected_tools:
-- calendar.create_draft
+  - calendar.create_draft
 max_latency_ms: 500
 schema_ok_first: false
 fallback_allowed: false

@@ -2,7 +2,7 @@ name: Docs Language Check
 
 on:
   pull_request:
-    branches: [ main, master, develop ]
+    branches: [main, master, develop]
 
 jobs:
   check-english:
@@ -12,4 +12,3 @@ jobs:
       - name: Run docs language check (no Swedish)
         run: |
           python3 scripts/docs_language_check.py
-

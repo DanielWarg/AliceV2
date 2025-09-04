@@ -8,7 +8,7 @@
       "language": "swedish",
       "slo_targets": {
         "response_time_p95_ms": 2000,
-        "success_rate_minimum": 0.80,
+        "success_rate_minimum": 0.8,
         "conversation_completion_rate": 0.75,
         "guardian_compliance": 1.0
       }
@@ -42,7 +42,7 @@
         "id": "time_current",
         "name": "Current Time Query",
         "category": "time",
-        "priority": "HIGH", 
+        "priority": "HIGH",
         "expected_intent": "TIME.CURRENT",
         "expected_route": "micro",
         "conversation": [
@@ -56,7 +56,7 @@
         ],
         "success_criteria": {
           "response_time_ms": 300,
-          "intent_confidence": 0.90,
+          "intent_confidence": 0.9,
           "conversation_completion": true
         }
       },
@@ -79,8 +79,8 @@
         ],
         "success_criteria": {
           "response_time_ms": 1500,
-          "intent_confidence": 0.80,
-          "tool_success_rate": 0.90,
+          "intent_confidence": 0.8,
+          "tool_success_rate": 0.9,
           "conversation_completion": true
         }
       },
@@ -127,7 +127,7 @@
         ],
         "success_criteria": {
           "response_time_ms": 1200,
-          "intent_confidence": 0.80,
+          "intent_confidence": 0.8,
           "tool_success_rate": 0.75,
           "conversation_completion": true
         }
@@ -190,7 +190,7 @@
         "success_criteria": {
           "response_time_ms": 1000,
           "intent_confidence": 0.85,
-          "tool_success_rate": 0.80,
+          "tool_success_rate": 0.8,
           "conversation_completion": true
         }
       },
@@ -214,7 +214,7 @@
         "success_criteria": {
           "response_time_ms": 3000,
           "intent_confidence": 0.75,
-          "tool_success_rate": 0.70,
+          "tool_success_rate": 0.7,
           "conversation_completion": true
         }
       },
@@ -237,7 +237,7 @@
         ],
         "success_criteria": {
           "response_time_ms": 1000,
-          "intent_confidence": 0.60,
+          "intent_confidence": 0.6,
           "conversation_completion": true
         }
       },
@@ -260,8 +260,8 @@
         ],
         "success_criteria": {
           "response_time_ms": 2500,
-          "intent_confidence": 0.70,
-          "tool_success_rate": 0.60,
+          "intent_confidence": 0.7,
+          "tool_success_rate": 0.6,
           "conversation_completion": true
         }
       },
@@ -314,7 +314,7 @@
         ],
         "success_criteria": {
           "response_time_ms": 800,
-          "intent_confidence": 0.70,
+          "intent_confidence": 0.7,
           "conversation_completion": true
         }
       },
@@ -344,7 +344,7 @@
         ],
         "success_criteria": {
           "response_time_ms": 1800,
-          "intent_confidence": 0.80,
+          "intent_confidence": 0.8,
           "tool_success_rate": 0.85,
           "conversation_completion": true
         }
@@ -376,7 +376,7 @@
         "success_criteria": {
           "response_time_ms": 1000,
           "intent_confidence": 0.75,
-          "tool_success_rate": 0.80,
+          "tool_success_rate": 0.8,
           "conversation_completion": true
         }
       },
@@ -400,7 +400,7 @@
         ],
         "success_criteria": {
           "response_time_ms": 1000,
-          "intent_confidence": 0.70,
+          "intent_confidence": 0.7,
           "mood_adaptation": true,
           "conversation_completion": true
         }
@@ -424,8 +424,8 @@
         ],
         "success_criteria": {
           "response_time_ms": 800,
-          "intent_confidence": 0.80,
-          "tool_success_rate": 0.90,
+          "intent_confidence": 0.8,
+          "tool_success_rate": 0.9,
           "conversation_completion": true
         }
       },
@@ -448,7 +448,7 @@
         ],
         "success_criteria": {
           "response_time_ms": 1000,
-          "intent_confidence": 0.90,
+          "intent_confidence": 0.9,
           "tool_success_rate": 1.0,
           "conversation_completion": true
         }
@@ -474,7 +474,7 @@
         "success_criteria": {
           "response_time_ms": 1500,
           "intent_confidence": 0.85,
-          "concurrent_success_rate": 0.80,
+          "concurrent_success_rate": 0.8,
           "conversation_completion": true
         }
       },
@@ -499,7 +499,7 @@
         ],
         "success_criteria": {
           "response_time_ms": 2000,
-          "intent_confidence": 0.70,
+          "intent_confidence": 0.7,
           "graceful_degradation": true,
           "conversation_completion": true
         }
@@ -521,7 +521,7 @@
             "max_response_time_ms": 800
           },
           {
-            "turn": 2,  
+            "turn": 2,
             "user": "Vilken är den bästa tiden att åka?",
             "expected_response_type": "travel_advice",
             "expected_tools": ["weather.forecast"],
@@ -551,8 +551,8 @@
         ],
         "success_criteria": {
           "response_time_ms": 2000,
-          "intent_confidence": 0.70,
-          "context_retention": 0.80,
+          "intent_confidence": 0.7,
+          "context_retention": 0.8,
           "conversation_completion": true
         }
       }
@@ -570,8 +570,8 @@
     "success_thresholds": {
       "overall_success_rate": 0.75,
       "critical_scenarios_success_rate": 0.85,
-      "high_priority_success_rate": 0.80,
-      "response_time_p95_compliance": 0.90,
+      "high_priority_success_rate": 0.8,
+      "response_time_p95_compliance": 0.9,
       "guardian_compliance": 1.0
     }
   }

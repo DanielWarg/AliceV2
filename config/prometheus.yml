@@ -3,7 +3,7 @@ global:
   evaluation_interval: 15s
 
 rule_files:
-  - "alerts.yml"
+  - 'alerts.yml'
 
 scrape_configs:
   # Alice v2 Guardian Service
@@ -17,7 +17,7 @@ scrape_configs:
     scrape_interval: 10s
     scrape_timeout: 5s
 
-  # Alice v2 Orchestrator Service  
+  # Alice v2 Orchestrator Service
   - job_name: 'alice_orchestrator'
     static_configs:
       - targets: ['orchestrator:8000']

@@ -6,6 +6,7 @@ Lägg nedladdade modeller här. Rekommenderat:
 - XNLI (xlm-roberta-xnli) ONNX + tokenizer
 
 Hälsokontroller:
+
 - NLU läser `E5_ONNX_PATH` och `E5_TOKENIZER_JSON`
 - XNLI läses via `XNLI_ONNX_PATH` och `XNLI_TOKENIZER_DIR`
 

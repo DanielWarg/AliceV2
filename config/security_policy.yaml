@@ -11,10 +11,8 @@ risk:
 tool_firewall:
   # Exempel: blockera nätverksverktyg vid STRICT/LOCKDOWN
   deny_on_modes:
-    STRICT: ["vision.stream", "web.fetch"]
-    LOCKDOWN: ["*"]
+    STRICT: ['vision.stream', 'web.fetch']
+    LOCKDOWN: ['*']
 
 messages:
-  require_confirm_sv: "Säkerhet: Åtgärden kräver bekräftelse i UI (intent‑kort)."
-
-
+  require_confirm_sv: 'Säkerhet: Åtgärden kräver bekräftelse i UI (intent‑kort).'

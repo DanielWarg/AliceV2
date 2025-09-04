@@ -5,6 +5,7 @@ Reinforcement Learning system för Alice v2 med contextual bandits, intelligent 
 ## 🚀 Quick Start
 
 ### Automatisk deployment (rekommenderat)
+
 ```bash
 # Från alice-v2 root directory
 cd services/rl
@@ -12,6 +13,7 @@ cd services/rl
 ```
 
 ### Manuell körning
+
 ```bash
 # Full pipeline
 python automate_rl_pipeline.py
@@ -26,6 +28,7 @@ python automate_rl_pipeline.py --step eval
 ```
 
 ### Monitoring
+
 ```bash
 # Kontinuerlig monitoring
 python monitor_rl.py
@@ -57,25 +60,28 @@ python monitor_rl.py --interval 60
    - Confidence intervals och variance estimering
 
 4. **Deployment Pipeline**
-   - `deploy/export_policies.py` - Packa policies för deployment  
+   - `deploy/export_policies.py` - Packa policies för deployment
    - `deploy/promote.py` - Canary → Production deployment
    - Hot-reloading utan service restart
 
 ## 🧠 RL Models
 
 ### LinUCB Routing
+
 - **Input**: Text features, context, user metadata
 - **Arms**: micro, planner, deep
 - **Exploration**: Upper Confidence Bound
 - **Learning**: Ridge regression per arm
 
 ### Thompson Sampling Tools
+
 - **Input**: Intent, available tools
 - **Priors**: Beta(α=1, β=1) per intent-tool pair
 - **Exploration**: Beta sampling
 - **Learning**: Online Bayesian updates
 
 ### Cache Bandit
+
 - **Input**: Query features, cache tiers
 - **Strategy**: ε-greedy med decay
 - **Tiers**: L1 (exact), L2 (semantic), L3 (negative)
@@ -83,13 +89,15 @@ python monitor_rl.py --interval 60
 ## 📈 Performance Metrics
 
 ### Reward Function
+
 ```python
 reward = 2.0 * success + 1.0 * tool_ok - 0.001 * latency_ms - 0.5 * cost_usd + 0.4 * cache_hit - 0.7 * guardian_flag
 ```
 
 ### Key Metrics
+
 - **Success Rate**: Task completion rate
-- **Tool Precision**: Correct tool selection rate  
+- **Tool Precision**: Correct tool selection rate
 - **Latency**: P95 response time
 - **Cost**: Average cost per request
 - **Cache Hit Rate**: Cache effectiveness
@@ -97,6 +105,7 @@ reward = 2.0 * success + 1.0 * tool_ok - 0.001 * latency_ms - 0.5 * cost_usd + 0
 ## 🔧 Configuration
 
 ### Default Config (`config.json`)
+
 ```json
 {
   "dataset": {
@@ -104,8 +113,8 @@ reward = 2.0 * success + 1.0 * tool_ok - 0.001 * latency_ms - 0.5 * cost_usd + 0
     "lookback_days": 30
   },
   "training": {
-    "routing": {"alpha": 0.5, "feature_dim": 64},
-    "tools": {"alpha_prior": 1.0, "beta_prior": 1.0}
+    "routing": { "alpha": 0.5, "feature_dim": 64 },
+    "tools": { "alpha_prior": 1.0, "beta_prior": 1.0 }
   },
   "evaluation": {
     "min_policy_value": 0.4,
@@ -141,7 +150,7 @@ services/rl/
 │   ├── export_policies.py    # Policy packaging
 │   └── promote.py           # Canary/Prod deployment
 ├── data/                     # Generated datasets
-├── models/                   # Trained policies  
+├── models/                   # Trained policies
 ├── eval_runs/               # Evaluation results
 └── deploy/                  # Deployment packages
 ```
@@ -159,18 +168,21 @@ services/rl/
 ## 🚨 Safety Features
 
 ### Fallback Mechanisms
+
 - Rule-based routing fallback
 - Default tool selection
 - Cache-miss handling
 - Circuit breaker pattern
 
 ### Quality Gates
+
 - Minimum episode count
 - Policy value thresholds
 - Variance limits
 - Stability monitoring
 
 ### Rollback
+
 ```bash
 # Auto-rollback vid instabilitet
 python deploy/promote.py --rollback --stage canary
@@ -182,12 +194,14 @@ python deploy/promote.py --rollback --stage prod
 ## 📊 Monitoring & Alerts
 
 ### Real-time Monitoring
+
 - Success rate drops
-- Latency increases  
+- Latency increases
 - Policy performance degradation
 - System health checks
 
 ### Dashboards
+
 ```bash
 # Live dashboard
 python monitor_rl.py
@@ -199,18 +213,21 @@ curl http://localhost:8000/rl-status
 ## 🧪 Testing
 
 ### Unit Tests
+
 ```bash
 cd services/rl
 python -m pytest tests/ -v
 ```
 
 ### Integration Tests
+
 ```bash
 # Test med riktig telemetri data
 python automate_rl_pipeline.py --dry-run
 ```
 
 ### A/B Testing
+
 Canary deployment ger naturlig A/B test mellan gamla och nya policies.
 
 ## 🐛 Troubleshooting
@@ -218,6 +235,7 @@ Canary deployment ger naturlig A/B test mellan gamla och nya policies.
 ### Common Issues
 
 **No telemetry data**
+
 ```bash
 # Check telemetry file
 ls -la services/orchestrator/telemetry.jsonl
@@ -227,6 +245,7 @@ ls -la services/orchestrator/telemetry.jsonl
 ```
 
 **Policy loading failed**
+
 ```bash
 # Check policy files
 ls -la services/orchestrator/src/policies/live/
@@ -236,6 +255,7 @@ python deploy/export_policies.py --validate-only --routing models/routing_policy
 ```
 
 **Performance degradation**
+
 ```bash
 # Monitor performance
 python monitor_rl.py --once
@@ -245,6 +265,7 @@ python deploy/promote.py --rollback --stage prod
 ```
 
 ### Debug Commands
+
 ```bash
 # Verbose logging
 python automate_rl_pipeline.py --step eval 2>&1 | tee debug.log
@@ -256,12 +277,14 @@ docker-compose logs orchestrator | tail -50
 ## 🎯 Performance Targets
 
 ### Current State (Step 8.5)
+
 - Tool Precision: 54.7% → 85%+
 - P95 Latency: 9580ms → <900ms
 - Routing Precision: 40% → 100%
 - Cache Hit Rate: 10% → 60%+
 
 ### RL Improvements
+
 - **Intelligent Routing**: Context-aware micro/planner/deep selection
 - **Smart Tool Selection**: Intent-based tool matching
 - **Adaptive Caching**: Multi-tier cache optimization
@@ -281,4 +304,5 @@ docker-compose logs orchestrator | tail -50
 - [IPS Evaluation](https://arxiv.org/abs/1112.1984) - Offline policy evaluation
 
 ---
+
 **Alice RL System** - Making Alice helt jävla grym! 🚀

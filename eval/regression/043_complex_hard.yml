@@ -1,12 +1,12 @@
 id: '043'
 tags:
-- HARD
-- complex
+  - HARD
+  - complex
 prompt_sv: Skapa en rapport baserad på mina senaste projektmail, analysera trender
   och rekommendera förbättringar för nästa sprint
 expected_intent: memory.query
 expected_tools:
-- memory.query
+  - memory.query
 max_latency_ms: 1500
 schema_ok_first: false
 fallback_allowed: true

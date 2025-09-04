@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [main]
 
-# Förhindra parallella builds som konkurrerar  
+# Förhindra parallella builds som konkurrerar
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -16,13 +16,13 @@ env:
   NODE_VERSION: '20'
   PYTHON_VERSION: '3.11'
   PNPM_VERSION: '8'
-  
+
   # Standardiserade portar (ingen port-drift)
   ORCHESTRATOR_PORT: 18000
   GUARDIAN_PORT: 8787
   NLU_PORT: 9002
   REDIS_PORT: 6379
-  
+
   # SLO Targets - HÅRDA KRAV
   TARGET_TOOL_PRECISION: 85
   TARGET_P95_LATENCY_MS: 900
@@ -31,19 +31,19 @@ env:
 jobs:
   # STEG 1: Bygg images
   build:
-    name: "🔨 Build Images"
+    name: '🔨 Build Images'
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
-      
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      
+
       - name: Build images (essential only)
         run: |
           echo "🔨 Building Alice v2 core images..."
@@ -55,26 +55,26 @@ jobs:
 
   # STEG 2: Starta stack + hård health-väntan
   stack:
-    name: "🚀 Start Stack"
+    name: '🚀 Start Stack'
     runs-on: ubuntu-latest
     needs: build
     timeout-minutes: 10
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Create directories
         run: |
           mkdir -p data/{telemetry,tests,embeddings}
           chmod 777 data/{telemetry,tests}
-      
+
       - name: Set safe CI env
         run: |
           echo "CLOUD_OK=false" >> $GITHUB_ENV
           echo "OLLAMA_DISABLE=true" >> $GITHUB_ENV
           echo "COMPOSE_PROJECT_NAME=alicev2_ci_${{ github.run_id }}" >> $GITHUB_ENV
-      
+
       - name: Start stack (CI with --wait)
         run: |
           echo "🚀 Starting core services with --wait for health..."
@@ -87,7 +87,7 @@ jobs:
           }
           echo "✅ All services healthy via --wait"
           docker compose ps
-      
+
       - name: Service status
         if: always()
         run: |
@@ -98,37 +98,37 @@ jobs:
 
   # STEG 3: Code quality
   quality:
-    name: "🧹 Code Quality"
+    name: '🧹 Code Quality'
     runs-on: ubuntu-latest
     needs: stack
     timeout-minutes: 8
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
-      
+
       - name: Setup Node.js
         if: hashFiles('package.json') != ''
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
-      
+
       - name: Setup pnpm
         if: hashFiles('package.json') != ''
         uses: pnpm/action-setup@v3
         with:
           version: ${{ env.PNPM_VERSION }}
-      
+
       - name: Install Python tools
         run: pip install black flake8 pytest
-      
+
       - name: Python format check
         run: |
           echo "🐍 Checking Python formatting..."
@@ -137,7 +137,7 @@ jobs:
             echo "Fix with: black --line-length 100 services/"
             exit 1
           }
-      
+
       - name: Python lint
         run: |
           echo "🧹 Python linting..."
@@ -145,30 +145,30 @@ jobs:
             --max-line-length=100 \
             --extend-ignore=E203,W503 \
             --exclude=__pycache__,.venv
-      
+
       - name: TypeScript check
         if: hashFiles('package.json') != ''
         run: |
           echo "📦 Installing JS dependencies..."
           pnpm install --frozen-lockfile
-          
+
           echo "🔍 TypeScript check..."
           pnpm run type-check --if-present
-          
+
           echo "🧹 ESLint check..."
           pnpm run lint --if-present -- --max-warnings=0
 
   # STEG 4: Security (ZERO tolerance för CRITICAL/HIGH)
   security:
-    name: "🔒 Security Scan"
+    name: '🔒 Security Scan'
     runs-on: ubuntu-latest
     needs: build
     timeout-minutes: 10
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Trivy filesystem scan
         run: |
           echo "🔒 Scanning filesystem for vulnerabilities..."
@@ -177,7 +177,7 @@ jobs:
             --format table \
             --exit-code 0 || echo "⚠️ Found vulnerabilities but continuing for stabilization"
           echo "✅ No HIGH/CRITICAL filesystem vulnerabilities"
-      
+
       - name: Check if images exist
         run: |
           echo "🔍 Checking if images were built..."
@@ -195,28 +195,28 @@ jobs:
 
   # STEG 5: Unit tests
   tests:
-    name: "🧪 Tests"
+    name: '🧪 Tests'
     runs-on: ubuntu-latest
     needs: stack
     timeout-minutes: 10
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
-      
+
       - name: Install dependencies
         run: |
           pip install pytest pytest-asyncio httpx structlog
           if [ -f "services/orchestrator/requirements.txt" ]; then
             pip install -r services/orchestrator/requirements.txt
           fi
-      
+
       - name: Run tests
         run: |
           echo "🧪 Running unit tests..."
@@ -230,30 +230,30 @@ jobs:
 
   # STEG 6: EVAL HARNESS - Kritisk gate
   eval:
-    name: "📊 Eval Harness (SLO Gate)"
+    name: '📊 Eval Harness (SLO Gate)'
     runs-on: ubuntu-latest
     needs: [quality, security, tests]
     timeout-minutes: 25
-    
+
     outputs:
       tool_precision: ${{ steps.extract.outputs.tool_precision }}
       p95_latency: ${{ steps.extract.outputs.p95_latency }}
       gate_passed: ${{ steps.gate.outputs.passed }}
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-          
+
       - name: Create directories
         run: |
           mkdir -p data/{telemetry,tests,embeddings}
           chmod 777 data/{telemetry,tests}
-      
+
       - name: Start services for eval
         run: |
           echo "🚀 Starting services for eval..."
@@ -261,12 +261,12 @@ jobs:
           echo "OPENAI_API_KEY=fake-key-for-eval" > .env
           echo "REDIS_HOST=localhost" >> .env
           echo "REDIS_PORT=6379" >> .env
-          
+
           docker compose up -d guardian orchestrator alice-cache
-          
+
           echo "⏳ Waiting for services..."
           sleep 30
-      
+
       - name: Pre-eval health check
         run: |
           echo "🏥 Pre-eval health verification..."
@@ -274,29 +274,29 @@ jobs:
             echo "❌ Orchestrator unhealthy before eval"
             exit 1
           }
-      
+
       - name: Run eval harness
         run: |
           echo "📊 Running eval harness..."
           mkdir -p data/tests eval_runs
-          
+
           # Install eval dependencies
           pip install aiohttp pyyaml
-          
+
           # Run evaluation harness directly (like eval.yml)
           python eval/harness.py \
             --base-url http://localhost:${ORCHESTRATOR_PORT} \
             --regression-dir eval/regression \
             --output data/tests/ci_eval_$(date +%s).json
-      
+
       - name: Extract metrics
         id: extract
         run: |
           echo "📈 Extracting eval results..."
-          
+
           # Hitta results fil
           result_file=$(find data/tests -name "*.json" -type f | head -1)
-          
+
           if [ -f "$result_file" ]; then
             echo "📄 Found: $result_file"
             cat "$result_file"
@@ -311,63 +311,63 @@ jobs:
             p95_latency=1000
             success_rate=0.8
           fi
-          
+
           # Konvertera till rätt format
           if (( $(echo "$tool_precision < 1" | bc -l) )); then
             tool_precision=$(echo "$tool_precision * 100" | bc -l)
           fi
-          
+
           echo "📊 Results:"
           echo "  Tool Precision: ${tool_precision}%"
           echo "  P95 Latency: ${p95_latency}ms"
           echo "  Success Rate: ${success_rate}%"
-          
+
           # Outputs
           echo "tool_precision=$tool_precision" >> $GITHUB_OUTPUT
           echo "p95_latency=$p95_latency" >> $GITHUB_OUTPUT
           echo "success_rate=$success_rate" >> $GITHUB_OUTPUT
-      
+
       - name: SLO Gate
         id: gate
         run: |
           echo "🚪 SLO Gate Check..."
-          
+
           tool_precision=${{ steps.extract.outputs.tool_precision }}
           p95_latency=${{ steps.extract.outputs.p95_latency }}
           success_rate=${{ steps.extract.outputs.success_rate }}
-          
+
           echo "🎯 Targets vs Actual:"
           echo "  Tool Precision: ≥${TARGET_TOOL_PRECISION}% (${tool_precision}%)"
           echo "  P95 Latency: ≤${TARGET_P95_LATENCY_MS}ms (${p95_latency}ms)"  
           echo "  Success Rate: ≥${TARGET_SUCCESS_RATE}% (${success_rate}%)"
-          
+
           # Gate logic
           passed=true
-          
+
           if (( $(echo "$tool_precision < $TARGET_TOOL_PRECISION" | bc -l) )); then
             echo "❌ GATE FAILED: Tool precision too low"
             passed=false
           fi
-          
+
           if (( $(echo "$p95_latency > $TARGET_P95_LATENCY_MS" | bc -l) )); then
             echo "❌ GATE FAILED: P95 latency too high"  
             passed=false
           fi
-          
+
           if (( $(echo "$success_rate < $TARGET_SUCCESS_RATE" | bc -l) )); then
             echo "❌ GATE FAILED: Success rate too low"
             passed=false
           fi
-          
+
           if [ "$passed" = "true" ]; then
             echo "✅ SLO GATE PASSED"
           else
             echo "🚨 SLO GATE FAILED - DO NOT MERGE"
             exit 1
           fi
-          
+
           echo "passed=$passed" >> $GITHUB_OUTPUT
-      
+
       - name: Upload artifacts
         if: always()
         uses: actions/upload-artifact@v4
@@ -380,12 +380,12 @@ jobs:
 
   # STEG 7: Final health check
   final:
-    name: "🏁 Final Check"
+    name: '🏁 Final Check'
     runs-on: ubuntu-latest
     needs: eval
     if: needs.eval.outputs.gate_passed == 'true'
     timeout-minutes: 3
-    
+
     steps:
       - name: Final success summary
         run: |
@@ -396,11 +396,11 @@ jobs:
 
   # SUCCESS: Sammanfattning
   success:
-    name: "🎉 Success"
+    name: '🎉 Success'
     runs-on: ubuntu-latest
     needs: [build, stack, quality, security, tests, eval, final]
     if: success()
-    
+
     steps:
       - name: Success summary
         run: |
@@ -418,11 +418,11 @@ jobs:
 
   # CLEANUP: Alltid körs
   cleanup:
-    name: "🧹 Cleanup"  
+    name: '🧹 Cleanup'
     runs-on: ubuntu-latest
     if: always()
     needs: [build, stack, quality, security, tests, eval, final, success]
-    
+
     steps:
       - name: Docker cleanup
         run: |

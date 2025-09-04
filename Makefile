@@ -1,4 +1,4 @@
-.PHONY: help down up status health test-unit test-all security-scan format lint clean stabilize fix-system rl-bootstrap rl-train rl-shadow
+.PHONY: help down up status health test-unit test-all security-scan format lint clean stabilize fix-system rl-bootstrap rl-train rl-shadow fmt type code-hygiene
 
 # Default target
 help: ## Show this help message
@@ -293,6 +293,27 @@ lint: ## Lint all code
 
 quality: format lint security-scan ## Format + lint + security
 	@echo "✅ All quality checks complete"
+
+# --- Code Hygiene (New Standards) -------------------------------------------
+
+fmt: ## Format all code (Python + JS/TS)
+	@echo "🐍 Formatting Python code..."
+	@ruff format . || true
+	@black . || true
+	@echo "📦 Formatting TypeScript/JavaScript..."
+	@npx prettier --write . || echo "⚠️ Prettier not installed, skipping JS/TS"
+	@echo "✅ All code formatted"
+
+type: ## Type checking
+	@echo "🔍 Type checking Python..."
+	@mypy services || echo "⚠️ mypy issues found"
+	@echo "🔍 Type checking TypeScript..."
+	@npx tsc --noEmit || echo "⚠️ TypeScript issues found"
+	@echo "✅ Type checking complete"
+
+code-hygiene: fmt lint type ## Complete code hygiene check
+	@echo "🧹 Running complete code hygiene check..."
+	@echo "✅ Code hygiene check complete"
 
 # Stabilization
 stabilize: ## Full stabilization check

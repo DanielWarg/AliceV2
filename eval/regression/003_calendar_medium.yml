@@ -1,8 +1,8 @@
 id: 003
 tags: [MEDIUM, calendar]
-prompt_sv: "Boka ett möte med Anna imorgon kl 14:00"
+prompt_sv: 'Boka ett möte med Anna imorgon kl 14:00'
 expected_intent: calendar.create_draft
-expected_tools: ["calendar.create_draft"]
+expected_tools: ['calendar.create_draft']
 max_latency_ms: 500
 schema_ok_first: true
 fallback_allowed: true

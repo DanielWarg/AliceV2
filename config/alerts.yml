@@ -9,8 +9,8 @@ groups:
           severity: critical
           service: guardian
         annotations:
-          summary: "Guardian service is unreachable"
-          description: "Guardian service has been down for more than 5 minutes. This affects system safety monitoring."
+          summary: 'Guardian service is unreachable'
+          description: 'Guardian service has been down for more than 5 minutes. This affects system safety monitoring.'
 
       - alert: GuardianHighRAM
         expr: alice_guardian_ram_pct > 90
@@ -19,8 +19,8 @@ groups:
           severity: warning
           service: guardian
         annotations:
-          summary: "Guardian RAM usage is high"
-          description: "Guardian service RAM usage is {{ $value }}%"
+          summary: 'Guardian RAM usage is high'
+          description: 'Guardian service RAM usage is {{ $value }}%'
 
       # Orchestrator Service Alerts
       - alert: OrchestratorHighLatency
@@ -30,8 +30,8 @@ groups:
           severity: warning
           service: orchestrator
         annotations:
-          summary: "Orchestrator P95 latency is high"
-          description: "Orchestrator P95 latency is {{ $value }}ms"
+          summary: 'Orchestrator P95 latency is high'
+          description: 'Orchestrator P95 latency is {{ $value }}ms'
 
       - alert: OrchestratorHighErrorRate
         expr: rate(alice_orchestrator_errors_total[5m]) > 0.05
@@ -40,8 +40,8 @@ groups:
           severity: warning
           service: orchestrator
         annotations:
-          summary: "Orchestrator error rate is high"
-          description: "Orchestrator error rate is {{ $value | humanizePercentage }}"
+          summary: 'Orchestrator error rate is high'
+          description: 'Orchestrator error rate is {{ $value | humanizePercentage }}'
 
       # System Health Alerts
       - alert: SystemDegraded
@@ -51,8 +51,8 @@ groups:
           severity: warning
           service: system
         annotations:
-          summary: "System health score is degraded"
-          description: "System health score is {{ $value }}/100"
+          summary: 'System health score is degraded'
+          description: 'System health score is {{ $value }}/100'
 
       - alert: SystemCritical
         expr: alice_system_health_score < 50
@@ -61,5 +61,5 @@ groups:
           severity: critical
           service: system
         annotations:
-          summary: "System health score is critical"
-          description: "System health score is {{ $value }}/100 - immediate attention required"
+          summary: 'System health score is critical'
+          description: 'System health score is {{ $value }}/100 - immediate attention required'

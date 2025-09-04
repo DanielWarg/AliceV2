@@ -1,4 +1,3 @@
-
 services:
   guardian:
     build:
@@ -18,9 +17,9 @@ services:
       - GUARD_TEMP_C_HARD=85
       - GUARD_BATTERY_PCT_HARD=25
     ports:
-      - "8787:8787"
+      - '8787:8787'
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8787/health"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:8787/health']
       interval: 10s
       timeout: 5s
       retries: 20
@@ -84,11 +83,11 @@ services:
       - CACHE_ENABLED=1
       - REDIS_URL=redis://alice-cache:6379
     ports:
-      - "18000:8000"
+      - '18000:8000'
     volumes:
       - ./data/telemetry:/data/telemetry
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:8000/health']
       interval: 10s
       timeout: 5s
       retries: 20
@@ -99,12 +98,12 @@ services:
     container_name: alice-cache
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - '6379:6379'
     volumes:
       - cache_data:/data
     command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 10s
       timeout: 5s
       retries: 20
@@ -130,7 +129,7 @@ services:
       - DEEP_CONCURRENCY=2
     volumes:
       - ./data/telemetry:/data/telemetry
-    restart: "no"
+    restart: 'no'
     profiles:
       - loadtest
 
@@ -148,7 +147,7 @@ services:
       - API_BASE=http://orchestrator:8000
     volumes:
       - ./data/tests:/data/tests
-    restart: "no"
+    restart: 'no'
     profiles:
       - eval
 
@@ -181,7 +180,7 @@ services:
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 10s
       timeout: 5s
       retries: 20
@@ -202,7 +201,7 @@ services:
     profiles:
       - dashboard
     ports:
-      - "8501:8501"
+      - '8501:8501'
 
   dev-proxy:
     image: caddy:2
@@ -213,7 +212,7 @@ services:
       guardian:
         condition: service_healthy
     ports:
-      - "18000:80"
+      - '18000:80'
     volumes:
       - ./ops/Caddyfile:/etc/caddy/Caddyfile:ro
     restart: unless-stopped
@@ -259,7 +258,7 @@ services:
       - ./data/n8n:/home/node/.n8n
     restart: unless-stopped
     ports:
-      - "5678:5678"
+      - '5678:5678'
 
   # ollama runs locally on host, not in docker
   # ollama:
@@ -297,9 +296,9 @@ services:
       - E5_TOKENIZER_JSON=/models/e5-tokenizer.json
       # XNLI avstängt tills ONNX finns
     ports:
-      - "9002:9002"
+      - '9002:9002'
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:9002/healthz"]
+      test: ['CMD', 'curl', '-fsS', 'http://localhost:9002/healthz']
       interval: 10s
       timeout: 2s
       retries: 12

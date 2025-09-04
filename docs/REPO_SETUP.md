@@ -3,6 +3,7 @@
 ## 🚀 Quick Setup Instructions
 
 ### 1. Create GitHub Repository
+
 Go to [GitHub](https://github.com) and:
 
 1. Click "New repository"
@@ -29,6 +30,7 @@ git push -u origin main
 After creating the repo, go to Settings and configure:
 
 #### General Settings
+
 - ✅ Restrict pushes that create files larger than 100 MB
 - ✅ Allow merge commits
 - ✅ Allow squash merging
@@ -36,11 +38,13 @@ After creating the repo, go to Settings and configure:
 - ✅ Automatically delete head branches
 
 #### Branch Protection (for main branch)
+
 - ✅ Require a pull request before merging
 - ✅ Require status checks to pass before merging
 - ✅ Restrict pushes that create files larger than 100 MB
 
 #### Security & Analysis
+
 - ✅ Dependency graph
 - ✅ Dependabot alerts
 - ✅ Dependabot security updates
@@ -101,6 +105,7 @@ You know the setup succeeded when:
 ## 🔧 Additional Configuration
 
 ### Environment Variables
+
 Set up required environment variables:
 
 ```bash
@@ -118,6 +123,7 @@ export CLOUD_OK=false
 ```
 
 ### Pre-commit Hooks
+
 Install pre-commit hooks for code quality:
 
 ```bash
@@ -133,15 +139,18 @@ pnpm dlx husky-init && pnpm i
 ### Common Issues
 
 **"Permission denied" when pushing:**
+
 - Check that you have write access to the repository
 - Verify your GitHub credentials are correct
 
 **"Branch protection rules" blocking push:**
+
 - Create a feature branch: `git checkout -b feature/your-feature`
 - Push to feature branch: `git push origin feature/your-feature`
 - Create a Pull Request to merge into main
 
 **"Dependencies not found":**
+
 - Run `pnpm install:all` to install all workspace dependencies
 - Check that Node.js version is 18+ and Python is 3.11+
 

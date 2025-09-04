@@ -2,7 +2,7 @@ name: Repo Guard
 
 on:
   pull_request:
-    branches: [ main, master, develop ]
+    branches: [main, master, develop]
 
 jobs:
   large-files:
@@ -35,4 +35,3 @@ jobs:
           if git diff --name-only origin/${{ github.base_ref }}... | grep -E '^(DAILY_STATUS\.md|PORT_MANAGEMENT_ISSUE\.md|LOOSE_THREADS\.md|docs/README\.md)$'; then
             echo "❌ Reintroduced archived docs at root. Use docs/archive/."; exit 1
           fi
-

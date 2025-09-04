@@ -1,7 +1,7 @@
 id: '012'
 tags:
-- EASY
-- greeting
+  - EASY
+  - greeting
 prompt_sv: Hallå
 expected_intent: greeting.hello
 expected_tools: []

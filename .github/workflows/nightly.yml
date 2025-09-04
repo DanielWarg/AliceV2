@@ -1,8 +1,8 @@
 name: Nightly + 14:00 SLO Gate
 on:
   schedule:
-    - cron: "0 0 * * *"   # 00:00 UTC nightly
-    - cron: "0 12 * * *"  # 12:00 UTC ≈ 14:00 CET/CEST
+    - cron: '0 0 * * *' # 00:00 UTC nightly
+    - cron: '0 12 * * *' # 12:00 UTC ≈ 14:00 CET/CEST
   workflow_dispatch:
 
 jobs:
@@ -14,7 +14,7 @@ jobs:
 
       - name: Setup Python & Node
         uses: actions/setup-python@v5
-        with: { python-version: "3.11" }
+        with: { python-version: '3.11' }
 
       - name: Fetch models (no commit)
         run: bash ./scripts/fetch_models.sh

@@ -1,11 +1,11 @@
 id: '030'
 tags:
-- MEDIUM
-- email
+  - MEDIUM
+  - email
 prompt_sv: Skicka rapport till projektledaren
 expected_intent: email.create_draft
 expected_tools:
-- email.create_draft
+  - email.create_draft
 max_latency_ms: 500
 schema_ok_first: false
 fallback_allowed: false

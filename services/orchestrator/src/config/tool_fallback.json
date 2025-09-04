@@ -57,7 +57,7 @@
     },
     "EMERGENCY": {
       "deep": "blocked",
-      "planner": "blocked", 
+      "planner": "blocked",
       "micro": "degraded",
       "reason": "Only micro available during emergency"
     }

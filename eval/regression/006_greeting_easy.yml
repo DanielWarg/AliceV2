@@ -1,7 +1,7 @@
 id: '006'
 tags:
-- EASY
-- greeting
+  - EASY
+  - greeting
 prompt_sv: God morgon
 expected_intent: greeting.hello
 expected_tools: []

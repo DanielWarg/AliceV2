@@ -1,5 +1,5 @@
-import AliceHUD from '../components/AliceHUD'
+import AliceHUD from '../components/AliceHUD';
 
 export default function HomePage() {
-  return <AliceHUD />
+  return <AliceHUD />;
 }

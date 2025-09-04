@@ -1,11 +1,11 @@
 id: '002'
 tags:
-- EASY
-- weather
+  - EASY
+  - weather
 prompt_sv: Vad är vädret i Stockholm?
 expected_intent: weather.lookup
 expected_tools:
-- weather.lookup
+  - weather.lookup
 max_latency_ms: 200
 schema_ok_first: true
 fallback_allowed: false

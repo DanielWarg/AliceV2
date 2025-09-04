@@ -3,6 +3,7 @@
 Goal: Tight, scalable codebase.
 
 ## Approved Top-Level Directories
+
 - `services/` – backend services
 - `apps/` – frontend/desktop
 - `packages/` – shared packages (api/ui/types)
@@ -13,6 +14,7 @@ Goal: Tight, scalable codebase.
 - `docs/` – documentation
 
 ## Rules
+
 - No binaries in repo. Large files (>10MB) only under `models/`.
 - No `node_modules`/`__pycache__`/build output in repo.
 - Shared code → `packages/` (public API), not cross-import between services.
@@ -21,4 +23,5 @@ Goal: Tight, scalable codebase.
 - All new functionality must have DoD and gate in `ROADMAP.md`.
 
 ## Owners
+
 See `.github/CODEOWNERS`.

@@ -4,9 +4,9 @@ Gör att all **riktig testtrafik** (eval-harness + e2e) sparas som **lärbar, ku
 
 ## 🎯 Mål
 
-* Samla **riktiga** turn-events/tests → normalisera → kvalitetssäkra → lagra → exportera.
-* Driva **kontinuerligt lärande** (NLU thresholds, planner-policies, RAG K, cache/prewarm).
-* Hålla **compliance & säkerhet**: PII-maskning, consent, "right-to-forget".
+- Samla **riktiga** turn-events/tests → normalisera → kvalitetssäkra → lagra → exportera.
+- Driva **kontinuerligt lärande** (NLU thresholds, planner-policies, RAG K, cache/prewarm).
+- Hålla **compliance & säkerhet**: PII-maskning, consent, "right-to-forget".
 
 ## ✨ Vad ingår (v1)
 
@@ -15,10 +15,10 @@ Gör att all **riktig testtrafik** (eval-harness + e2e) sparas som **lärbar, ku
 3. **Governance**: PII-mask, consent-scopes, anomali-flaggor; red-team-taggar.
 4. **Signals**: beräknar features (latens, RAG-hit, tool-errorklass, energikostnad, NLU-marginal, injection score).
 5. **Exporters**:
+   - `parquet/` för analys/ML.
+   - `snapshots/` för versionerade datapack.
+   - `prom` counters för "learning rate" (hur mycket nytt lärbart per dag).
 
-   * `parquet/` för analys/ML.
-   * `snapshots/` för versionerade datapack.
-   * `prom` counters för "learning rate" (hur mycket nytt lärbart per dag).
 6. **Dash-hooks**: visar daglig learning-rate, data-kvalitet, drift.
 7. **APIs**: `/api/learn/ingest` (ad-hoc), `/api/learn/snapshot` (stänger dag), `/api/learn/stats`.
 
@@ -74,7 +74,7 @@ LEARN_DENY_STRICT=true           # exkludera STRICT/LOCKDOWN turns
     "intent": "calendar.create",
     "conf": 0.86,
     "margin": 0.21,
-    "slots": {"time": "2025-09-02T14:00:00+02:00"}
+    "slots": { "time": "2025-09-02T14:00:00+02:00" }
   },
   "timings": {
     "ttft_ms": 120,
@@ -82,10 +82,8 @@ LEARN_DENY_STRICT=true           # exkludera STRICT/LOCKDOWN turns
     "p50_route_ms": 8.6,
     "p95_route_ms": 24.7
   },
-  "rag": {"top_k": 3, "hits": 2},
-  "tools": [
-    {"name": "calendar.read", "ok": true, "klass": null, "lat_ms": 85}
-  ],
+  "rag": { "top_k": 3, "hits": 2 },
+  "tools": [{ "name": "calendar.read", "ok": true, "klass": null, "lat_ms": 85 }],
   "security": {
     "mode": "NORMAL",
     "inj_score": 0.13,
@@ -93,13 +91,13 @@ LEARN_DENY_STRICT=true           # exkludera STRICT/LOCKDOWN turns
     "system_prompt_sha256": "a1b2..."
   },
   "resources": {
-    "ram_peak_mb": {"proc": 410.2, "sys": 7341.5},
+    "ram_peak_mb": { "proc": 410.2, "sys": 7341.5 },
     "energy_wh": 0.0031
   },
   "outcome": {
     "ok": true,
     "error": null,
-    "labels": ["eval", "prod"], 
+    "labels": ["eval", "prod"],
     "redteam": false
   },
   "consent": {
@@ -115,32 +113,31 @@ LEARN_DENY_STRICT=true           # exkludera STRICT/LOCKDOWN turns
 
 ## 🧪 Lärbarhets-regler (v1)
 
-* **Ta med** rader där:
+- **Ta med** rader där:
+  - `outcome.ok == true`
+  - `nlu.conf >= LEARN_MIN_CONF` **och** `nlu.margin >= LEARN_MIN_MARGIN`
+  - `security.mode == "NORMAL"` (om `LEARN_DENY_STRICT=true`)
+  - **ej** `redteam`
 
-  * `outcome.ok == true`
-  * `nlu.conf >= LEARN_MIN_CONF` **och** `nlu.margin >= LEARN_MIN_MARGIN`
-  * `security.mode == "NORMAL"` (om `LEARN_DENY_STRICT=true`)
-  * **ej** `redteam`
-* **Tagga** svåra case:
-
-  * Låg marginal (`nlu.margin < 0.08`) → `labels += ["hard_intent"]`
-  * Tool-fel (`tools[].ok==false`) → `labels += ["tool_fail"]`
-  * RAG=0 → `labels += ["rag_miss"]`
+- **Tagga** svåra case:
+  - Låg marginal (`nlu.margin < 0.08`) → `labels += ["hard_intent"]`
+  - Tool-fel (`tools[].ok==false`) → `labels += ["tool_fail"]`
+  - RAG=0 → `labels += ["rag_miss"]`
 
 ---
 
 ## 🛠️ API (FastAPI – orkestratorn)
 
-* `POST /api/learn/ingest`  → kör en runda (returnerar antal rader in/ut + orsak till drop)
-* `POST /api/learn/snapshot` → skriver dags-snapshot (`dataset.jsonl.gz`) + checksum
-* `GET  /api/learn/stats`    → sammanfattning (dag/vecka), learning-rate, kvalitetsindikatorer
+- `POST /api/learn/ingest` → kör en runda (returnerar antal rader in/ut + orsak till drop)
+- `POST /api/learn/snapshot` → skriver dags-snapshot (`dataset.jsonl.gz`) + checksum
+- `GET  /api/learn/stats` → sammanfattning (dag/vecka), learning-rate, kvalitetsindikatorer
 
 **Exempelrespons /api/learn/stats**
 
 ```json
 {
-  "v":"1",
-  "day":"2025-09-01",
+  "v": "1",
+  "day": "2025-09-01",
   "rows_raw": 1240,
   "rows_learnable": 812,
   "hard_intent": 73,
@@ -186,11 +183,11 @@ learn-daily:
 
 ## 📈 Dashboard (HUD) – nya paneler
 
-* **Learning rate** (daglig andel learnable av rådata)
-* **Hard intents** (antal/mix)
-* **Tool-fail per klass** (stack) – hjälper planner/tool-stabilisering
-* **RAG miss rate** (andel turns utan träff)
-* **Energy/turn & RAM-peak distribution** (sanity + eco)
+- **Learning rate** (daglig andel learnable av rådata)
+- **Hard intents** (antal/mix)
+- **Tool-fail per klass** (stack) – hjälper planner/tool-stabilisering
+- **RAG miss rate** (andel turns utan träff)
+- **Energy/turn & RAM-peak distribution** (sanity + eco)
 
 Källa: läs `data/learn/parquet/` + `learn.jsonl` eller Prom counters.
 
@@ -198,21 +195,21 @@ Källa: läs `data/learn/parquet/` + `learn.jsonl` eller Prom counters.
 
 ## 🔒 Governance & säkerhet
 
-* **PII-mask** alltid i normaliserad data (e-post/telefon/PNR).
-* **Consent scopes** sparas; **user memory** kräver explicit consent och skrivs separat (ej i denna modul).
-* **Right-to-forget**: API ska radera matchande `session_id`/`trace_id` från `parquet/` och `snapshots/` + logga ett `forget_event` (mål < 1s).
+- **PII-mask** alltid i normaliserad data (e-post/telefon/PNR).
+- **Consent scopes** sparas; **user memory** kräver explicit consent och skrivs separat (ej i denna modul).
+- **Right-to-forget**: API ska radera matchande `session_id`/`trace_id` från `parquet/` och `snapshots/` + logga ett `forget_event` (mål < 1s).
 
 ---
 
 ## ✅ Definition of Done (v1)
 
-* [ ] `learn` körs automatiskt 14:00 (cron/CI).
-* [ ] **Parquet** + **snapshot (.jsonl.gz + sha256)** produceras dagligen.
-* [ ] **Pass-regler** appliceras (confidence/margin/security/redteam).
-* [ ] **PII-mask** och **consent** följer policy (bronze/silver/gold).
-* [ ] **HUD** visar learning-rate, hard_intent, tool_fail, rag_miss.
-* [ ] **Right-to-forget** testad e2e (<1s).
-* [ ] **/api/learn/stats** rapporterar dagliga siffror.
+- [ ] `learn` körs automatiskt 14:00 (cron/CI).
+- [ ] **Parquet** + **snapshot (.jsonl.gz + sha256)** produceras dagligen.
+- [ ] **Pass-regler** appliceras (confidence/margin/security/redteam).
+- [ ] **PII-mask** och **consent** följer policy (bronze/silver/gold).
+- [ ] **HUD** visar learning-rate, hard_intent, tool_fail, rag_miss.
+- [ ] **Right-to-forget** testad e2e (<1s).
+- [ ] **/api/learn/stats** rapporterar dagliga siffror.
 
 ---
 
@@ -245,19 +242,19 @@ class LearnRow(BaseModel):
 
 ## 🔍 Mini-checklista att bocka av i PR
 
-* [ ] `services/ingest/run_ingest.py` finns (ingest + normalize + export).
-* [ ] Env-variabler enligt ovan; defaultar till `/data/...`.
-* [ ] `/api/learn/*` endpoints inkopplade.
-* [ ] `Makefile` targets `learn` och `learn-daily`.
-* [ ] Cron/CI kör 14:00.
-* [ ] HUD-sektion "Learning" aktiverad.
-* [ ] DoD-punkter gröna.
+- [ ] `services/ingest/run_ingest.py` finns (ingest + normalize + export).
+- [ ] Env-variabler enligt ovan; defaultar till `/data/...`.
+- [ ] `/api/learn/*` endpoints inkopplade.
+- [ ] `Makefile` targets `learn` och `learn-daily`.
+- [ ] Cron/CI kör 14:00.
+- [ ] HUD-sektion "Learning" aktiverad.
+- [ ] DoD-punkter gröna.
 
 ---
 
 ## 🧠 Vad modulen lär Alice (konkret)
 
-* **NLU**: thresholds/margins justeras med verkliga svåra intents ("hard_intent").
-* **Planner/Tools**: vilka verktyg fallerar var – förbättra fallback och schema.
-* **RAG**: tunar K/indextyper när `rag_miss` sticker.
-* **Eco/SLO**: energi/turn och RAM-peak ger cache/prewarm-förslag.
+- **NLU**: thresholds/margins justeras med verkliga svåra intents ("hard_intent").
+- **Planner/Tools**: vilka verktyg fallerar var – förbättra fallback och schema.
+- **RAG**: tunar K/indextyper när `rag_miss` sticker.
+- **Eco/SLO**: energi/turn och RAM-peak ger cache/prewarm-förslag.

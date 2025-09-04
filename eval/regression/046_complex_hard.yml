@@ -1,12 +1,12 @@
 id: '046'
 tags:
-- HARD
-- complex
+  - HARD
+  - complex
 prompt_sv: Skapa en veckoplanering baserad på mina deadlines och prioriteringar, inklusive
   buffertar för oväntade uppgifter
 expected_intent: calendar.create_draft
 expected_tools:
-- calendar.create_draft
+  - calendar.create_draft
 max_latency_ms: 1500
 schema_ok_first: false
 fallback_allowed: true
