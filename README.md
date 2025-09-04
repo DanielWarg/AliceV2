@@ -549,8 +549,12 @@ For more advanced troubleshooting, see the main troubleshooting section below.
 
 ## ⚡ Solo Quickstart (Local Lite)
 ```bash
-# Start core services
-docker compose up -d guardian orchestrator nlu dev-proxy ollama n8n-db n8n
+# Start Ollama locally first (not in Docker)
+ollama serve &
+ollama pull qwen2.5:3b-instruct-q4_K_M
+
+# Start core services (Note: Ollama runs on host, not in Docker)
+docker compose up -d guardian orchestrator nlu dev-proxy n8n-db n8n
 
 # Quick test
 curl -s -X POST http://localhost:18000/api/chat \

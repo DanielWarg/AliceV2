@@ -119,9 +119,9 @@ main() {
         echo -e "${YELLOW}⚠️  High RAM usage detected. Consider restarting system.${NC}"
     fi
     
-    # Step 3: Start infrastructure services
+    # Step 3: Start infrastructure services (Redis only - Ollama runs on host)
     echo -e "${BLUE}🐳 Starting infrastructure services...${NC}"
-    docker compose up -d redis ollama
+    docker compose up -d redis
     sleep 5
     
     # Step 4: Start Python services in dependency order
