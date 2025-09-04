@@ -164,7 +164,7 @@ class RealMicroClient(MicroClient):
         self.top_p = 0.1  # Focused sampling
         self.repeat_penalty = 1.0
         self.max_tokens = 20  # Short responses for tool selection
-        
+
         # System prompt for tool selection
         self.system_prompt = """Du är en precis AI som klassificerar svenska frågor till rätt verktyg.
 
@@ -213,7 +213,6 @@ Verktyg: search.query"""
             "calculator": {"intent": "calculator", "tool": "calculator"},
             "search.query": {"intent": "search", "tool": "search.query"},
         }
-
 
     def _extract_tool_name(self, response: str) -> str:
         """Extract tool name from model response"""

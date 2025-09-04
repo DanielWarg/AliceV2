@@ -43,8 +43,12 @@ class KillSequenceConfig:
     max_restart_attempts: int = 3
 
     # Health gating - configurable via environment
-    health_check_url: str = "http://localhost:11434/api/health"  # Default, override with OLLAMA_BASE_URL
-    llm_test_url: str = "http://localhost:11434/api/generate"    # Default, override with OLLAMA_BASE_URL
+    health_check_url: str = (
+        "http://localhost:11434/api/health"  # Default, override with OLLAMA_BASE_URL
+    )
+    llm_test_url: str = (
+        "http://localhost:11434/api/generate"  # Default, override with OLLAMA_BASE_URL
+    )
     llm_test_model: str = "llama3.2:3b"  # Use lighter model for test
     health_timeout_s: float = 10.0
 
@@ -96,7 +100,7 @@ class GracefulKillSequence:
             # Step 5: Resume intake
             if not await self._resume_intake():
                 self.logger.warning(
-                    "Failed to resume intake, manual intervention may be needed"
+                    "Failed to resume intake, manual intervention may be needed",
                 )
 
             self.last_kill_time = kill_start_time
@@ -114,7 +118,7 @@ class GracefulKillSequence:
             # Signal Alice to stop accepting new requests
             async with httpx.AsyncClient(timeout=5.0) as client:
                 response = await client.post(
-                    f"{self.config.alice_base_url}/api/guard/stop-intake"
+                    f"{self.config.alice_base_url}/api/guard/stop-intake",
                 )
                 if response.status_code != 200:
                     self.logger.warning(f"Stop intake returned {response.status_code}")
@@ -122,7 +126,7 @@ class GracefulKillSequence:
 
             # Wait for queue to drain
             self.logger.info(
-                f"Draining request queue for {self.config.drain_timeout_s}s"
+                f"Draining request queue for {self.config.drain_timeout_s}s",
             )
             await asyncio.sleep(self.config.drain_timeout_s)
 
@@ -157,7 +161,7 @@ class GracefulKillSequence:
 
             # Wait for graceful shutdown
             self.logger.info(
-                f"Waiting {self.config.sigterm_timeout_s}s for graceful shutdown"
+                f"Waiting {self.config.sigterm_timeout_s}s for graceful shutdown",
             )
             await asyncio.sleep(self.config.sigterm_timeout_s)
 
@@ -165,7 +169,7 @@ class GracefulKillSequence:
             remaining_pids = self._find_ollama_processes()
             if remaining_pids:
                 self.logger.warning(
-                    f"Force killing remaining processes: {remaining_pids}"
+                    f"Force killing remaining processes: {remaining_pids}",
                 )
                 for pid in remaining_pids:
                     try:
@@ -217,7 +221,8 @@ class GracefulKillSequence:
     async def _restart_ollama_with_backoff(self) -> bool:
         """Restart Ollama with exponential backoff"""
         max_attempts = min(
-            self.config.max_restart_attempts, len(self.config.restart_delays)
+            self.config.max_restart_attempts,
+            len(self.config.restart_delays),
         )
 
         for attempt in range(max_attempts):
@@ -226,7 +231,7 @@ class GracefulKillSequence:
             ]
 
             self.logger.info(
-                f"Restart attempt {attempt + 1}/{max_attempts} after {delay}s delay"
+                f"Restart attempt {attempt + 1}/{max_attempts} after {delay}s delay",
             )
             await asyncio.sleep(delay)
 
@@ -277,12 +282,12 @@ class GracefulKillSequence:
         # Basic health check
         try:
             async with httpx.AsyncClient(
-                timeout=self.config.health_timeout_s
+                timeout=self.config.health_timeout_s,
             ) as client:
                 response = await client.get(self.config.health_check_url)
                 if response.status_code != 200:
                     self.logger.warning(
-                        f"Ollama health check failed: {response.status_code}"
+                        f"Ollama health check failed: {response.status_code}",
                     )
                     return False
         except Exception as e:
@@ -292,7 +297,7 @@ class GracefulKillSequence:
         # Simple LLM test (optional, can be disabled if no model is loaded)
         try:
             async with httpx.AsyncClient(
-                timeout=self.config.health_timeout_s
+                timeout=self.config.health_timeout_s,
             ) as client:
                 test_request = {
                     "model": self.config.llm_test_model,
@@ -301,7 +306,8 @@ class GracefulKillSequence:
                     "options": {"temperature": 0, "num_predict": 5},
                 }
                 response = await client.post(
-                    self.config.llm_test_url, json=test_request
+                    self.config.llm_test_url,
+                    json=test_request,
                 )
                 if response.status_code == 200:
                     self.logger.debug("LLM test passed")

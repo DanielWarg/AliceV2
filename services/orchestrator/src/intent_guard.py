@@ -27,8 +27,6 @@ def guard_intent_sv(text: str) -> Optional[str]:
     Deterministic intent classification using Swedish regex patterns.
     Returns intent name or None if no clear match.
     """
-    text_lower = text.lower().strip()
-
     # Email patterns (högst prioritet för "agenda")
     if RE_EMAIL.search(text):
         return "email.create_draft"
