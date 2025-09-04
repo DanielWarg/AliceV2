@@ -35,12 +35,17 @@ jobs:
           
       - name: Start Alice services
         run: |
+          # Create minimal .env for CI
+          echo "OPENAI_API_KEY=fake-key-for-ci" > .env
+          echo "N8N_DB_PASSWORD=test" >> .env
+          echo "N8N_ENCRYPTION_KEY=fake-key-for-ci-testing" >> .env
+          
           # Start Alice services in background
-          docker compose up -d orchestrator guardian
+          docker compose up -d orchestrator guardian alice-cache nlu
           
           # Wait for services to be healthy
           echo "Waiting for Alice services to be ready..."
-          timeout 60 bash -c 'until curl -f http://localhost:18000/health; do sleep 2; done'
+          timeout 90 bash -c 'until curl -f http://localhost:18000/health; do sleep 5; done'
           
       - name: Run regression tests
         run: |
