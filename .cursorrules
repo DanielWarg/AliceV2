@@ -20,6 +20,7 @@
 ## 🛠️ DEVELOPMENT PRINCIPLES
 
 - **Safety First**: Guardian system always takes priority
+- **Watchdog Always-Active**: Real-time SLO monitoring must be running 24/7
 - **Real Integration**: No mocks, test against real services
 - **Autonomous Testing**: All changes validated via `./scripts/auto_verify.sh`
 - **Production Ready**: Everything deployment-ready from day 1
@@ -54,13 +55,49 @@
 
 - Never commit Swedish text to documentation (except `docs/archive/`)
 - Always use `make up` for development stack
+- **Watchdog Mandatory**: Always run `docker compose -f docker-compose.yml -f docker-compose.watchdog.yml up -d` for SLO protection
 - **Ollama Setup**: Start local Ollama with `ollama serve` before running tests
 - **Dev-Proxy Config**: Ensure `ops/Caddyfile` points to `host.docker.internal:11434` for Ollama
 - Test with `python3 eval/harness.py` for quality gates validation
 - Monitor real-time metrics via HUD at `http://localhost:18000/hud`
+- **Watchdog Metrics**: Monitor `http://localhost:9308/metrics` for system health
 - Follow established code conventions (FastAPI + Pydantic, structlog)
 - **Intent-Guard**: Use Swedish regex patterns for deterministic classification
 - **Cache Optimization**: Use micro_key with canonical_prompt for better hits
+
+## 🛡️ WATCHDOG SYSTEM
+
+**Always-Active Policy**: The watchdog system provides 24/7 SLO monitoring and deployment protection.
+
+### Mandatory Checks:
+- Tool precision ≥85%
+- P95 latency ≤900ms (fast), ≤900ms (planner_first)
+- Success rate ≥98%
+- Service health (orchestrator, guardian, nlu)
+
+### Auto-Actions:
+- **Auto-restart**: Sick containers (orchestrator, nlu) restarted once
+- **Deployment freeze**: GitHub commit status → `failure` on critical bursts
+- **Slack alerts**: Incident notifications with breach details
+- **Prometheus export**: Metrics on `:9308` for monitoring stack
+
+### Startup Sequence:
+```bash
+# Development
+make up                                    # Start core services
+bash scripts/watchdog_dev.sh             # Start watchdog
+curl http://localhost:9308/metrics       # Verify watchdog health
+
+# Production  
+docker compose -f docker-compose.yml -f docker-compose.watchdog.yml up -d
+```
+
+### Emergency Override:
+If watchdog freezes deployments incorrectly:
+1. Check Slack alerts for incident details
+2. Fix underlying SLO breach 
+3. Restart watchdog: `docker compose restart watchdog`
+4. Verify green status: GitHub commit status → `success`
 
 ---
 
