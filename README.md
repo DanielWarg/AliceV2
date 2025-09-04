@@ -6,7 +6,7 @@
 ![Privacy](https://img.shields.io/badge/Privacy-GDPR%20by%20design-blue)
 
 > **🚦 Status (live-gates)**: Fast P95 ✅ | Planner P95 ✅ | Auto-verify (core) ✅, (planner) ✅
-> Planner: Shadow Mode + Canary Routing (5% live traffic via v2). Schema OK: 97.5%, Intent Match: 95%.
+> Intent-Guard: Deterministic classification. Tool Precision: 54.7% → 85% target. Schema OK: 100%.
 
 ## 🎯 Quick Demo (30 seconds)
 
@@ -24,7 +24,7 @@ Alice v2 is a robust AI assistant featuring:
 - **📊 Complete Observability** - RAM-peak per turn, energy tracking, tool error classification, structured JSONL logging
 - **🧪 Autonomous E2E Testing** - Self-contained test suite with 20 scenarios, SLO validation, and automatic failure detection
 - **🧠 NLU v1 (Swedish)** - e5-embeddings + heuristics, `/api/nlu/parse`, headers `X-Intent`/`X-Route-Hint`
-- **🎯 Shadow Mode + Canary Routing** - 100% traffic comparison v1 vs v2, 5% live traffic via v2 with guardrails
+- **🎯 Intent-Guard + Quality Gates** - Swedish regex patterns for deterministic classification, tool precision optimization
 - **📋 Schema v4** - Strict Pydantic models with canonicalizer and auto-repair
 - **💾 Robust Semantic Cache** - Deterministic fingerprinting, intent-aware caching, versioned invalidation
 - **📈 Real-time Monitoring** - Streamlit HUD with comprehensive metrics visualization

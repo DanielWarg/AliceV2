@@ -149,18 +149,11 @@ class RealMicroClient(MicroClient):
         self.max_tokens = 1     # Only one word response
         self.top_p = 0.1       # Very focused sampling
         
-        # Enum-only system prompt for precise tool selection
-        self.system_prompt = """Du är Alice, en AI-assistent som väljer verktyg.
-Svara ENDAST med exakt ett av följande ord:
-- time (för tidsfrågor)
-- weather (för väderfrågor) 
-- memory (för minnesfrågor)
-- greeting (för hälsningar)
-- calendar (för kalender/bokning)
-- email (för e-post)
-- none (för allt annat)
-
-Inga andra ord, inga förklaringar."""
+        # Hårt grammar-lås för exakt enum selection
+        self.system_prompt = (
+            "Return EXACTLY one lowercase word from: time, weather, memory, greeting, none.\n"
+            "Input: {text}\nOutput:"
+        )
     
     def generate(self, prompt: str, **kwargs) -> Dict[str, Any]:
         """Generate response using real Ollama model with enum→JSON mapping and cache"""
@@ -175,16 +168,12 @@ Inga andra ord, inga förklaringar."""
             enum_response = self._call_ollama(prompt, **kwargs)
             intent = self._enum_to_intent(enum_response)
             
-            # Try primary cache key first
-            primary_key = build_cache_key(intent, prompt, model_id=self.model)
-            cached_response = self._get_from_cache(primary_key)
-            
-            if not cached_response:
-                # Try fallback key
-                fallback_key = build_fallback_key(prompt)
-                cached_response = self._get_from_cache(fallback_key)
+            # Micro cache key: intent + canonical prompt hash
+            from ..cache_key import micro_key
+            cache_key = micro_key(intent, prompt)
+            cached_response = self._get_from_cache(cache_key)
             if cached_response:
-                logger.info("Micro cache hit", cache_key=primary_key or fallback_key)
+                logger.info("Micro cache hit", cache_key=cache_key)
                 return cached_response
             
             # Enum response already obtained above for cache key
@@ -210,9 +199,8 @@ Inga andra ord, inga förklaringar."""
                 "enum_response": enum_response
             }
             
-            # Cache the result with both keys
-            self._set_cache(primary_key, result)
-            self._set_cache(fallback_key, result)
+            # Cache the result
+            self._set_cache(cache_key, result)
             
             return result
             
@@ -223,21 +211,29 @@ Inga andra ord, inga förklaringar."""
     def _call_ollama(self, prompt: str, **kwargs) -> str:
         """Call Ollama and get enum response"""
         import httpx
-        
+
         micro_kwargs = {
             "temperature": kwargs.get("temperature", self.temperature),
             "max_tokens": kwargs.get("max_tokens", self.max_tokens),
             "top_p": kwargs.get("top_p", self.top_p),
             "system": kwargs.get("system", self.system_prompt)
         }
-        
+
         # Truncate prompt to 128 tokens for speed
         truncated_prompt = prompt[:128] if len(prompt) > 128 else prompt
-        
+
+        # Format prompt with GBNF grammar
+        formatted_prompt = self.system_prompt.format(text=truncated_prompt)
+
+        # Use provided grammar or default
+        grammar = kwargs.get("grammar", 'root ::= ("time"|"weather"|"memory"|"greeting"|"none")')
+
         payload = {
             "model": self.model,
-            "prompt": truncated_prompt,
-            "stream": False
+            "prompt": formatted_prompt,
+            "stream": False,
+            "grammar": grammar,
+            "stop": []
         }
         payload.update(micro_kwargs)
         

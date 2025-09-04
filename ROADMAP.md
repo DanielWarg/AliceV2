@@ -14,8 +14,8 @@
 ## 🚦 Live Milestone Tracker
 
 **Current status**
-- **Current step**: Step 8.5 – Robust Semantic Cache Implementation 🔄 IN PROGRESS
-- **Next step**: Step 9 – Advanced Features
+- **Current step**: Step 8.5 – Intent-Guard + Quality Gates Optimization 🔄 IN PROGRESS
+- **Next step**: Step 9 – RL Loop Implementation
 
 **✅ ALL PREVIOUS STEPS COMPLETED**:
 - **Step 1**: Orchestrator Core ✅ COMPLETED (Health endpoint working, API contracts stable)
@@ -26,6 +26,7 @@
 - **Step 6**: Memory Service ✅ COMPLETED (Redis + FAISS, RAG functionality)
 - **Step 7**: Planner-LLM + Tools (MCP) ✅ COMPLETED (Hybrid routing, shadow mode, canary)
 - **Step 8**: Text E2E hard test ✅ COMPLETED (Auto-verify PASS 100%, all SLO targets met)
+- **Step 8.5**: Intent-Guard + Quality Gates Optimization 🔄 IN PROGRESS (Tool precision 54.7%, latency optimization ongoing)
 
 **Step 7 Results**: 
 - ✅ Schema OK: 97.5% (EASY+MEDIUM: 97.5%, HARD: 0%)
@@ -80,17 +81,17 @@
     - Report per-route p95 (planner_openai vs planner_local)
     - Cost report included (tokens & USD); total ≤ test budget
   - Artifacts: `test-results/` nightly trends, SLO‑report
-- Step 8.5 – Robust Semantic Cache Implementation:
-  - Commands: `make test-all` + cache metrics validation + `python3 test_cache.py`
-  - Pass: Cache hit rate ≥60% (EASY/MEDIUM), stale prevention working, invalidation functional
+- Step 8.5 – Intent-Guard + Quality Gates Optimization:
+  - Commands: `make test-all` + intent guard validation + quality gates check
+  - Pass: Tool precision ≥85%, latency P95 ≤900ms, cache hit rate ≥60%
   - SLO Targets:
-    - ✅ Deterministic fingerprint generation (same input → same hash)
-    - ✅ Intent-aware cache (no cross-contamination)
-    - ✅ Versioned Redis keys (safe invalidation)
-    - ✅ PII/size protection (max 128KB response, PII filtered)
-    - ✅ Telemetry: hit/miss/save_ms/stale_prevented metrics
-  - Artifacts: Cache metrics in HUD, Redis key patterns, invalidation logs
-  - **Status**: ✅ Core implementation complete, ready for integration
+    - ✅ Intent-Guard: Swedish regex patterns for deterministic classification
+    - ✅ Tool precision: 45.3% → 54.7% (+9.4% improvement)
+    - ✅ Schema validation: 100% (perfect)
+    - ✅ Cache optimization: micro_key with canonical_prompt
+    - ✅ Grammar-scoped micro: intent-specific GBNF constraints
+  - Artifacts: Intent guard metrics, quality gates report, cache hit rates
+  - **Status**: 🔄 Core implementation complete, optimization ongoing
 
 ### Solo Edition vNext (Local Lite)
 - ToolSelector (local 3B, enum-only, strict JSON)

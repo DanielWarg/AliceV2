@@ -10,9 +10,16 @@ from datetime import datetime
 
 def canonical_prompt(text: str) -> str:
     """Normaliserar prompt för cache."""
-    text = " ".join(text.lower().split())           # case + whitespace
-    text = text.replace(""", "\"").replace(""", "\"").replace("'", "'")
-    return text.strip()
+    import unicodedata
+    import re
+    
+    t = unicodedata.normalize("NFKC", text or "")
+    t = t.lower()
+    t = t.replace(""", '"').replace(""", '"').replace("'", "'")
+    t = re.sub(r"\s+", " ", t).strip()
+    # ta bort artiga prefix för bättre träff
+    t = re.sub(r"^(hej|snälla|kan du|skulle du kunna)\s+", "", t)
+    return t
 
 def canonical_facts(facts: List[str]) -> List[str]:
     """Sorterar och deduplikerar fakta."""
@@ -49,6 +56,12 @@ def build_cache_key(
     primary = f"{schema_version}:{model_id}:{intent}:{time_bucket}:{hashlib.md5((cp + cf).encode()).hexdigest()[:12]}"
     
     return primary
+
+def micro_key(intent: str, text: str) -> str:
+    """Micro cache key: intent + canonical prompt hash"""
+    c = canonical_prompt(text)
+    h = hashlib.sha256(c.encode("utf-8")).hexdigest()[:16]
+    return f"micro:{intent}:{h}"
 
 def build_fallback_key(prompt_raw: str) -> str:
     """Fallback cache key för exakt match."""

@@ -526,26 +526,61 @@ async def orchestrator_chat(
         
         try:
             if route == "micro":
-                # Fast tool selector for EASY/MEDIUM intents
-                from ..tool_selector_fast import pick_tool
-                
-                # Always try fast tool selector for better precision
-                fast_tool = pick_tool(chat_request.message)
-                
-                # Generate response
-                micro_driver = get_micro_driver()
-                llm_response = micro_driver.generate(chat_request.message)
-                model_used = llm_response["model"]
-                
-                # Override tool selection with fast tool result if available
-                if fast_tool and llm_response.get("response"):
-                    try:
-                        response_json = json.loads(llm_response["response"])
-                        response_json["tool"] = fast_tool
-                        llm_response["response"] = json.dumps(response_json)
-                        print(f"🚀 Fast tool selector override: {fast_tool}")
-                    except:
-                        pass  # Keep original if parsing fails
+                    # Intent guard for deterministic classification
+                    from ..intent_guard import guard_intent_sv, grammar_for
+                    
+                    # Try deterministic intent classification first
+                    guard_intent = guard_intent_sv(chat_request.message)
+                    
+                    if guard_intent:
+                        # Use guard result directly - skip micro model
+                        from ..intent_guard import intent_to_tool
+                        tool_name = intent_to_tool(guard_intent)
+                        print(f"🛡️ Intent guard hit: {guard_intent} → {tool_name}")
+                        llm_response = {
+                            "text": json.dumps({
+                                "intent": guard_intent,
+                                "tool": tool_name,
+                                "args": {},
+                                "render_instruction": {
+                                    "type": "text",
+                                    "content": f"Intent: {guard_intent}"
+                                }
+                            }),
+                            "model": "intent_guard",
+                            "tokens_used": 0,
+                            "prompt_tokens": 0,
+                            "response_tokens": 0,
+                            "temperature": 0.0,
+                            "route": "micro",
+                            "mock_used": False,
+                            "schema_ok": True,
+                            "source": "guard"
+                        }
+                        model_used = "intent_guard"
+                    else:
+                        # Fallback to micro with intent-scoped grammar
+                        from ..tool_selector_fast import pick_tool
+                        
+                        # Get intent-scoped grammar
+                        grammar = grammar_for(chat_request.message)
+                        
+                        # Generate response with scoped grammar
+                        micro_driver = get_micro_driver()
+                        llm_response = micro_driver.generate(chat_request.message, grammar=grammar)
+                        model_used = llm_response["model"]
+                        llm_response["source"] = "micro"
+                        
+                        # Override with fast tool selector if available
+                        fast_tool = pick_tool(chat_request.message)
+                        if fast_tool and llm_response.get("response"):
+                            try:
+                                response_json = json.loads(llm_response["response"])
+                                response_json["tool"] = fast_tool
+                                llm_response["response"] = json.dumps(response_json)
+                                print(f"🚀 Fast tool selector override: {fast_tool}")
+                            except:
+                                pass  # Keep original if parsing fails
                 
             elif route == "planner":
                 canary_router = CanaryRouter() if shadow_enabled else None
