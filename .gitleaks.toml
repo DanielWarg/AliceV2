@@ -15,12 +15,16 @@ description = "Documentation and test fixtures"
 paths = [
     "README.md",
     "docs/",
-    ".*\\.md$"
+    ".*\\.md$",
+    ".github/workflows/.*\\.yml$"
 ]
 regexes = [
     "YOUR_API_KEY_HERE",
     "test-key-123",
-    "fake-key-for-ci", 
+    "fake-key-for-ci",
+    "fake-key-for-eval", 
     "Bearer test-",
-    "example-token"
+    "example-token",
+    "OPENAI_API_KEY=fake-key-for-ci",
+    "N8N_ENCRYPTION_KEY=fake-key-for-ci-testing"
 ]

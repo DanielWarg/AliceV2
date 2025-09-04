@@ -44,23 +44,14 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       
-      - name: Free disk space
+      - name: Build images (essential only)
         run: |
-          echo "🧹 Cleaning up disk space..."
-          docker system prune -af || true
-          sudo rm -rf /usr/share/dotnet || true
-          sudo rm -rf /usr/local/lib/android || true
-          df -h
-          
-      - name: Build images (lightweight first)
-        run: |
-          echo "🔨 Building Alice v2 images..."
-          # Build lightweight services first
-          docker compose build --pull guardian alice-cache
-          # Build heavier services with no cache to save space  
-          docker compose build --pull --no-cache orchestrator
-          # Skip NLU for now to save space and time
-          echo "✅ Core images built successfully"
+          echo "🔨 Building Alice v2 core images..."
+          # Build only essential services for stabilization
+          docker compose build --pull guardian
+          docker compose build --pull alice-cache  
+          docker compose build --pull orchestrator
+          echo "✅ Core images built successfully (skipped NLU for speed)"
 
   # STEG 2: Starta stack + hård health-väntan
   stack:
@@ -263,10 +254,10 @@ jobs:
 
   # STEG 6: EVAL HARNESS - Kritisk gate
   eval:
-    name: "📊 Eval Harness (SLO Gate) - SKIPPED"
+    name: "📊 Eval Harness (SLO Gate)"
     runs-on: ubuntu-latest
     needs: [quality, security, tests]
-    timeout-minutes: 5
+    timeout-minutes: 25
     
     outputs:
       tool_precision: ${{ steps.extract.outputs.tool_precision }}
@@ -287,21 +278,40 @@ jobs:
           mkdir -p data/{telemetry,tests,embeddings}
           chmod 777 data/{telemetry,tests}
       
-      - name: Skip eval for stabilization
+      - name: Start services for eval
         run: |
-          echo "📊 Skipping eval harness for stabilization build..."
-          echo "🎯 Using baseline metrics for gate..."
-          mkdir -p data/tests
+          echo "🚀 Starting services for eval..."
+          # Create minimal .env for eval
+          echo "OPENAI_API_KEY=fake-key-for-eval" > .env
+          echo "REDIS_HOST=localhost" >> .env
+          echo "REDIS_PORT=6379" >> .env
           
-          # Create mock eval results for gate
-          cat > data/tests/baseline_eval.json << 'EOF'
-          {
-            "tool_precision": 0.90,
-            "p95_latency_ms": 800,
-            "success_rate": 0.95,
-            "note": "Baseline metrics for stabilization"
+          docker compose up -d guardian orchestrator alice-cache nlu
+          
+          echo "⏳ Waiting for services..."
+          sleep 30
+      
+      - name: Pre-eval health check
+        run: |
+          echo "🏥 Pre-eval health verification..."
+          curl -sf "http://localhost:${ORCHESTRATOR_PORT}/health" || {
+            echo "❌ Orchestrator unhealthy before eval"
+            exit 1
           }
-          EOF
+      
+      - name: Run eval harness
+        run: |
+          echo "📊 Running eval harness..."
+          mkdir -p data/tests eval_runs
+          
+          # Install eval dependencies
+          pip install aiohttp pyyaml
+          
+          # Run evaluation harness directly (like eval.yml)
+          python eval/harness.py \
+            --base-url http://localhost:${ORCHESTRATOR_PORT} \
+            --regression-dir eval/regression \
+            --output data/tests/ci_eval_$(date +%s).json
       
       - name: Extract metrics
         id: extract
