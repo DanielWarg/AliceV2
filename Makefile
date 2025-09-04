@@ -82,11 +82,11 @@ preflight: ## Light checks (Docker + ports)
 
 # System commands
 
-up: ## Start all services  
+up: ## Start all services (fast)  
 	@echo "🚀 Starting Alice v2 services..."
 	docker compose up -d guardian orchestrator alice-cache nlu
 	@echo "⏳ Waiting for services to start..."
-	@sleep 10
+	@sleep 5
 	@$(MAKE) health
 
 status: ## Show service status
@@ -108,16 +108,8 @@ logs: ## Show recent logs
 	@echo "📋 Recent logs:"
 	@docker compose logs --tail=20 orchestrator guardian nlu
 
-dev-fast: install-requirements fetch-models ## Start core services only (fast dev)
-	@echo "🚀 Starting core services (fast dev mode)..."
-	@if docker info >/dev/null 2>&1; then \
-		./scripts/dev_up_fast.sh; \
-	else \
-		echo "⚠️  Docker not running. Start Docker first."; \
-		exit 1; \
-	fi
-	@echo "🎨 Starting frontend..."
-	@$(MAKE) frontend
+dev-fast: ## Alias for up (fast dev)
+	@$(MAKE) up
 
 down: ## Stop development stack (with Docker fallback)
 	@echo "🛑 Stopping dev stack..."
