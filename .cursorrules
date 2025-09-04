@@ -1,0 +1,67 @@
+# Alice v2 Cursor Rules
+*Instructions for AI coding assistant working on Alice v2*
+
+## 🚀 MANDATORY STARTUP SEQUENCE
+
+**ALWAYS read these files FIRST when starting a new chat:**
+
+1. **`AGENTS.md`** - Contains current project status, next priorities, and development context
+2. **`README.md`** - Contains project overview, architecture, and quick start guide
+3. **`ROADMAP.md`** - Contains live milestone tracker and current step status
+
+## 📋 PROJECT CONTEXT
+
+- **Current Phase**: Phase 3 - Advanced Reasoning
+- **Current Step**: Step 8.5 - Intent-Guard + Quality Gates Optimization 🔄 IN PROGRESS
+- **Next Step**: Step 9 - RL Loop Implementation
+- **Language**: All documentation must be in English (except code comments)
+- **Focus**: Swedish language optimization for Alice AI Assistant
+
+## 🛠️ DEVELOPMENT PRINCIPLES
+
+- **Safety First**: Guardian system always takes priority
+- **Real Integration**: No mocks, test against real services
+- **Autonomous Testing**: All changes validated via `./scripts/auto_verify.sh`
+- **Production Ready**: Everything deployment-ready from day 1
+- **Observable**: Structured logging and real-time monitoring
+- **Local Ollama**: Ollama runs locally (not in Docker) - use `ollama serve` and configure dev-proxy to point to `host.docker.internal:11434`
+
+## 🔧 WORKFLOW
+
+1. **Start**: Read AGENTS.md → README.md → ROADMAP.md
+2. **Plan**: Check current step status and next priorities
+3. **Implement**: Real integration with proper error handling
+4. **Test**: Run `./scripts/auto_verify.sh` for validation
+5. **Monitor**: Use HUD at `http://localhost:18000/hud`
+6. **Document**: Update relevant .md files with progress
+
+## 🎯 CURRENT FOCUS
+
+- **Step 8.5**: Intent-Guard + Quality Gates optimization
+- **SLO Targets**: Tool precision ≥85%, Latency P95 ≤900ms
+- **Key Files**: `services/orchestrator/src/intent_guard.py`, `services/orchestrator/src/llm/micro_client.py`
+
+## 📊 SUCCESS METRICS
+
+- Auto-verify PASS 100%
+- Tool precision ≥85% (currently 54.7%)
+- Latency P95 ≤900ms (currently 6897ms)
+- Schema validation 100%
+- Guardian system health
+- Swedish language support
+
+## 🚨 IMPORTANT REMINDERS
+
+- Never commit Swedish text to documentation (except `docs/archive/`)
+- Always use `make up` for development stack
+- **Ollama Setup**: Start local Ollama with `ollama serve` before running tests
+- **Dev-Proxy Config**: Ensure `ops/Caddyfile` points to `host.docker.internal:11434` for Ollama
+- Test with `python3 eval/harness.py` for quality gates validation
+- Monitor real-time metrics via HUD at `http://localhost:18000/hud`
+- Follow established code conventions (FastAPI + Pydantic, structlog)
+- **Intent-Guard**: Use Swedish regex patterns for deterministic classification
+- **Cache Optimization**: Use micro_key with canonical_prompt for better hits
+
+---
+
+**Remember**: This is a production-ready AI assistant platform. Every change must maintain quality, safety, and observability standards.
