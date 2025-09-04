@@ -47,7 +47,8 @@ jobs:
       - name: Build images
         run: |
           echo "🔨 Building Alice v2 images..."
-          docker-compose build --pull
+          # GitHub Actions uses modern docker compose (with space)
+          docker compose build --pull
           echo "✅ Images built successfully"
 
   # STEG 2: Starta stack + hård health-väntan
@@ -69,7 +70,7 @@ jobs:
       - name: Start services
         run: |
           echo "🚀 Starting core services..."
-          docker-compose up -d guardian orchestrator alice-cache nlu
+          docker compose up -d guardian orchestrator alice-cache nlu
       
       - name: Wait for health (hard timeout)
         run: |
@@ -93,7 +94,7 @@ jobs:
             done
             
             echo "❌ $service failed health check"
-            docker-compose logs "$service" --tail=50
+            docker compose logs "$service" --tail=50
             return 1
           }
           
@@ -103,7 +104,7 @@ jobs:
           wait_for_health "http://localhost:${NLU_PORT}/healthz" "nlu"
           
           # Verifiera Redis
-          docker-compose exec -T alice-cache redis-cli ping | grep PONG || {
+          docker compose exec -T alice-cache redis-cli ping | grep PONG || {
             echo "❌ Redis not responding"
             exit 1
           }
@@ -114,9 +115,9 @@ jobs:
         if: always()
         run: |
           echo "📊 Service Status:"
-          docker-compose ps
+          docker compose ps
           echo "📋 Recent logs:"
-          docker-compose logs --tail=10
+          docker compose logs --tail=10
 
   # STEG 3: Code quality
   quality:
@@ -278,7 +279,7 @@ jobs:
           # Kör eval med retry
           for attempt in 1 2; do
             echo "Eval attempt $attempt/2..."
-            if timeout 20m docker-compose run --rm eval; then
+            if timeout 20m docker compose run --rm eval; then
               echo "✅ Eval completed"
               break
             else
@@ -289,7 +290,7 @@ jobs:
               fi
               
               # Clean restart för nästa attempt
-              docker-compose restart orchestrator
+              docker compose restart orchestrator
               sleep 30
             fi
           done
@@ -444,6 +445,6 @@ jobs:
       - name: Docker cleanup
         run: |
           echo "🧹 Cleaning up..."
-          docker-compose down --volumes --remove-orphans || true
+          docker compose down --volumes --remove-orphans || true
           docker system prune -f || true
           echo "✅ Cleanup done"
