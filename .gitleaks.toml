@@ -15,12 +15,12 @@ description = "Documentation and test fixtures"
 paths = [
     "README.md",
     "docs/",
-    "**/*.md"
+    ".*\\.md$"
 ]
 regexes = [
-    '''YOUR_API_KEY_HERE''',
-    '''test-key-123''',
-    '''fake-key-for-ci''',
-    '''Bearer test-''',
-    '''example-token'''
+    "YOUR_API_KEY_HERE",
+    "test-key-123",
+    "fake-key-for-ci", 
+    "Bearer test-",
+    "example-token"
 ]
