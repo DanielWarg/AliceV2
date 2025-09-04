@@ -5,7 +5,7 @@
 
 Alice v2 implements a **RealOps testing approach** - no mocks, only real data flows through actual services. The testing system runs continuously, validates SLOs, detects regressions, applies safe remediation, and generates actionable reports.
 
-**🚀 CURRENT STATUS**: Complete observability + eval-harness v1 operational; NLU v1 live via proxy (`/api/nlu/parse`); `/api/chat` sets `X-Route` and writes turn-events (RAM/energy/guardian) to `data/telemetry/YYYY-MM-DD/`.
+**🚀 CURRENT STATUS**: Complete observability + eval-harness v1 operational; Intent-Guard + Quality Gates optimization in progress; `/api/chat` sets `X-Route` and writes turn-events (RAM/energy/guardian) to `data/telemetry/YYYY-MM-DD/`. NLU service needs restoration (currently down).
 
 **Philosophy**: Test with real Swedish voice data, actual SMTP/CalDAV integration, live RTSP streams, and production-equivalent LLM workloads. When issues arise, automatically fix them or create detailed issue reports.
 

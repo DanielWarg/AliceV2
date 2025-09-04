@@ -19,12 +19,12 @@
 - **Timezone handling**: Europe/Stockholm defaults
 - **5-minute rounding**: ISO time normalization
 
-#### **📊 Live Metrics (Current)**
+#### **📊 Live Metrics (Latest A-Z Test)**
 - **Tool Precision**: 54.7% (target: ≥85%)
 - **Schema OK Rate**: 100% (perfect)
-- **Success Rate**: 100% (no errors)
-- **Latency P95**: 6897ms (target: ≤900ms)
-- **Cache Hit Rate**: Optimized with micro_key
+- **Success Rate**: 83% (44/53 scenarios)
+- **Latency P95**: 5448ms (target: ≤900ms)
+- **Cache Hit Rate**: ~10% (needs optimization)
 - **Intent-Guard Hits**: Deterministic classification for clear patterns
 
 ### **🚀 Technical Implementation**
@@ -43,9 +43,9 @@
 
 #### **Quality Gates Status**
 - **Tool Precision**: 54.7% (target: ≥85%) - 🔄 Optimization ongoing
-- **Latency P95**: 6897ms (target: ≤900ms) - 🔄 Cache optimization needed
+- **Latency P95**: 5448ms (target: ≤900ms) - 🔄 Cache optimization needed
 - **Schema OK**: 100% (target: ≥95%) - ✅ Perfect
-- **Success Rate**: 100% (target: ≥98%) - ✅ Perfect
+- **Success Rate**: 83% (target: ≥98%) - 🔄 Some scenarios failing
 
 ### **📈 Performance Improvements**
 
@@ -57,8 +57,8 @@
 #### **After Intent-Guard + Cache Optimization**
 - Tool Precision: 54.7% (+9.4% improvement)
 - Schema OK: 100% (perfect)
-- Latency P95: 6897ms (needs optimization)
-- Cache Hit Rate: Optimized with micro_key
+- Latency P95: 5448ms (needs optimization)
+- Cache Hit Rate: ~10% (needs optimization)
 
 ### **🔧 Development Workflow**
 
@@ -76,9 +76,11 @@
 ### **🎯 Next Steps**
 
 #### **Immediate (Next Sprint)**
-1. **Step 8.5 Completion**: Achieve tool precision ≥85% and latency P95 ≤900ms
-2. **Cache Optimization**: Improve cache hit rates and pre-warming
-3. **Step 9 - RL Loop**: Implement reinforcement learning for self-improvement
+1. **Fix NLU Service**: Restore alice-nlu service (critical blocker)
+2. **Implement Cache Telemetry**: Add cache_decision/reason logging
+3. **Fix Micro Cap**: Ensure MICRO_MAX_SHARE=0.2 works correctly
+4. **Step 8.5 Completion**: Achieve tool precision ≥85% and latency P95 ≤900ms
+5. **Step 9 - RL Loop**: Implement reinforcement learning for self-improvement
 
 #### **Medium Term**
 1. **Voice pipeline**: ASR + TTS integration
@@ -91,10 +93,10 @@
 | Metric | Target | Current | Status |
 |--------|--------|---------|--------|
 | Tool Precision | ≥85% | 54.7% | 🔄 |
-| Latency P95 | ≤900ms | 6897ms | 🔄 |
+| Latency P95 | ≤900ms | 5448ms | 🔄 |
 | Schema OK Rate | ≥95% | 100% | ✅ |
-| Success Rate | ≥98% | 100% | ✅ |
-| Cache Hit Rate | ≥60% | Optimized | 🔄 |
+| Success Rate | ≥98% | 83% | 🔄 |
+| Cache Hit Rate | ≥60% | ~10% | 🔄 |
 
 #### **Business Impact**
 - **Quality improvement**: Intent-guard provides deterministic classification

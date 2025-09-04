@@ -710,10 +710,11 @@ make dev-quick    # Quick development workflow (up + e2e only)
 | API Response Time P95 | <100ms | ✅ | 🟢 |
 | Metrics Collection Latency | <10ms | ✅ | 🟢 |
 | Dashboard Load Time | <2s | ✅ | 🟢 |
-| E2E Test Success Rate | ≥80% | 30% | 🟡 |
-| Voice E2E Latency (P95) | <2000ms | - | 🔴 |
-| Intent Accuracy | ≥92% | - | 🔴 |
-| Tool Success Rate | ≥95% | - | 🔴 |
+| E2E Test Success Rate | ≥80% | 83% | 🟢 |
+| Tool Precision | ≥85% | 54.7% | 🔴 |
+| Latency P95 | ≤900ms | 5448ms | 🔴 |
+| Schema OK Rate | ≥95% | 100% | 🟢 |
+| Cache Hit Rate | ≥60% | ~10% | 🔴 |
 | System Availability | ≥99.5% | ✅ | 🟢 |
 
 ### Business Metrics

@@ -6,7 +6,7 @@
 ![Privacy](https://img.shields.io/badge/Privacy-GDPR%20by%20design-blue)
 
 > **🚦 Status (live-gates)**: Fast P95 ✅ | Planner P95 ✅ | Auto-verify (core) ✅, (planner) ✅
-> Intent-Guard: Deterministic classification. Tool Precision: 54.7% → 85% target. Schema OK: 100%.
+> Intent-Guard: Deterministic classification. Tool Precision: 54.7% → 85% target. Schema OK: 100%. Cache optimization ongoing.
 
 ## 🎯 Quick Demo (30 seconds)
 

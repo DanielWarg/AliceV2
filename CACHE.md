@@ -10,6 +10,8 @@ The Alice v2 cache system provides intelligent caching for planner responses wit
 - **PII/size protection** - Automatic filtering and size limits
 - **Real-time telemetry** - Hit/miss/save_ms/stale_prevented metrics
 
+**🚀 CURRENT STATUS**: Cache system implemented but experiencing ~90% miss rate. Optimization in progress with micro_key canonicalization and negative cache implementation.
+
 ## 🏗️ Architecture
 
 ```
