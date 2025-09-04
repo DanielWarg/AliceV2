@@ -7,8 +7,8 @@ services:
       retries: 40
       start_period: 10s
     environment:
-      CLOUD_OK: ${CLOUD_OK:false}
-      OLLAMA_DISABLE: ${OLLAMA_DISABLE:true}
+      CLOUD_OK: "false"
+      OLLAMA_DISABLE: "true"
 
   guardian:
     healthcheck:
