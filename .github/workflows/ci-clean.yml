@@ -277,27 +277,16 @@ jobs:
       - name: Run eval harness
         run: |
           echo "📊 Running eval harness..."
-          mkdir -p data/tests
-          chmod 777 data/tests
+          mkdir -p data/tests eval_runs
           
-          # Kör eval med retry
-          for attempt in 1 2; do
-            echo "Eval attempt $attempt/2..."
-            if timeout 20m docker compose run --rm eval; then
-              echo "✅ Eval completed"
-              break
-            else
-              echo "⚠️ Eval attempt $attempt failed"
-              if [ $attempt -eq 2 ]; then
-                echo "❌ All eval attempts failed"
-                exit 1
-              fi
-              
-              # Clean restart för nästa attempt
-              docker compose restart orchestrator
-              sleep 30
-            fi
-          done
+          # Install eval dependencies
+          pip install aiohttp pyyaml
+          
+          # Run evaluation harness directly (like eval.yml)
+          python eval/harness.py \
+            --base-url http://localhost:${ORCHESTRATOR_PORT} \
+            --regression-dir eval/regression \
+            --output data/tests/ci_eval_$(date +%s).json
       
       - name: Extract metrics
         id: extract
