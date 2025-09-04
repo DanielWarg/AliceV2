@@ -31,9 +31,13 @@ ALLOW_TOP = {
     "pnpm-workspace.yaml",
     "turbo.json",
     "docker-compose.yml",
-    "docker-compose.override.yml" "GITHUB_SETUP.md",
+    "docker-compose.override.yml",
+    "GITHUB_SETUP.md", 
     "CONTRIBUTING.md",
-    "docs",
+    "Makefile",
+    "eval",
+    "eval_runs", 
+    "fix_system_health.py",
 }
 BLOCK_DIRS = {"node_modules", "__pycache__", "dist", "build"}
 MAX_FILES_PR = int(os.getenv("MAX_FILES_PR", "200"))
