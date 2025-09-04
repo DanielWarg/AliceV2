@@ -1,7 +1,9 @@
-from fastapi import APIRouter
-from typing import Dict, Any
-import os, json
+import json
+import os
 from datetime import datetime
+from typing import Any, Dict
+
+from fastapi import APIRouter
 
 router = APIRouter(prefix="/api/feedback", tags=["feedback"])
 
@@ -22,9 +24,10 @@ async def thumbs(body: Dict[str, Any]):
         "v": "1",
         "kind": "feedback",
         "trace_id": body.get("trace_id"),
-        "explicit": {"thumbs_up": bool(body.get("up", False)), "comment": body.get("comment")},
+        "explicit": {
+            "thumbs_up": bool(body.get("up", False)),
+            "comment": body.get("comment"),
+        },
     }
     append_event(ev)
     return {"ok": True}
-
-

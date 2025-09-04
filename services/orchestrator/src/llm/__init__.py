@@ -2,18 +2,27 @@
 LLM module for Alice v2 - Micro, Planner, and Deep LLM drivers.
 """
 
-from .ollama_client import get_ollama_client, OllamaClient, OllamaConfig
-from .micro_phi import get_micro_driver, MicroPhiDriver
-from .micro_client import get_micro_client, MicroClient, MockMicroClient, RealMicroClient
-from .planner_qwen import get_planner_driver, PlannerQwenDriver
-from .planner_classifier import get_planner_classifier, PlannerClassifier, ClassificationResult
-from .planner_hybrid import get_hybrid_planner_driver, PlannerHybridDriver
-from .planner_v2 import get_planner_v2_driver, PlannerV2Driver
-from .deep_llama import get_deep_driver, DeepLlamaDriver
+from .deep_llama import DeepLlamaDriver, get_deep_driver
+from .micro_client import (
+    MicroClient,
+    MockMicroClient,
+    RealMicroClient,
+    get_micro_client,
+)
+from .micro_phi import MicroPhiDriver, get_micro_driver
+from .ollama_client import OllamaClient, OllamaConfig, get_ollama_client
+from .planner_classifier import (
+    ClassificationResult,
+    PlannerClassifier,
+    get_planner_classifier,
+)
+from .planner_hybrid import PlannerHybridDriver, get_hybrid_planner_driver
+from .planner_qwen import PlannerQwenDriver, get_planner_driver
+from .planner_v2 import PlannerV2Driver, get_planner_v2_driver
 
 __all__ = [
     "get_ollama_client",
-    "OllamaClient", 
+    "OllamaClient",
     "OllamaConfig",
     "get_micro_driver",
     "MicroPhiDriver",
@@ -31,5 +40,5 @@ __all__ = [
     "get_planner_v2_driver",
     "PlannerV2Driver",
     "get_deep_driver",
-    "DeepLlamaDriver"
+    "DeepLlamaDriver",
 ]

@@ -1,4 +1,6 @@
-import os, json, pathlib
+import json
+import os
+import pathlib
 from datetime import datetime, timedelta, timezone
 
 LOG_DIR = pathlib.Path(os.getenv("LOG_DIR", "/data/telemetry"))
@@ -30,30 +32,46 @@ def iter_jsonl(path: pathlib.Path):
 
 def pii_ok(ev: dict) -> bool:
     scopes = ev.get("consent_scopes") or []
-    return bool(ev.get("pii_masked", True)) and ("train:anon" in scopes or "basic_logging" in scopes)
+    return bool(ev.get("pii_masked", True)) and (
+        "train:anon" in scopes or "basic_logging" in scopes
+    )
 
 
 def slo_ok(ev: dict) -> bool:
     q = (ev.get("quality") or {}).get("automatic") or {}
-    return bool(q.get("slo_ok", True)) and bool(q.get("tool_success", True)) and (q.get("error_class") in (None, ""))
+    return (
+        bool(q.get("slo_ok", True))
+        and bool(q.get("tool_success", True))
+        and (q.get("error_class") in (None, ""))
+    )
 
 
 def implicit_positive(ev: dict) -> bool:
     imp = (ev.get("quality") or {}).get("implicit") or {}
-    return bool(imp.get("user_continues_flow")) or (imp.get("no_followup_within_s") or 0) >= 30
+    return (
+        bool(imp.get("user_continues_flow"))
+        or (imp.get("no_followup_within_s") or 0) >= 30
+    )
 
 
 def curate(day: datetime):
     src = day_dir(day)
     # read both subdir file and flat daily file
-    events = list(iter_jsonl(src / "events.jsonl")) + list(iter_jsonl(LOG_DIR / f"events_{day.strftime('%Y-%m-%d')}.jsonl"))
+    events = list(iter_jsonl(src / "events.jsonl")) + list(
+        iter_jsonl(LOG_DIR / f"events_{day.strftime('%Y-%m-%d')}.jsonl")
+    )
 
     # BRONZE: rå (maskad) chat-turns med output_text
     bronze = [e for e in events if e.get("output_text") and pii_ok(e)]
     # SILVER: bronze + SLO OK + tool success
     silver = [e for e in bronze if slo_ok(e)]
     # GOLD: silver + implicit/explicit positiv feedback
-    gold = [e for e in silver if implicit_positive(e) or ((e.get("quality") or {}).get("explicit") or {}).get("thumbs_up")]
+    gold = [
+        e
+        for e in silver
+        if implicit_positive(e)
+        or ((e.get("quality") or {}).get("explicit") or {}).get("thumbs_up")
+    ]
 
     # Exports: RAG-chunks + finetune-instruct (endast consent)
     exports_rag = []
@@ -62,23 +80,27 @@ def curate(day: datetime):
         if "rag:index" in (e.get("consent_scopes") or []):
             txt = (e.get("output_text") or "").strip()
             if txt:
-                exports_rag.append({
-                    "id": f"{e.get('trace_id','')[:8]}#{e.get('session_id','')[:8]}",
-                    "text": txt,
-                    "source": "chat",
-                    "lang": e.get("lang", "sv"),
-                    "ts": e.get("ts") or iso_now(),
-                    "consent": "rag:index",
-                })
+                exports_rag.append(
+                    {
+                        "id": f"{e.get('trace_id','')[:8]}#{e.get('session_id','')[:8]}",
+                        "text": txt,
+                        "source": "chat",
+                        "lang": e.get("lang", "sv"),
+                        "ts": e.get("ts") or iso_now(),
+                        "consent": "rag:index",
+                    }
+                )
         inp = (e.get("input_text") or "").strip()
         out = (e.get("output_text") or "").strip()
         if inp and out and len(out) >= 12:
-            exports_ft.append({
-                "prompt": f"[SV] {inp}",
-                "completion": f"[SV] {out}",
-                "route": e.get("route"),
-                "ok": True,
-            })
+            exports_ft.append(
+                {
+                    "prompt": f"[SV] {inp}",
+                    "completion": f"[SV] {out}",
+                    "route": e.get("route"),
+                    "ok": True,
+                }
+            )
 
     stamp = day.strftime("%Y%m%d")
     (OUT_DIR / "bronze").mkdir(parents=True, exist_ok=True)
@@ -116,5 +138,3 @@ def curate(day: datetime):
 if __name__ == "__main__":
     d = datetime.now(timezone.utc) - timedelta(days=1)
     curate(d)
-
-

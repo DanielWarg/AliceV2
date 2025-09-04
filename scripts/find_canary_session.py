@@ -5,10 +5,11 @@ Find session ID that qualifies for canary routing
 
 import hashlib
 
+
 def find_canary_session(percentage=5.0):
     """Find a session ID that qualifies for canary routing"""
-    canary_threshold = (percentage / 100.0) * 0xffffffff
-    
+    canary_threshold = (percentage / 100.0) * 0xFFFFFFFF
+
     i = 0
     while i < 1000:
         session_id = f"test_{i:03d}"
@@ -19,9 +20,10 @@ def find_canary_session(percentage=5.0):
             print(f"Percentage: {percentage}%")
             return session_id
         i += 1
-    
+
     print("No qualifying session found in first 1000")
     return None
+
 
 if __name__ == "__main__":
     session = find_canary_session(5.0)

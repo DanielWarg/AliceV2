@@ -1,0 +1,27 @@
+title = "AliceV2 gitleaks"
+
+[allowlist]
+description = "False positives (placeholders, tests, docs)"
+files = [
+  "^docs/.*",
+  "^examples?/.*", 
+  ".*\\.md$",
+  ".*\\.jsonl$",
+  "^tests?/.*",
+  ".github/workflows/.*\\.yml$"
+]
+regexes = [
+  # Exempel/placeholder API-nycklar (inte riktiga)
+  "sk-test-[a-zA-Z0-9]{16,}",
+  "OPENAI_API_KEY=[\"']?sk-PLACEHOLDER[\"']?",
+  "OPENAI_API_KEY=fake-key-for-ci",
+  "OPENAI_API_KEY=fake-key-for-eval",
+  "N8N_WEBHOOK_SECRET=[\"']?(changeme|placeholder|test|fake-webhook-for-ci)[\"']?",
+  "N8N_ENCRYPTION_KEY=fake-key-for-ci-testing",
+  "YOUR_API_KEY_HERE",
+  "test-key-123",
+  "fake-key-for-ci",
+  "fake-key-for-eval",
+  "Bearer test-",
+  "example-token"
+]

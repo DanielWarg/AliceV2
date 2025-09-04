@@ -1,0 +1,29 @@
+{
+  "dataset": {
+    "min_episodes": 5,
+    "min_date": null,
+    "lookback_days": 30
+  },
+  "training": {
+    "routing": {
+      "alpha": 0.5,
+      "feature_dim": 64
+    },
+    "tools": {
+      "alpha_prior": 1.0,
+      "beta_prior": 1.0
+    },
+    "cache": {
+      "alpha": 1.0
+    }
+  },
+  "evaluation": {
+    "min_policy_value": 0.4,
+    "max_variance": 0.3
+  },
+  "deployment": {
+    "canary_stability_minutes": 1.0,
+    "canary_traffic_pct": 5.0,
+    "prod_after_canary": true
+  }
+}

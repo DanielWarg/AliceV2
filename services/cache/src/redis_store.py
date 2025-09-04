@@ -1,8 +1,9 @@
 import json
-import asyncio
-import redis.asyncio as redis
-from models import CacheKey, CacheEntry, CACHE_NS
 from typing import Optional
+
+import redis.asyncio as redis
+
+from models import CACHE_NS, CacheEntry, CacheKey
 
 
 class ICacheStore:
@@ -12,7 +13,12 @@ class ICacheStore:
     async def set(self, key: CacheKey, entry: CacheEntry) -> None:
         raise NotImplementedError
 
-    async def invalidate(self, intent: Optional[str] = None, schema_version: Optional[str] = None, deps_version: Optional[str] = None) -> int:
+    async def invalidate(
+        self,
+        intent: Optional[str] = None,
+        schema_version: Optional[str] = None,
+        deps_version: Optional[str] = None,
+    ) -> int:
         raise NotImplementedError
 
 
@@ -25,9 +31,16 @@ class RedisCacheStore(ICacheStore):
         return CacheEntry(**json.loads(data)) if data else None
 
     async def set(self, key: CacheKey, entry: CacheEntry) -> None:
-        await self.cli.setex(key.redis_key(), entry.ttl_sec, json.dumps(entry.dict(), ensure_ascii=False))
+        await self.cli.setex(
+            key.redis_key(), entry.ttl_sec, json.dumps(entry.dict(), ensure_ascii=False)
+        )
 
-    async def invalidate(self, intent: Optional[str] = None, schema_version: Optional[str] = None, deps_version: Optional[str] = None) -> int:
+    async def invalidate(
+        self,
+        intent: Optional[str] = None,
+        schema_version: Optional[str] = None,
+        deps_version: Optional[str] = None,
+    ) -> int:
         # Begränsa scan till rätt namespace
         pattern = f"{CACHE_NS}:{schema_version or '*'}:{deps_version or '*'}:{intent or '*'}:*"
         n = 0

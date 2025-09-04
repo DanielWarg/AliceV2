@@ -15,7 +15,9 @@ jobs:
           fetch-depth: 0
       - uses: gitleaks/gitleaks-action@v2
         with:
-          args: detect --redact --no-banner
+          config-path: .gitleaks.toml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   links:
     runs-on: ubuntu-latest

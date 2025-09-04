@@ -1,5 +1,6 @@
+from typing import Any, Dict, Optional
+
 from pydantic import BaseModel, Field
-from typing import Optional, Dict, Any
 
 
 class ParseRequest(BaseModel):
@@ -16,5 +17,3 @@ class ParseResponse(BaseModel):
     slots: Dict[str, Any]
     route_hint: str
     timings_ms: Dict[str, float]
-
-

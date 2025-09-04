@@ -1,6 +1,7 @@
 import os
-import numpy as np
 from typing import Optional
+
+import numpy as np
 
 try:
     import onnxruntime as ort  # type: ignore
@@ -31,24 +32,101 @@ class NLURegistry:
         # Optional ONNX encoder setup
         self._encoder = self._init_onnx_encoder()
         # Precompute label embeddings
-        self.embeddings = {k: self._encode_label(v) for k, v in self.intent_labels.items()}
+        self.embeddings = {
+            k: self._encode_label(v) for k, v in self.intent_labels.items()
+        }
 
     def _fake_embed(self, text: str) -> np.ndarray:
         # Förbättrad hashbaserad vektor med keyword-matching
         text_lower = text.lower()
-        
+
         # Keyword weights för bättre intent-matching
         keywords = {
-            "calendar.create": ["möte", "meeting", "boka", "book", "schedule", "appointment", "tid", "time", "datum", "date"],
-            "calendar.move": ["flytta", "move", "ändra", "change", "omboka", "reschedule"],
-            "email.send": ["e-post", "email", "mail", "skicka", "send", "brev", "letter"],
-            "weather.today": ["väder", "weather", "temperatur", "temperature", "prognos", "forecast", "vad är vädret", "vädret idag", "vad är vädret idag", "vad är vädret idag"],
-            "system.lights": ["lampa", "light", "tända", "turn on", "släcka", "turn off", "ljus"],
-            "greeting.hello": ["hej", "hello", "hälsa", "god morgon", "good morning", "tja", "hi"],
-            "smalltalk.time": ["klockan", "clock", "tid", "time", "nu", "now", "aktuell", "current", "vad är klockan", "hur mycket är klockan"],
-            "info.query": ["vad är", "what is", "hur", "how", "när", "when", "var", "where", "vem", "who"]
+            "calendar.create": [
+                "möte",
+                "meeting",
+                "boka",
+                "book",
+                "schedule",
+                "appointment",
+                "tid",
+                "time",
+                "datum",
+                "date",
+            ],
+            "calendar.move": [
+                "flytta",
+                "move",
+                "ändra",
+                "change",
+                "omboka",
+                "reschedule",
+            ],
+            "email.send": [
+                "e-post",
+                "email",
+                "mail",
+                "skicka",
+                "send",
+                "brev",
+                "letter",
+            ],
+            "weather.today": [
+                "väder",
+                "weather",
+                "temperatur",
+                "temperature",
+                "prognos",
+                "forecast",
+                "vad är vädret",
+                "vädret idag",
+                "vad är vädret idag",
+                "vad är vädret idag",
+            ],
+            "system.lights": [
+                "lampa",
+                "light",
+                "tända",
+                "turn on",
+                "släcka",
+                "turn off",
+                "ljus",
+            ],
+            "greeting.hello": [
+                "hej",
+                "hello",
+                "hälsa",
+                "god morgon",
+                "good morning",
+                "tja",
+                "hi",
+            ],
+            "smalltalk.time": [
+                "klockan",
+                "clock",
+                "tid",
+                "time",
+                "nu",
+                "now",
+                "aktuell",
+                "current",
+                "vad är klockan",
+                "hur mycket är klockan",
+            ],
+            "info.query": [
+                "vad är",
+                "what is",
+                "hur",
+                "how",
+                "när",
+                "when",
+                "var",
+                "where",
+                "vem",
+                "who",
+            ],
         }
-        
+
         # Beräkna intent-vektor baserat på keywords med längre fraser först
         intent_scores = np.zeros(len(self.intent_labels))
         for i, (intent, keywords_list) in enumerate(keywords.items()):
@@ -60,21 +138,23 @@ class NLURegistry:
                     # Ge högre vikt till längre keywords
                     score += len(keyword) * 0.1
             intent_scores[i] = score
-        
+
         # Normalisera och konvertera till embedding
         if np.sum(intent_scores) > 0:
             intent_scores = intent_scores / np.sum(intent_scores)
         else:
             intent_scores = np.ones(len(intent_scores)) / len(intent_scores)
-        
+
         # Skapa 384-dimensionell vektor (paddar med hash-baserad data)
         v = np.zeros(384, dtype=np.float32)
-        v[:len(intent_scores)] = intent_scores
-        
+        v[: len(intent_scores)] = intent_scores
+
         # Fyll resten med hash-baserad data för variation
         rng = np.random.default_rng(abs(hash(text)) % (2**32))
-        v[len(intent_scores):] = rng.normal(size=(384-len(intent_scores))).astype(np.float32)
-        
+        v[len(intent_scores) :] = rng.normal(size=(384 - len(intent_scores))).astype(
+            np.float32
+        )
+
         v /= np.linalg.norm(v) + 1e-9
         return v
 
@@ -141,5 +221,3 @@ class NLURegistry:
     def _encode_label(self, text: str) -> np.ndarray:
         # E5 passages (labels) preprended with "passage:"
         return self._encode_text(text, prefix="passage:")
-
-

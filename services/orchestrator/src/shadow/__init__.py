@@ -2,13 +2,13 @@
 Shadow mode and canary routing for planner evaluation
 """
 
-from .evaluator import ShadowEvaluator, CanaryRouter
-from .models import ShadowRequest, ShadowResponse, CanaryConfig
+from .evaluator import CanaryRouter, ShadowEvaluator
+from .models import CanaryConfig, ShadowRequest, ShadowResponse
 
 __all__ = [
     "ShadowEvaluator",
-    "CanaryRouter", 
+    "CanaryRouter",
     "ShadowRequest",
     "ShadowResponse",
-    "CanaryConfig"
+    "CanaryConfig",
 ]

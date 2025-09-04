@@ -1,6 +1,7 @@
-from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional, Any, Dict
+from typing import Any, Dict
+
+from pydantic import BaseModel
 
 CACHE_NS = "sc:v1"  # bumpa vid schema för key-space cutover
 

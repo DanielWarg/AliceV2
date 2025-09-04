@@ -12,7 +12,7 @@ jobs:
     services:
       redis:
         image: redis:7-alpine
-        ports: ['6379:6379']
+        ports: ['16379:6379']
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 10s
@@ -33,14 +33,31 @@ jobs:
           python -m pip install --upgrade pip
           pip install aiohttp pyyaml
           
+      - name: Cleanup ports
+        run: |
+          # Kill any processes on eval ports to avoid conflicts
+          sudo lsof -ti:18000,8787,9002,16379 | xargs -r sudo kill -9 || true
+          docker system prune -f || true
+          
       - name: Start Alice services
         run: |
-          # Start Alice services in background
-          docker-compose up -d orchestrator guardian
+          # Create minimal .env for CI
+          echo "OPENAI_API_KEY=fake-key-for-ci" > .env
+          echo "N8N_DB_PASSWORD=test" >> .env
+          echo "N8N_ENCRYPTION_KEY=fake-key-for-ci-testing" >> .env
+          echo "REDIS_HOST=localhost" >> .env
+          echo "REDIS_PORT=16379" >> .env
           
-          # Wait for services to be healthy
+          # Start Alice services in background (NLU without Ollama dependency)
+          docker compose up -d guardian alice-cache
+          # Start NLU without healthcheck dependency on Ollama
+          docker compose up -d --no-deps nlu
+          # Start orchestrator last
+          docker compose up -d --no-deps orchestrator
+          
+          # Wait for services to be healthy (increased timeout for CI)
           echo "Waiting for Alice services to be ready..."
-          timeout 60 bash -c 'until curl -f http://localhost:18000/health; do sleep 2; done'
+          timeout 300 bash -c 'until curl -f http://localhost:18000/health; do sleep 10; done'
           
       - name: Run regression tests
         run: |

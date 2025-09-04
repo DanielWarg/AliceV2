@@ -4,6 +4,7 @@ import pathlib
 # Default system prompt path
 PROMPT_PATH = pathlib.Path("config/system_prompt.txt")
 
+
 def get_system_prompt_hash() -> str:
     """Calculate SHA256 hash of system prompt"""
     try:
@@ -17,6 +18,7 @@ def get_system_prompt_hash() -> str:
     except Exception:
         # Return hash of error state
         return hashlib.sha256(b"error_reading_prompt").hexdigest()
+
 
 # Global hash for easy access
 SYSTEM_PROMPT_SHA256 = get_system_prompt_hash()

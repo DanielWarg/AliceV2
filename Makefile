@@ -1,17 +1,35 @@
-.PHONY: help venv clean clean-venv fetch-models up down force-down restart preflight docker-up docker-down test verify test-all test-unit test-e2e test-integration
+.PHONY: help down up status health test-unit test-all security-scan format lint clean stabilize fix-system rl-bootstrap rl-train rl-shadow
 
 # Default target
 help: ## Show this help message
-	@echo "Alice v2 Development Commands"
-	@echo "============================="
+	@echo "🚀 Alice v2 Development Commands"
 	@echo ""
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@echo "📦 System:"
+	@echo "  make up          - Start all services"
+	@echo "  make down        - Stop all services"  
+	@echo "  make status      - Show service status"
+	@echo "  make health      - Check all health endpoints"
+	@echo "  make logs        - Show recent logs"
 	@echo ""
-	@echo "Quick Start:"
-	@echo "  make up          # Start development stack + frontend (auto-creates venv + installs deps)"
-	@echo "  make frontend    # Start frontend only (HUD on http://localhost:3001)"
-	@echo "  make test-all    # Run all tests (unit + e2e + integration)"
-	@echo "  make down        # Stop development stack + frontend"
+	@echo "🧪 Testing:"
+	@echo "  make test-unit   - Run unit tests"
+	@echo "  make test-all    - Run all tests including eval"
+	@echo "  make test-a-z    - Comprehensive A-Z system test"
+	@echo ""
+	@echo "🔒 Quality & Security:"
+	@echo "  make security-scan - Trivy security scan"
+	@echo "  make format        - Format all code"
+	@echo "  make lint          - Lint all code" 
+	@echo "  make quality       - Format + lint + security"
+	@echo ""
+	@echo "🎯 Stabilization:"
+	@echo "  make stabilize     - Full stabilization check"
+	@echo "  make fix-system    - Auto-fix system health issues"
+	@echo ""
+	@echo "🤖 RL Pipeline:"
+	@echo "  make rl-bootstrap  - Generate bootstrap data"
+	@echo "  make rl-train      - Train RL policies"
+	@echo "  make rl-shadow     - Start shadow mode"
 
 venv: ## Create/update root virtual environment
 	@echo "🔧 Setting up virtual environment..."
@@ -62,27 +80,36 @@ preflight: ## Light checks (Docker + ports)
 	@if docker info >/dev/null 2>&1; then echo "🐳 Docker: OK"; else echo "🐳 Docker: NOT RUNNING"; fi
 	@printf "🔌 Ports in use: "; (lsof -i :8000 -i :8501 -i :8787 2>/dev/null || true) | awk '{print $$9}' | sed 's/.*://g' | xargs -I{} echo -n "{} " ; echo
 
-up: install-requirements fetch-models ## Start development stack (auto-setup)
-	@echo "🚀 Starting dev stack..."
-	@if docker info >/dev/null 2>&1; then \
-		./scripts/dev_up.sh; \
-	else \
-		echo "⚠️  Docker not running. Start Docker first or use local-only scripts."; \
-		exit 1; \
-	fi
-	@echo "🎨 Starting frontend..."
-	@$(MAKE) frontend
+# System commands
 
-dev-fast: install-requirements fetch-models ## Start core services only (fast dev)
-	@echo "🚀 Starting core services (fast dev mode)..."
-	@if docker info >/dev/null 2>&1; then \
-		./scripts/dev_up_fast.sh; \
-	else \
-		echo "⚠️  Docker not running. Start Docker first."; \
-		exit 1; \
-	fi
-	@echo "🎨 Starting frontend..."
-	@$(MAKE) frontend
+up: ## Start all services (fast)  
+	@echo "🚀 Starting Alice v2 services..."
+	docker compose up -d guardian orchestrator alice-cache nlu
+	@echo "⏳ Waiting for services to start..."
+	@sleep 5
+	@$(MAKE) health
+
+status: ## Show service status
+	@echo "📊 Service Status:"
+	@docker compose ps
+
+health: ## Check all health endpoints
+	@echo "🏥 Health Check:"
+	@echo -n "  Orchestrator: "
+	@curl -sf http://localhost:18000/health >/dev/null && echo "✅ OK" || echo "❌ FAIL"
+	@echo -n "  Guardian: "
+	@curl -sf http://localhost:8787/health >/dev/null && echo "✅ OK" || echo "❌ FAIL"
+	@echo -n "  NLU: "
+	@curl -sf http://localhost:9002/healthz >/dev/null && echo "✅ OK" || echo "❌ FAIL"
+	@echo -n "  Redis: "
+	@docker compose exec -T alice-cache redis-cli ping | grep -q PONG && echo "✅ OK" || echo "❌ FAIL"
+
+logs: ## Show recent logs
+	@echo "📋 Recent logs:"
+	@docker compose logs --tail=20 orchestrator guardian nlu
+
+dev-fast: ## Alias for up (fast dev)
+	@$(MAKE) up
 
 down: ## Stop development stack (with Docker fallback)
 	@echo "🛑 Stopping dev stack..."
@@ -145,15 +172,15 @@ test-all: ## Run complete test suite (unit + e2e + integration)
 	@$(MAKE) test-integration
 	@echo "✅ All tests completed!"
 
-test-unit: ## Run unit tests for all services
+# Testing commands
+test-unit: ## Run unit tests
 	@echo "🧪 Running unit tests..."
-	@echo "🔍 Testing orchestrator..."
-	@cd services/orchestrator && source ../../.venv/bin/activate && python -m pytest -v --tb=short || echo "⚠️  Some orchestrator tests failed (expected in dev environment)"
-	@echo "🔍 Testing guardian..."
-	@cd services/guardian && source ../../.venv/bin/activate && python -m pytest -v --tb=short || echo "⚠️  Guardian has no tests yet"
-	@echo "🔍 Testing NLU..."
-	@cd services/nlu && source ../../.venv/bin/activate && python -m pytest -v --tb=short || echo "⚠️  NLU has no tests yet"
-	@echo "✅ Unit tests completed!"
+	@cd services/orchestrator && python -m pytest src/tests/ -v --tb=short
+
+
+test-a-z: ## Comprehensive A-Z system test
+	@echo "🔍 Running comprehensive A-Z test..."
+	@cd services/orchestrator && python src/tests/test_comprehensive_a_z.py
 
 test-e2e: ## Run end-to-end tests
 	@echo "🧪 Running E2E tests..."
@@ -249,17 +276,77 @@ dev-quick: up test-e2e ## Quick development workflow (up + e2e only)
 # Development helpers
 install-deps: install-requirements ## Install all dependencies (alias)
 
-format: ## Format code
-	@echo "🎨 Formatting code..."
-	@source .venv/bin/activate && cd services/orchestrator && ruff format .
-	@source .venv/bin/activate && cd services/guardian && ruff format .
-	@echo "✅ Code formatted"
+# Quality & Security
+security-scan: ## Trivy security scan
+	@echo "🔒 Running security scan..."
+	@docker run --rm -v "$(PWD):/src" aquasec/trivy fs /src --severity HIGH,CRITICAL --format table
 
-lint: ## Lint code
-	@echo "🔍 Linting code..."
-	@source .venv/bin/activate && cd services/orchestrator && ruff check .
-	@source .venv/bin/activate && cd services/guardian && ruff check .
-	@echo "✅ Code linted"
+format: ## Format all code
+	@echo "🐍 Formatting Python code..."
+	@black --line-length 100 services/
+	@echo "✅ Formatting complete"
+
+lint: ## Lint all code
+	@echo "🧹 Linting Python code..."
+	@flake8 services/ --max-line-length=100 --extend-ignore=E203,W503 --exclude=__pycache__,.venv
+	@echo "✅ Linting complete"
+
+quality: format lint security-scan ## Format + lint + security
+	@echo "✅ All quality checks complete"
+
+# Stabilization
+stabilize: ## Full stabilization check
+	@echo "🔧 Running full stabilization check..."
+	@$(MAKE) down
+	@$(MAKE) up
+	@$(MAKE) health
+	@$(MAKE) quality
+	@$(MAKE) test-unit
+	@echo "✅ Stabilization check complete"
+
+fix-system: ## Auto-fix system health issues
+	@echo "🔧 Auto-fixing system health issues..."
+	@python fix_system_health.py --action fix
+
+# RL Pipeline
+rl-bootstrap: ## Generate bootstrap data
+	@echo "🌱 Generating bootstrap data..."
+	@python services/rl/generate_bootstrap_data.py --episodes 1000 --out data/bootstrap.json
+
+rl-train: ## Train RL policies
+	@echo "🧠 Training RL policies..."
+	@python services/rl/automate_rl_pipeline.py --telemetry data/bootstrap.json
+
+rl-shadow: ## Start shadow mode
+	@echo "🌑 Starting shadow mode..."
+	@python services/rl/shadow_mode.py --action start
+
+# Utilities
+clean-docker: ## Clean Docker containers and system
+	@echo "🧹 Cleaning Docker resources..."
+	@docker compose down --volumes --remove-orphans
+	@docker system prune -f
+	@find . -name "*.pyc" -delete
+	@find . -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+	@echo "✅ Docker cleanup complete"
+
+# Development workflow
+dev-start: down up health ## Start development environment
+	@echo "🚀 Development environment ready!"
+	@echo "📊 Access points:"
+	@echo "  Orchestrator: http://localhost:18000"
+	@echo "  Guardian: http://localhost:8787" 
+	@echo "  NLU: http://localhost:9002"
+	@echo "  Cache: localhost:6379"
+
+# CI simulation
+ci-local: ## Simulate CI pipeline locally
+	@echo "🤖 Simulating CI pipeline locally..."
+	@$(MAKE) clean
+	@$(MAKE) up
+	@$(MAKE) quality
+	@$(MAKE) test-all
+	@echo "✅ CI simulation complete"
 
 # Repository hygiene
 repo-health: ## Check repository health

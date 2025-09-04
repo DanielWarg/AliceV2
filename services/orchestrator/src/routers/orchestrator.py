@@ -3,29 +3,43 @@ Orchestrator API Router
 Handles LLM routing and ingestion requests with LLM integration v1
 """
 
-from fastapi import APIRouter, HTTPException, Request, Response, Depends
-import httpx
-import structlog
-import time
+import hashlib
 import json
 import os
-from typing import Dict, Any, List
+import pathlib
+import time
 from datetime import datetime
+from typing import Any, Dict, List
 
-from ..models.api import IngestRequest, IngestResponse, APIError, ModelType, ChatRequest, ChatResponse
-from ..services.guardian_client import GuardianClient
-from ..middleware.logging import get_logger_with_trace
-from ..utils.ram_peak import ram_peak_mb
-from ..utils.energy import EnergyMeter
-from ..utils.tool_errors import record_tool_call, classify_tool_error
+import httpx
+import structlog
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 
 # LLM Integration v1 imports
-from ..llm import get_micro_driver, get_planner_driver, get_hybrid_planner_driver, get_planner_v2_driver, get_deep_driver
-from ..shadow import CanaryRouter
-from ..router import get_router_policy
+from ..llm import (
+    get_deep_driver,
+    get_hybrid_planner_driver,
+    get_micro_driver,
+    get_planner_driver,
+    get_planner_v2_driver,
+)
+from ..middleware.logging import get_logger_with_trace
+from ..models.api import (
+    APIError,
+    ChatRequest,
+    ChatResponse,
+    IngestRequest,
+    IngestResponse,
+    ModelType,
+)
 from ..planner import get_planner_executor
-import hashlib
-import pathlib
+from ..router import get_router_policy
+from ..services.guardian_client import GuardianClient
+from ..shadow import CanaryRouter
+from ..utils.energy import EnergyMeter
+from ..utils.ram_peak import ram_peak_mb
+from ..utils.tool_errors import classify_tool_error, record_tool_call
+
 
 # Calculate system prompt hash directly
 def get_system_prompt_hash() -> str:
@@ -43,6 +57,7 @@ def get_system_prompt_hash() -> str:
         # Return hash of error state
         return hashlib.sha256(b"error_reading_prompt").hexdigest()
 
+
 SYSTEM_PROMPT_SHA256 = get_system_prompt_hash()
 
 router = APIRouter()
@@ -50,9 +65,11 @@ router = APIRouter()
 # Global Guardian client (will be injected)
 guardian_client = GuardianClient()
 
+
 async def get_guardian_client() -> GuardianClient:
     """Dependency to get Guardian client"""
     return guardian_client
+
 
 def log_turn_event(
     trace_id: str,
@@ -72,10 +89,10 @@ def log_turn_event(
     lang: str | None = None,
 ) -> None:
     """Logga komplett turn event enligt observability standard"""
-    
+
     logger = structlog.get_logger(__name__)
     logger.info("log_turn_event called", trace_id=trace_id, session_id=session_id)
-    
+
     turn_event = {
         "v": "1",
         "ts": datetime.utcnow().isoformat() + "Z",
@@ -94,103 +111,108 @@ def log_turn_event(
         "input_text": input_text,
         "output_text": output_text,
         "lang": lang or "sv",
-        "security": {
-            "system_prompt_sha256": SYSTEM_PROMPT_SHA256
-        }
+        "security": {"system_prompt_sha256": SYSTEM_PROMPT_SHA256},
     }
-    
+
     # Skriv till JSONL fil
     try:
         # Använd konfigurerad katalog (monteras i Docker via LOG_DIR)
         telemetry_dir = os.getenv("LOG_DIR", "/data/telemetry")
         logger.info("Telemetry dir", telemetry_dir=telemetry_dir)
         os.makedirs(telemetry_dir, exist_ok=True)
-        
+
         today = datetime.utcnow().strftime("%Y-%m-%d")
         daily_dir = os.path.join(telemetry_dir, today)
         os.makedirs(daily_dir, exist_ok=True)
         filename = os.path.join(daily_dir, f"events_{today}.jsonl")
         logger.info("Writing to file", filename=filename)
-        
+
         with open(filename, "a", encoding="utf-8") as f:
             f.write(json.dumps(turn_event) + "\n")
-        
+
         logger.info("Turn event written successfully")
-            
+
     except Exception as e:
         # Fallback till logging om filskrivning misslyckas
-        logger.error("Failed to write turn event to JSONL", error=str(e), turn_event=turn_event)
+        logger.error(
+            "Failed to write turn event to JSONL", error=str(e), turn_event=turn_event
+        )
+
 
 def route_request(request) -> str:
     """
     LLM Integration v1 routing logic: Choose between micro, planner, deep
-    
+
     Routes based on:
     - Text analysis and pattern matching
     - Guardian system state
     - Message complexity and length
-    
+
     Args:
         request: IngestRequest or ChatRequest to route
-        
+
     Returns:
         Route string: "micro", "planner", or "deep"
     """
     # Handle both IngestRequest (text) and ChatRequest (message)
-    text = getattr(request, 'text', None) or getattr(request, 'message', '')
-    
+    text = getattr(request, "text", None) or getattr(request, "message", "")
+
     router_policy = get_router_policy()
     route_decision = router_policy.decide_route(text)
-    
+
     # Log routing decision if enabled
     if os.getenv("ROUTER_LOG_DECISION", "true").lower() == "true":
         logger = structlog.get_logger(__name__)
-        logger.info("Route decision", 
-                   route=route_decision.route,
-                   confidence=route_decision.confidence,
-                   reason=route_decision.reason,
-                   text_length=len(text))
-    
+        logger.info(
+            "Route decision",
+            route=route_decision.route,
+            confidence=route_decision.confidence,
+            reason=route_decision.reason,
+            text_length=len(text),
+        )
+
     return route_decision.route
+
 
 def estimate_latency(model: ModelType, text_length: int) -> int:
     """
     Estimate processing latency based on model and input length
-    
+
     Args:
         model: Target model
         text_length: Input text length
-        
+
     Returns:
         Estimated latency in milliseconds
     """
     base_latency = {
-        ModelType.MICRO: 100,    # 100ms base
+        ModelType.MICRO: 100,  # 100ms base
         ModelType.PLANNER: 500,  # 500ms base
-        ModelType.DEEP: 1500     # 1.5s base
+        ModelType.DEEP: 1500,  # 1.5s base
     }
-    
+
     # Add ~1ms per character for longer texts
     text_penalty = min(text_length, 1000) // 10
-    
+
     return base_latency.get(model, 100) + text_penalty
+
 
 def calculate_priority(request, guardian_health: Dict[str, Any]) -> int:
     """
     Calculate request priority (1-10, where 10 is highest)
-    
+
     Args:
         request: IngestRequest or ChatRequest
         guardian_health: Guardian system health data
-        
+
     Returns:
         Priority score 1-10
     """
     base_priority = 5  # Default priority
-    
+
     # Handle both IngestRequest (text) and ChatRequest (message)
-    text = getattr(request, 'text', None) or getattr(request, 'message', '')
-    
+    text = getattr(request, "text", None) or getattr(request, "message", "")
+
     # Adjust based on Guardian state
     state = guardian_health.get("state", "NORMAL")
     if state == "NORMAL":
@@ -201,84 +223,87 @@ def calculate_priority(request, guardian_health: Dict[str, Any]) -> int:
         priority_modifier = -2
     else:
         priority_modifier = -3
-    
+
     # Shorter messages get slight priority boost
     if len(text) < 100:
         priority_modifier += 1
-    
+
     return max(1, min(10, base_priority + priority_modifier))
+
 
 @router.post("/ingest", response_model=IngestResponse)
 async def orchestrator_ingest(
     request: Request,
     response: Response,
     ingest_request: IngestRequest,
-    guardian: GuardianClient = Depends(get_guardian_client)
+    guardian: GuardianClient = Depends(get_guardian_client),
 ) -> IngestResponse:
     """
     Main orchestrator ingestion endpoint
-    
+
     Performs routing decisions and admission control for LLM requests.
     Phase 1: Always routes to micro model with Guardian protection.
     """
     logger = get_logger_with_trace(request, __name__)
     start_time = time.time()
-    
+
     logger.info(
         "Orchestrator ingest request",
         session_id=ingest_request.session_id,
         text_length=len(ingest_request.text),
         lang=ingest_request.lang,
-        intent=ingest_request.intent
+        intent=ingest_request.intent,
     )
-    
+
     try:
         # Get Guardian health status
         guardian_health = await guardian.get_health()
-        
+
         # Check admission control
-        admitted = await guardian.check_admission({
-            "type": "ingest",
-            "session_id": ingest_request.session_id,
-            "text_length": len(ingest_request.text),
-            "lang": ingest_request.lang
-        })
-        
+        admitted = await guardian.check_admission(
+            {
+                "type": "ingest",
+                "session_id": ingest_request.session_id,
+                "text_length": len(ingest_request.text),
+                "lang": ingest_request.lang,
+            }
+        )
+
         if not admitted:
             retry_after = guardian.get_retry_after_seconds(guardian_health)
-            
+
             logger.warning(
                 "Ingest request blocked by Guardian",
                 session_id=ingest_request.session_id,
                 guardian_state=guardian_health.get("state"),
-                retry_after=retry_after
+                retry_after=retry_after,
             )
-            
+
             raise HTTPException(
                 status_code=503,
                 detail=APIError.create(
                     code="SERVICE_OVERLOADED",
                     message="System is currently overloaded, please try again later",
                     retry_after=retry_after,
-                    trace_id=getattr(request.state, "trace_id", None)
-                ).model_dump()
+                    trace_id=getattr(request.state, "trace_id", None),
+                ).model_dump(),
             )
-        
+
         # Perform routing decision
         routed_model = route_request(ingest_request)
-        
+
         # Calculate request priority
         priority = calculate_priority(ingest_request, guardian_health)
-        
+
         # Estimate processing latency
         estimated_latency = estimate_latency(routed_model, len(ingest_request.text))
-        
+
         # Generate routing reason
         routing_reason = f"Phase 1 routing: always micro model (Guardian: {guardian_health.get('state', 'UNKNOWN')})"
-        
+
         # Calculate response latency
         response_latency_ms = int((time.time() - start_time) * 1000)
-        
+
         logger.info(
             "Orchestrator routing decision",
             session_id=ingest_request.session_id,
@@ -286,28 +311,30 @@ async def orchestrator_ingest(
             priority=priority,
             estimated_latency_ms=estimated_latency,
             response_latency_ms=response_latency_ms,
-            guardian_state=guardian_health.get("state")
+            guardian_state=guardian_health.get("state"),
         )
-        
+
         # Report metrics to Guardian
-        await guardian.report_request_metrics({
-            "type": "ingest",
-            "routed_model": routed_model,
-            "latency_ms": response_latency_ms,
-            "text_length": len(ingest_request.text),
-            "priority": priority,
-            "success": True
-        })
-        
+        await guardian.report_request_metrics(
+            {
+                "type": "ingest",
+                "routed_model": routed_model,
+                "latency_ms": response_latency_ms,
+                "text_length": len(ingest_request.text),
+                "priority": priority,
+                "success": True,
+            }
+        )
+
         # Set route header for metrics middleware
         route_name = {
             ModelType.MICRO: "micro",
-            ModelType.PLANNER: "planner", 
-            ModelType.DEEP: "deep"
+            ModelType.PLANNER: "planner",
+            ModelType.DEEP: "deep",
         }.get(routed_model, "other")
-        
+
         response.headers["X-Route"] = route_name
-        
+
         # Build response
         response_data = IngestResponse(
             session_id=ingest_request.session_id,
@@ -316,52 +343,53 @@ async def orchestrator_ingest(
             priority=priority,
             estimated_latency_ms=estimated_latency,
             reason=routing_reason,
-            trace_id=getattr(request.state, "trace_id", None)
+            trace_id=getattr(request.state, "trace_id", None),
         )
-        
+
         return response_data
-        
+
     except HTTPException:
         raise
     except Exception as e:
         response_latency_ms = int((time.time() - start_time) * 1000)
-        
+
         logger.error(
             "Orchestrator ingest failed",
             session_id=ingest_request.session_id,
             error=str(e),
             response_latency_ms=response_latency_ms,
-            exc_info=True
+            exc_info=True,
         )
-        
+
         # Report error metrics to Guardian
-        await guardian.report_request_metrics({
-            "type": "ingest",
-            "routed_model": "unknown",
-            "latency_ms": response_latency_ms,
-            "text_length": len(ingest_request.text),
-            "success": False,
-            "error": str(e)
-        })
-        
+        await guardian.report_request_metrics(
+            {
+                "type": "ingest",
+                "routed_model": "unknown",
+                "latency_ms": response_latency_ms,
+                "text_length": len(ingest_request.text),
+                "success": False,
+                "error": str(e),
+            }
+        )
+
         raise HTTPException(
             status_code=500,
             detail=APIError.create(
                 code="INTERNAL_ERROR",
                 message="An internal error occurred while processing routing request",
                 details=str(e) if str(e) else "Unknown error",
-                trace_id=getattr(request.state, "trace_id", None)
-            ).model_dump()
+                trace_id=getattr(request.state, "trace_id", None),
+            ).model_dump(),
         )
 
+
 @router.get("/health")
-async def orchestrator_health(
-    guardian: GuardianClient = Depends(get_guardian_client)
-):
+async def orchestrator_health(guardian: GuardianClient = Depends(get_guardian_client)):
     """Orchestrator service health check with routing capability status"""
     try:
         guardian_health = await guardian.get_health()
-        
+
         return {
             "service": "orchestrator",
             "status": "healthy",
@@ -372,9 +400,9 @@ async def orchestrator_health(
                 "guardian_integration": True,
                 "llm_drivers": {
                     "micro": "phi3.5:mini",
-                    "planner": "qwen2.5:7b-moe", 
-                    "deep": "llama3.1:8b"
-                }
+                    "planner": "qwen2.5:7b-moe",
+                    "deep": "llama3.1:8b",
+                },
             },
             "guardian_status": guardian_health.get("state", "unknown"),
             "features": {
@@ -384,54 +412,53 @@ async def orchestrator_health(
                 "metrics_reporting": True,
                 "llm_integration": True,
                 "planner_execution": True,
-                "fallback_matrix": True
+                "fallback_matrix": True,
             },
-            "security": {
-                "system_prompt_sha256": SYSTEM_PROMPT_SHA256
-            }
+            "security": {"system_prompt_sha256": SYSTEM_PROMPT_SHA256},
         }
     except Exception as e:
         return {
-            "service": "orchestrator", 
+            "service": "orchestrator",
             "status": "degraded",
             "error": str(e),
-            "guardian_status": "error"
+            "guardian_status": "error",
         }
+
 
 @router.post("/chat")
 async def orchestrator_chat(
     request: Request,
     response: Response,
     chat_request: ChatRequest,
-    guardian: GuardianClient = Depends(get_guardian_client)
+    guardian: GuardianClient = Depends(get_guardian_client),
 ) -> ChatResponse:
     """
     Chat completion endpoint
-    
+
     Processes chat messages and returns AI responses.
     Phase 1: Always routes to micro model with Guardian protection.
     """
     logger = get_logger_with_trace(request, __name__)
     start_time = time.time()
-    
+
     # Start energy meter
     energy_meter = EnergyMeter()
     energy_meter.start()
-    
+
     # Get trace ID for observability
     trace_id = getattr(request.state, "trace_id", "unknown")
-    
+
     logger.info(
         "Orchestrator chat request",
         session_id=chat_request.session_id,
         message_length=len(chat_request.message),
         preferred_model=chat_request.model,
-        trace_id=trace_id
+        trace_id=trace_id,
     )
-    
+
     # Track tool calls
     tool_calls: List[Dict[str, Any]] = []
-    
+
     try:
         # --- NLU pre-parse (fail-open) ---
         nlu_route_hint = None
@@ -445,11 +472,13 @@ async def orchestrator_chat(
                 "session_id": chat_request.session_id,
             }
             with httpx.Client(timeout=0.08) as client:
-                nlu_resp = client.post("http://nlu:9002/api/nlu/parse", json=nlu_payload)
+                nlu_resp = client.post(
+                    "http://nlu:9002/api/nlu/parse", json=nlu_payload
+                )
                 if nlu_resp.status_code == 200:
                     nlu_json = nlu_resp.json()
                     nlu_route_hint = nlu_json.get("route_hint")
-                    intent = (nlu_json.get("intent") or {})
+                    intent = nlu_json.get("intent") or {}
                     nlu_intent_label = intent.get("label")
                     nlu_slots = nlu_json.get("slots") or {}
                     if nlu_intent_label:
@@ -470,43 +499,45 @@ async def orchestrator_chat(
             logger.error("Guardian health check failed", error=str(e))
             guardian_health = {"state": "ERROR"}
             guardian_state = "ERROR"
-        
+
         # Check admission control
         try:
-            admitted = await guardian.check_admission({
-                "type": "chat",
-                "session_id": chat_request.session_id,
-                "message_length": len(chat_request.message),
-                "preferred_model": chat_request.model
-            })
+            admitted = await guardian.check_admission(
+                {
+                    "type": "chat",
+                    "session_id": chat_request.session_id,
+                    "message_length": len(chat_request.message),
+                    "preferred_model": chat_request.model,
+                }
+            )
         except Exception as e:
             logger.error("Admission control failed", error=str(e))
             admitted = True  # Fail-open
-        
+
         if not admitted:
             retry_after = guardian.get_retry_after_seconds(guardian_health)
-            
+
             logger.warning(
                 "Chat request blocked by Guardian",
                 session_id=chat_request.session_id,
                 guardian_state=guardian_state,
-                retry_after=retry_after
+                retry_after=retry_after,
             )
-            
+
             raise HTTPException(
                 status_code=429,
                 detail=APIError.create(
                     code="RATE_LIMITED",
                     message="Too many requests, please try again later",
                     retry_after=retry_after,
-                    trace_id=trace_id
+                    trace_id=trace_id,
                 ).model_dump(),
-                headers={"Retry-After": str(retry_after)}
+                headers={"Retry-After": str(retry_after)},
             )
-        
+
         # Route to appropriate model using LLM Integration v1 (+ NLU hint)
         # Respect force_route parameter if provided
-        force_route = getattr(chat_request, 'force_route', None)
+        force_route = getattr(chat_request, "force_route", None)
         if force_route:
             route = force_route
         else:
@@ -514,105 +545,112 @@ async def orchestrator_chat(
             if nlu_route_hint in {"micro", "planner", "deep"}:
                 route = nlu_route_hint
         logger.info("Route selected", route=route)
-        
+
         # Initialize shadow mode if enabled
         shadow_enabled = os.getenv("PLANNER_SHADOW_ENABLED", "0") == "1"
-        
+
         # Generate response based on route
         llm_response = None
         planner_execution = None
         fallback_used = False
         blocked_by_guardian = False
-        
+
         try:
             if route == "micro":
-                    # Intent guard for deterministic classification
-                    from ..intent_guard import guard_intent_sv, grammar_for
-                    
-                    # Try deterministic intent classification first
-                    guard_intent = guard_intent_sv(chat_request.message)
-                    
-                    if guard_intent:
-                        # Use guard result directly - skip micro model
-                        from ..intent_guard import intent_to_tool
-                        tool_name = intent_to_tool(guard_intent)
-                        print(f"🛡️ Intent guard hit: {guard_intent} → {tool_name}")
-                        llm_response = {
-                            "text": json.dumps({
+                # Intent guard for deterministic classification
+                from ..intent_guard import grammar_for, guard_intent_sv
+
+                # Try deterministic intent classification first
+                guard_intent = guard_intent_sv(chat_request.message)
+
+                if guard_intent:
+                    # Use guard result directly - skip micro model
+                    from ..intent_guard import intent_to_tool
+
+                    tool_name = intent_to_tool(guard_intent)
+                    print(f"🛡️ Intent guard hit: {guard_intent} → {tool_name}")
+                    llm_response = {
+                        "text": json.dumps(
+                            {
                                 "intent": guard_intent,
                                 "tool": tool_name,
                                 "args": {},
                                 "render_instruction": {
                                     "type": "text",
-                                    "content": f"Intent: {guard_intent}"
-                                }
-                            }),
-                            "model": "intent_guard",
-                            "tokens_used": 0,
-                            "prompt_tokens": 0,
-                            "response_tokens": 0,
-                            "temperature": 0.0,
-                            "route": "micro",
-                            "mock_used": False,
-                            "schema_ok": True,
-                            "source": "guard"
-                        }
-                        model_used = "intent_guard"
-                    else:
-                        # Fallback to micro with intent-scoped grammar
-                        from ..tool_selector_fast import pick_tool
-                        
-                        # Get intent-scoped grammar
-                        grammar = grammar_for(chat_request.message)
-                        
-                        # Generate response with scoped grammar
-                        micro_driver = get_micro_driver()
-                        llm_response = micro_driver.generate(chat_request.message, grammar=grammar)
-                        model_used = llm_response["model"]
-                        llm_response["source"] = "micro"
-                        
-                        # Override with fast tool selector if available
-                        fast_tool = pick_tool(chat_request.message)
-                        if fast_tool and llm_response.get("response"):
-                            try:
-                                response_json = json.loads(llm_response["response"])
-                                response_json["tool"] = fast_tool
-                                llm_response["response"] = json.dumps(response_json)
-                                print(f"🚀 Fast tool selector override: {fast_tool}")
-                            except:
-                                pass  # Keep original if parsing fails
-                
+                                    "content": f"Intent: {guard_intent}",
+                                },
+                            }
+                        ),
+                        "model": "intent_guard",
+                        "tokens_used": 0,
+                        "prompt_tokens": 0,
+                        "response_tokens": 0,
+                        "temperature": 0.0,
+                        "route": "micro",
+                        "mock_used": False,
+                        "schema_ok": True,
+                        "source": "guard",
+                    }
+                    model_used = "intent_guard"
+                else:
+                    # Fallback to micro with intent-scoped grammar
+                    from ..tool_selector_fast import pick_tool
+
+                    # Get intent-scoped grammar
+                    grammar = grammar_for(chat_request.message)
+
+                    # Generate response with scoped grammar
+                    micro_driver = get_micro_driver()
+                    llm_response = micro_driver.generate(
+                        chat_request.message, grammar=grammar
+                    )
+                    model_used = llm_response["model"]
+                    llm_response["source"] = "micro"
+
+                    # Override with fast tool selector if available
+                    fast_tool = pick_tool(chat_request.message)
+                    if fast_tool and llm_response.get("response"):
+                        try:
+                            response_json = json.loads(llm_response["response"])
+                            response_json["tool"] = fast_tool
+                            llm_response["response"] = json.dumps(response_json)
+                            print(f"🚀 Fast tool selector override: {fast_tool}")
+                        except:
+                            pass  # Keep original if parsing fails
+
             elif route == "planner":
                 canary_router = CanaryRouter() if shadow_enabled else None
-                
+
                 # Use hybrid planner if enabled, otherwise fallback to local
                 if os.getenv("PLANNER_HYBRID_ENABLED", "0") == "1":
                     planner_driver = get_hybrid_planner_driver()
-                    logger.info("Using hybrid planner (EASY/MEDIUM → local, HARD → OpenAI)")
+                    logger.info(
+                        "Using hybrid planner (EASY/MEDIUM → local, HARD → OpenAI)"
+                    )
                 else:
                     planner_driver = get_planner_driver()
                     logger.info("Using local planner only")
-                
+
                 # Generate primary response
                 llm_response = planner_driver.generate(chat_request.message)
                 model_used = llm_response["model"]
-                
+
                 # Run shadow evaluation if enabled
                 if shadow_enabled:
                     try:
                         # Generate shadow response with planner v2
                         shadow_driver = get_planner_v2_driver()
                         shadow_result = shadow_driver.generate(chat_request.message)
-                        
+
                         # Evaluate shadow vs primary
                         shadow_response = await canary_router.evaluate_shadow(
                             session_id=chat_request.session_id,
                             message=chat_request.message,
                             primary_result=llm_response,
                             shadow_result=shadow_result,
-                            trace_id=trace_id
+                            trace_id=trace_id,
                         )
-                        
+
                         # Use shadow result if canary routing is enabled and eligible
                         if shadow_response.canary_routed:
                             logger.info("Using canary response (planner v2)")
@@ -620,11 +658,13 @@ async def orchestrator_chat(
                             model_used = shadow_result["model"]
                         else:
                             logger.info("Using primary response (planner v1)")
-                            
+
                     except Exception as shadow_error:
-                        logger.warning("Shadow evaluation failed", error=str(shadow_error))
+                        logger.warning(
+                            "Shadow evaluation failed", error=str(shadow_error)
+                        )
                         # Continue with primary response
-                
+
                 # Execute plan if JSON was parsed successfully
                 if llm_response.get("json_parsed") and llm_response.get("plan"):
                     planner_executor = get_planner_executor()
@@ -632,31 +672,31 @@ async def orchestrator_chat(
                     if plan:
                         planner_execution = planner_executor.execute_plan(plan)
                         fallback_used = planner_execution.get("fallback_used", False)
-                        
+
                         # Record tool calls from plan execution
                         for step_result in planner_execution.get("executed_steps", []):
                             tool_call_result = record_tool_call(
                                 tool_name=step_result["tool"],
                                 success=step_result["success"],
                                 error_class=step_result.get("klass"),
-                                latency_ms=step_result["latency_ms"]
+                                latency_ms=step_result["latency_ms"],
                             )
                             tool_calls.append(tool_call_result)
-                
+
             elif route == "deep":
                 deep_driver = get_deep_driver()
                 llm_response = deep_driver.generate(chat_request.message)
                 model_used = llm_response["model"]
                 blocked_by_guardian = llm_response.get("blocked_by_guardian", False)
                 fallback_used = llm_response.get("fallback_used", False)
-                
+
             else:
                 # Fallback to micro for unknown routes
                 micro_driver = get_micro_driver()
                 llm_response = micro_driver.generate(chat_request.message)
                 model_used = llm_response["model"]
                 fallback_used = True
-                
+
         except Exception as llm_error:
             logger.error("LLM generation failed", route=route, error=str(llm_error))
             # Fallback to micro
@@ -668,14 +708,14 @@ async def orchestrator_chat(
             except Exception as fallback_error:
                 logger.error("Fallback to micro also failed", error=str(fallback_error))
                 raise llm_error
-        
+
         # Get RAM peak and energy consumption
         ram_peak = ram_peak_mb()
         energy_wh = energy_meter.stop()
-        
+
         # Calculate response latency
         response_latency_ms = int((time.time() - start_time) * 1000)
-        
+
         logger.info(
             "Orchestrator chat completed",
             session_id=chat_request.session_id,
@@ -684,9 +724,9 @@ async def orchestrator_chat(
             ram_peak_mb=ram_peak,
             energy_wh=energy_wh,
             tool_calls_count=len(tool_calls),
-            guardian_state=guardian_state
+            guardian_state=guardian_state,
         )
-        
+
         # Determine final route (honor planner fallback)
         route_final = route
         if llm_response and llm_response.get("route") == "fallback":
@@ -710,57 +750,100 @@ async def orchestrator_chat(
                 "top_k": 0,
                 "hits": 0,
                 "llm_model": model_used,
-                "planner_schema_ok": llm_response.get("schema_ok", llm_response.get("meta", {}).get("schema_ok", False)) if llm_response else False,
-                "repair_used": llm_response.get("repair_used", False) if llm_response else False,
-                "circuit_open": llm_response.get("circuit_open", False) if llm_response else False,
-                "fallback_used": llm_response.get("fallback_used", False) if llm_response else fallback_used,
-                "fallback_reason": llm_response.get("fallback_reason", None) if llm_response else None,
+                "planner_schema_ok": (
+                    llm_response.get(
+                        "schema_ok",
+                        llm_response.get("meta", {}).get("schema_ok", False),
+                    )
+                    if llm_response
+                    else False
+                ),
+                "repair_used": (
+                    llm_response.get("repair_used", False) if llm_response else False
+                ),
+                "circuit_open": (
+                    llm_response.get("circuit_open", False) if llm_response else False
+                ),
+                "fallback_used": (
+                    llm_response.get("fallback_used", False)
+                    if llm_response
+                    else fallback_used
+                ),
+                "fallback_reason": (
+                    llm_response.get("fallback_reason", None) if llm_response else None
+                ),
                 "blocked_by_guardian": blocked_by_guardian,
-                "tokens_used": llm_response.get("tokens_used", 0) if llm_response else 0
+                "tokens_used": (
+                    llm_response.get("tokens_used", 0) if llm_response else 0
+                ),
             },
             input_text=chat_request.message,
             output_text=(llm_response or {}).get("text", ""),
             lang=(getattr(chat_request, "lang", None) or "sv"),
         )
         logger.info("Turn event logged successfully", trace_id=trace_id)
-        
+
         # Set route header for metrics middleware
         response.headers["X-Route"] = route_final
-        
+
         # Build response with LLM integration
         if llm_response:
             response_text = llm_response["text"]
         else:
             response_text = f"LLM response not available for route {route}"
-        
+
         # Add metadata for observability
         metadata = {
             "route": route_final,
             "llm_model": model_used,
-            "planner_schema_ok": llm_response.get("schema_ok", llm_response.get("meta", {}).get("schema_ok", False)) if llm_response else False,
-            "repair_used": llm_response.get("repair_used", False) if llm_response else False,
-            "circuit_open": llm_response.get("circuit_open", False) if llm_response else False,
-            "fallback_used": llm_response.get("fallback_used", False) if llm_response else fallback_used,
-            "fallback_reason": llm_response.get("fallback_reason", None) if llm_response else None,
+            "planner_schema_ok": (
+                llm_response.get(
+                    "schema_ok", llm_response.get("meta", {}).get("schema_ok", False)
+                )
+                if llm_response
+                else False
+            ),
+            "repair_used": (
+                llm_response.get("repair_used", False) if llm_response else False
+            ),
+            "circuit_open": (
+                llm_response.get("circuit_open", False) if llm_response else False
+            ),
+            "fallback_used": (
+                llm_response.get("fallback_used", False)
+                if llm_response
+                else fallback_used
+            ),
+            "fallback_reason": (
+                llm_response.get("fallback_reason", None) if llm_response else None
+            ),
             "blocked_by_guardian": blocked_by_guardian,
             "tokens_used": llm_response.get("tokens_used", 0) if llm_response else 0,
             "planner_execution": planner_execution,
-            "nlu": {"intent": nlu_intent_label, "slots": nlu_slots} if (nlu_intent_label or nlu_slots) else None,
+            "nlu": (
+                {"intent": nlu_intent_label, "slots": nlu_slots}
+                if (nlu_intent_label or nlu_slots)
+                else None
+            ),
         }
-        
+
         # Add shadow mode metadata if enabled
-        if shadow_enabled and 'shadow_response' in locals():
+        if shadow_enabled and "shadow_response" in locals():
             metadata["shadow"] = {
                 "enabled": True,
                 "canary_eligible": shadow_response.canary_eligible,
                 "canary_routed": shadow_response.canary_routed,
                 "intent_match": shadow_response.comparison.get("intent_match", False),
-                "tool_choice_same": shadow_response.comparison.get("tool_choice_same", False),
-                "latency_delta_ms": shadow_response.comparison.get("latency_delta_ms", 0)
+                "tool_choice_same": shadow_response.comparison.get(
+                    "tool_choice_same", False
+                ),
+                "latency_delta_ms": shadow_response.comparison.get(
+                    "latency_delta_ms", 0
+                ),
             }
         else:
             metadata["shadow"] = {"enabled": False}
-        
+
         response_data = ChatResponse(
             session_id=chat_request.session_id,
             timestamp=int(time.time() * 1000),
@@ -768,27 +851,27 @@ async def orchestrator_chat(
             response=response_text,
             model_used=route,  # Use route as enum value instead of actual model name
             latency_ms=response_latency_ms,
-            metadata=metadata
+            metadata=metadata,
         )
-        
+
         return response_data
-        
+
     except HTTPException:
         raise
     except Exception as e:
         energy_wh = energy_meter.stop()
         response_latency_ms = int((time.time() - start_time) * 1000)
-        
+
         # Record error as tool call
         error_class = classify_tool_error(None, e)
         tool_call_result = record_tool_call(
             tool_name="orchestrator.chat",
             success=False,
             error_class=error_class,
-            latency_ms=response_latency_ms
+            latency_ms=response_latency_ms,
         )
         tool_calls.append(tool_call_result)
-        
+
         # Log turn event even on error
         try:
             log_turn_event(
@@ -810,7 +893,7 @@ async def orchestrator_chat(
                     "planner_schema_ok": False,
                     "fallback_used": False,
                     "blocked_by_guardian": False,
-                    "tokens_used": 0
+                    "tokens_used": 0,
                 },
                 input_text=chat_request.message,
                 output_text="",
@@ -818,54 +901,54 @@ async def orchestrator_chat(
             )
         except Exception as log_error:
             logger.error("Failed to log turn event on error", error=str(log_error))
-        
+
         logger.error(
             "Orchestrator chat failed",
             session_id=chat_request.session_id,
             error=str(e),
             response_latency_ms=response_latency_ms,
-            exc_info=True
+            exc_info=True,
         )
-        
+
         raise HTTPException(
             status_code=500,
             detail=APIError.create(
                 code="INTERNAL_ERROR",
                 message="An internal error occurred while processing chat request",
                 details=str(e) if str(e) else "Unknown error",
-                trace_id=trace_id
-            ).model_dump()
+                trace_id=trace_id,
+            ).model_dump(),
         )
+
 
 @router.post("/run")
 async def orchestrator_run(
     request: Request,
     response: Response,
     ingest_request: IngestRequest,
-    guardian: GuardianClient = Depends(get_guardian_client)
+    guardian: GuardianClient = Depends(get_guardian_client),
 ) -> IngestResponse:
     """
     Run endpoint - alias for /ingest for compatibility
-    
+
     This endpoint provides the same functionality as /ingest
     but with a more intuitive name for execution requests.
     """
     # Delegate to the main ingest endpoint
     return await orchestrator_ingest(request, response, ingest_request, guardian)
 
+
 @router.get("/tools")
-async def orchestrator_tools(
-    guardian: GuardianClient = Depends(get_guardian_client)
-):
+async def orchestrator_tools(guardian: GuardianClient = Depends(get_guardian_client)):
     """
     Get available tools and their status
-    
+
     Returns information about available tools, their health,
     and current capabilities based on Guardian state.
     """
     try:
         guardian_health = await guardian.get_health()
-        
+
         # Phase 1: Basic tool registry
         available_tools = {
             "micro_llm": {
@@ -874,48 +957,50 @@ async def orchestrator_tools(
                 "status": "available",
                 "model": "phi-3.5-mini",
                 "capabilities": ["simple_qa", "basic_conversation", "swedish_support"],
-                "guardian_restrictions": []
+                "guardian_restrictions": [],
             },
             "planner_llm": {
-                "name": "Planner LLM", 
+                "name": "Planner LLM",
                 "type": "text_generation",
                 "status": "planned",
                 "model": "qwen2.5-moe",
                 "capabilities": ["planning", "tool_use", "complex_reasoning"],
-                "guardian_restrictions": ["requires_normal_state"]
+                "guardian_restrictions": ["requires_normal_state"],
             },
             "deep_llm": {
                 "name": "Deep LLM",
-                "type": "text_generation", 
+                "type": "text_generation",
                 "status": "planned",
                 "model": "llama-3.1",
                 "capabilities": ["deep_analysis", "research", "creative_writing"],
-                "guardian_restrictions": ["requires_normal_state", "low_memory_usage"]
-            }
+                "guardian_restrictions": ["requires_normal_state", "low_memory_usage"],
+            },
         }
-        
+
         # Apply Guardian state restrictions
         guardian_state = guardian_health.get("state", "NORMAL")
         if guardian_state in ["BROWNOUT", "EMERGENCY"]:
             # Restrict to micro only during resource pressure
             available_tools["planner_llm"]["status"] = "restricted"
             available_tools["deep_llm"]["status"] = "restricted"
-            available_tools["micro_llm"]["guardian_restrictions"].append("only_available_model")
-        
+            available_tools["micro_llm"]["guardian_restrictions"].append(
+                "only_available_model"
+            )
+
         return {
             "service": "orchestrator",
             "status": "healthy",
             "guardian_state": guardian_state,
             "available_tools": available_tools,
             "phase": "1",
-            "total_tools": len(available_tools)
+            "total_tools": len(available_tools),
         }
-        
+
     except Exception as e:
         return {
             "service": "orchestrator",
-            "status": "degraded", 
+            "status": "degraded",
             "error": str(e),
             "available_tools": {},
-            "guardian_state": "unknown"
+            "guardian_state": "unknown",
         }

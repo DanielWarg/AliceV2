@@ -1,7 +1,8 @@
 import re
+from datetime import datetime
+
 import dateparser
 import phonenumbers
-from datetime import datetime
 
 RE_EMAIL = re.compile(r"[\w.\+\-]+@[\w\.-]+\.[A-Za-z]{2,}")
 RE_TIME = re.compile(r"\b(?:(?:kl\s*)?(\d{1,2})(?::(\d{2}))?)\b", re.IGNORECASE)
@@ -33,7 +34,9 @@ def extract_slots_sv(text: str) -> dict:
 
     # phone
     for m in phonenumbers.PhoneNumberMatcher(text, "SE"):
-        slots["phone_e164"] = phonenumbers.format_number(m.number, phonenumbers.PhoneNumberFormat.E164)
+        slots["phone_e164"] = phonenumbers.format_number(
+            m.number, phonenumbers.PhoneNumberFormat.E164
+        )
         break
 
     # person (enkel baseline)
@@ -45,5 +48,3 @@ def extract_slots_sv(text: str) -> dict:
         slots["person"] = m.group(1)
 
     return slots
-
-

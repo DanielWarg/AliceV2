@@ -1,4 +1,5 @@
 import os
+
 from src.security.policy import load_policy
 
 
@@ -11,4 +12,3 @@ def test_load_policy_ok(tmp_path):
 
 def test_default_repo_policy_exists():
     assert os.path.exists("config/security_policy.yaml")
-
