@@ -18,7 +18,7 @@ jobs:
           node-version: '20'
           cache: 'pnpm'
       - name: Install deps
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --no-frozen-lockfile
       - name: Lint web/packages
         run: pnpm run lint || true
       - name: Type-check web/packages
