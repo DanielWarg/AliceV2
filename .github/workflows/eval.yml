@@ -36,7 +36,7 @@ jobs:
       - name: Start Alice services
         run: |
           # Start Alice services in background
-          docker-compose up -d orchestrator guardian
+          docker compose up -d orchestrator guardian
           
           # Wait for services to be healthy
           echo "Waiting for Alice services to be ready..."
