@@ -105,7 +105,7 @@ jobs:
           # Vänta på alla kritiska services
           wait_for_health "http://localhost:${ORCHESTRATOR_PORT}/health" "orchestrator"
           wait_for_health "http://localhost:${GUARDIAN_PORT}/health" "guardian"  
-          wait_for_health "http://localhost:${NLU_PORT}/healthz" "nlu"
+          wait_for_health "http://localhost:${NLU_PORT}/health" "nlu"
           
           # Verifiera Redis
           docker compose exec -T alice-cache redis-cli ping | grep PONG || {

@@ -40,12 +40,16 @@ jobs:
           echo "N8N_DB_PASSWORD=test" >> .env
           echo "N8N_ENCRYPTION_KEY=fake-key-for-ci-testing" >> .env
           
-          # Start Alice services in background
-          docker compose up -d orchestrator guardian alice-cache nlu
+          # Start Alice services in background (NLU without Ollama dependency)
+          docker compose up -d guardian alice-cache
+          # Start NLU without healthcheck dependency on Ollama
+          docker compose up -d --no-deps nlu
+          # Start orchestrator last
+          docker compose up -d --no-deps orchestrator
           
-          # Wait for services to be healthy
+          # Wait for services to be healthy (increased timeout for CI)
           echo "Waiting for Alice services to be ready..."
-          timeout 90 bash -c 'until curl -f http://localhost:18000/health; do sleep 5; done'
+          timeout 300 bash -c 'until curl -f http://localhost:18000/health; do sleep 10; done'
           
       - name: Run regression tests
         run: |
