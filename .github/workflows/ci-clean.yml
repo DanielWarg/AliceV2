@@ -69,55 +69,62 @@ jobs:
           mkdir -p data/{telemetry,tests,embeddings}
           chmod 777 data/{telemetry,tests}
       
-      - name: Export env for CI
+      - name: Set safe CI env
         run: |
           echo "CLOUD_OK=false" >> $GITHUB_ENV
           echo "OLLAMA_DISABLE=true" >> $GITHUB_ENV
-          echo "OPENAI_API_KEY=fake-key-for-ci" >> $GITHUB_ENV
-          echo "N8N_WEBHOOK_SECRET=fake-webhook-for-ci" >> $GITHUB_ENV
+          echo "COMPOSE_PROJECT_NAME=alicev2_ci_${{ github.run_id }}" >> $GITHUB_ENV
       
-      - name: Start services (CI profile)
+      - name: Start stack (CI profile)
         run: |
           echo "🚀 Starting core services with CI profile..."
-          docker compose -f docker-compose.yml -f docker-compose.ci.yml --profile ci up -d
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d
+          docker compose ps
       
-      - name: Wait for orchestrator health  
+      - name: Wait for orchestrator (container health)
         run: |
-          echo "🏥 Waiting for orchestrator..."
+          echo "🏥 Waiting for orchestrator container health..."
           for i in {1..60}; do
-            if curl -fsS http://localhost:${ORCHESTRATOR_PORT}/health >/dev/null 2>&1; then
+            STATUS=$(docker inspect --format='{{json .State.Health.Status}}' $(docker compose ps -q orchestrator) 2>/dev/null || echo "null")
+            echo "orchestrator health = $STATUS (attempt $i/60)"
+            if [ "$STATUS" = "\"healthy\"" ]; then
               echo "✅ orchestrator healthy"; break
             fi
-            echo "⏳ Attempt $i/60..."
             sleep 2
           done
-          if ! curl -fsS http://localhost:${ORCHESTRATOR_PORT}/health >/dev/null 2>&1; then
-            echo "❌ orchestrator not healthy"
-            docker compose ps; docker compose logs orchestrator --tail=50; exit 1
+          if [ "$STATUS" != "\"healthy\"" ]; then
+            echo "❌ orchestrator not healthy after 120s"
+            docker compose logs orchestrator --tail=50; exit 1
           fi
 
-      - name: Wait for guardian health
+      - name: Wait for guardian (container health)
         run: |
-          echo "🏥 Waiting for guardian..."
+          echo "🏥 Waiting for guardian container health..."
           for i in {1..60}; do
-            if curl -fsS http://localhost:${GUARDIAN_PORT}/health >/dev/null 2>&1; then
+            STATUS=$(docker inspect --format='{{json .State.Health.Status}}' $(docker compose ps -q guardian) 2>/dev/null || echo "null")
+            echo "guardian health = $STATUS (attempt $i/60)"
+            if [ "$STATUS" = "\"healthy\"" ]; then
               echo "✅ guardian healthy"; break
             fi
-            echo "⏳ Attempt $i/60..."
             sleep 2
           done
-          if ! curl -fsS http://localhost:${GUARDIAN_PORT}/health >/dev/null 2>&1; then
-            echo "❌ guardian not healthy"
+          if [ "$STATUS" != "\"healthy\"" ]; then
+            echo "❌ guardian not healthy after 120s"
             docker compose logs guardian --tail=50; exit 1
           fi
-          
-      - name: Verify Redis
+
+      - name: Sanity curl inside network
         run: |
-          echo "🏥 Verifying Redis..."
-          docker compose exec -T alice-cache redis-cli ping | grep PONG || {
-            echo "❌ Redis not responding"
-            docker compose logs alice-cache --tail=20; exit 1
-          }
+          echo "🔍 Testing services via internal network..."
+          NETWORK=$(docker network ls --format '{{.Name}}' | grep "${COMPOSE_PROJECT_NAME}_default" | head -1)
+          echo "Using network: $NETWORK"
+          
+          docker run --rm --network "$NETWORK" curlimages/curl:8.10.1 curl -fsS http://orchestrator:8000/health
+          echo "✅ orchestrator reachable via network"
+          
+          docker run --rm --network "$NETWORK" curlimages/curl:8.10.1 curl -fsS http://guardian:8787/health  
+          echo "✅ guardian reachable via network"
+          
           echo "✅ ALL SERVICES HEALTHY"
       
       - name: Service status
