@@ -1,0 +1,17 @@
+---
+services:
+  watchdog:
+    build: ./services/watchdog
+    container_name: alice-watchdog
+    environment:
+      SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL:-}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - orchestrator
+      - guardian
+      - nlu
+    ports:
+      - "9308:9308"  # Prometheus metrics
+    restart: unless-stopped

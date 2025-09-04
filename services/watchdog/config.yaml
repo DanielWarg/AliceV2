@@ -1,0 +1,29 @@
+---
+poll_interval_s: 10
+
+slo:
+  latency_p95_ms:
+    fast: 250
+    planner_first: 900
+    planner_full: 1500
+  tool_precision_min: 0.85
+  success_rate_min: 0.98
+  cache_hit_min: 0.60
+
+endpoints:
+  orchestrator: http://orchestrator:8000/health
+  guardian: http://guardian:8787/health
+  nlu: http://nlu:9002/health
+  # Redis ping görs indirekt via orchestrator/HUD,
+  # men kan kompletteras via sidecar om ni vill.
+
+actions:
+  slack_webhook: ${SLACK_WEBHOOK_URL}
+  github_repo: DanielWarg/AliceV2
+  github_token_env: GITHUB_TOKEN
+  auto_restart_services: ["orchestrator", "nlu"]
+  freeze_on_critical_burst: true
+  burst_threshold: 2
+
+hud_snapshot_url: http://orchestrator:8000/hud/snapshot
+prometheus_port: 9308
