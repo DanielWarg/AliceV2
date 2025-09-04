@@ -3,42 +3,42 @@
   "planner": "unknown",
   "schema": "vunknown",
   "prompt": "v1.0",
-  "timestamp": "2025-09-04T06:25:00.031779Z",
+  "timestamp": "2025-09-04T06:46:04.413870Z",
   "total_scenarios": 53,
   "successful_scenarios": 53,
   "metrics": {
     "easy.schema_ok_first": 1.0,
     "medium.schema_ok_first": 1.0,
     "hard.schema_ok_first": 1.0,
-    "tool_precision": 0.6226415094339622,
-    "latency_p95_ms": 6632.273483276367,
+    "tool_precision": 0.7169811320754716,
+    "latency_p95_ms": 7529.053282737732,
     "success_rate": 1.0
   },
   "detailed_metrics": {
     "easy": {
       "easy.schema_ok_first": 1.0,
-      "easy.latency_p50_ms": 4532.630562782288,
-      "easy.latency_p95_ms": 6634.874475002289,
-      "easy.tool_precision": 0.6,
+      "easy.latency_p50_ms": 5916.174530982971,
+      "easy.latency_p95_ms": 7530.189037322998,
+      "easy.tool_precision": 0.65,
       "easy.success_rate": 1.0
     },
     "medium": {
       "medium.schema_ok_first": 1.0,
-      "medium.latency_p50_ms": 4857.524991035461,
-      "medium.latency_p95_ms": 6632.123064994812,
-      "medium.tool_precision": 0.8181818181818182,
+      "medium.latency_p50_ms": 5916.526913642883,
+      "medium.latency_p95_ms": 7529.181921482086,
+      "medium.tool_precision": 0.9090909090909091,
       "medium.success_rate": 1.0
     },
     "hard": {
       "hard.schema_ok_first": 1.0,
-      "hard.latency_p50_ms": 4224.240064620972,
-      "hard.latency_p95_ms": 6632.17306137085,
-      "hard.tool_precision": 0.2727272727272727,
+      "hard.latency_p50_ms": 5916.44287109375,
+      "hard.latency_p95_ms": 7528.812885284424,
+      "hard.tool_precision": 0.45454545454545453,
       "hard.success_rate": 1.0
     },
     "overall": {
-      "latency_p95_ms": 6632.273483276367,
-      "tool_precision": 0.6226415094339622,
+      "latency_p95_ms": 7529.053282737732,
+      "tool_precision": 0.7169811320754716,
       "success_rate": 1.0
     }
   },
@@ -46,7 +46,7 @@
     {
       "scenario_id": "006",
       "success": true,
-      "latency_ms": 6634.99903678894,
+      "latency_ms": 7530.265092849731,
       "schema_ok_first": true,
       "tool_precision": 1.0,
       "intent_match": true,
@@ -63,7 +63,7 @@
     {
       "scenario_id": "050",
       "success": true,
-      "latency_ms": 6632.17306137085,
+      "latency_ms": 7528.630018234253,
       "schema_ok_first": true,
       "tool_precision": 0.0,
       "intent_match": false,
@@ -82,7 +82,7 @@
     {
       "scenario_id": "038",
       "success": true,
-      "latency_ms": 6631.993770599365,
+      "latency_ms": 7528.983116149902,
       "schema_ok_first": true,
       "tool_precision": 0.0,
       "intent_match": false,
@@ -103,18 +103,18 @@
     {
       "scenario_id": "044",
       "success": true,
-      "latency_ms": 143.17083358764648,
+      "latency_ms": 7528.812885284424,
       "schema_ok_first": true,
       "tool_precision": 0.5,
       "intent_match": false,
       "expected_intent": "calendar.create_draft",
-      "actual_intent": "calendar",
+      "actual_intent": "email.create_draft",
       "expected_tools": [
         "calendar.create_draft",
         "email.create_draft"
       ],
       "actual_tools": [
-        "calendar.create_draft"
+        "email.create_draft"
       ],
       "max_latency_ms": 1500,
       "tags": [
@@ -125,12 +125,12 @@
     {
       "scenario_id": "002",
       "success": true,
-      "latency_ms": 6632.507801055908,
+      "latency_ms": 7528.7439823150635,
       "schema_ok_first": true,
       "tool_precision": 1.0,
-      "intent_match": false,
+      "intent_match": true,
       "expected_intent": "weather.lookup",
-      "actual_intent": "weather",
+      "actual_intent": "weather.lookup",
       "expected_tools": [
         "weather.lookup"
       ],
@@ -146,7 +146,7 @@
     {
       "scenario_id": 3,
       "success": true,
-      "latency_ms": 6631.724834442139,
+      "latency_ms": 7528.595209121704,
       "schema_ok_first": true,
       "tool_precision": 1.0,
       "intent_match": false,
@@ -167,12 +167,12 @@
     {
       "scenario_id": "028",
       "success": true,
-      "latency_ms": 6631.258010864258,
+      "latency_ms": 7529.217004776001,
       "schema_ok_first": true,
       "tool_precision": 1.0,
-      "intent_match": false,
+      "intent_match": true,
       "expected_intent": "email.create_draft",
-      "actual_intent": "email",
+      "actual_intent": "email.create_draft",
       "expected_tools": [
         "email.create_draft"
       ],
@@ -188,12 +188,12 @@
     {
       "scenario_id": "032",
       "success": true,
-      "latency_ms": 6632.145881652832,
+      "latency_ms": 7528.397083282471,
       "schema_ok_first": true,
       "tool_precision": 1.0,
-      "intent_match": false,
+      "intent_match": true,
       "expected_intent": "email.create_draft",
-      "actual_intent": "email",
+      "actual_intent": "email.create_draft",
       "expected_tools": [
         "email.create_draft"
       ],
@@ -209,7 +209,7 @@
     {
       "scenario_id": "018",
       "success": true,
-      "latency_ms": 6584.28692817688,
+      "latency_ms": 7528.431177139282,
       "schema_ok_first": true,
       "tool_precision": 1.0,
       "intent_match": true,
@@ -226,7 +226,7 @@
     {
       "scenario_id": "026",
       "success": true,
-      "latency_ms": 6584.736108779907,
+      "latency_ms": 7527.888059616089,
       "schema_ok_first": true,
       "tool_precision": 1.0,
       "intent_match": false,
@@ -247,17 +247,17 @@
     {
       "scenario_id": "045",
       "success": true,
-      "latency_ms": 6490.807056427002,
+      "latency_ms": 6676.849842071533,
       "schema_ok_first": true,
       "tool_precision": 0.0,
       "intent_match": false,
       "expected_intent": "memory.query",
-      "actual_intent": "time.now",
+      "actual_intent": "calendar.create_draft",
       "expected_tools": [
         "memory.query"
       ],
       "actual_tools": [
-        "time.now"
+        "calendar.create_draft"
       ],
       "max_latency_ms": 1500,
       "tags": [
@@ -268,7 +268,7 @@
     {
       "scenario_id": "005",
       "success": true,
-      "latency_ms": 1085.3619575500488,
+      "latency_ms": 6676.079034805298,
       "schema_ok_first": true,
       "tool_precision": 1.0,
       "intent_match": true,
@@ -285,12 +285,12 @@
     {
       "scenario_id": "041",
       "success": true,
-      "latency_ms": 1084.825038909912,
+      "latency_ms": 6675.875663757324,
       "schema_ok_first": true,
       "tool_precision": 0.5,
       "intent_match": false,
       "expected_intent": "memory.query",
-      "actual_intent": "calendar",
+      "actual_intent": "calendar.create_draft",
       "expected_tools": [
         "memory.query",
         "calendar.create_draft"
@@ -307,7 +307,7 @@
     {
       "scenario_id": "016",
       "success": true,
-      "latency_ms": 4842.854022979736,
+      "latency_ms": 6675.896167755127,
       "schema_ok_first": true,
       "tool_precision": 0.0,
       "intent_match": true,
@@ -326,7 +326,7 @@
     {
       "scenario_id": "022",
       "success": true,
-      "latency_ms": 4842.525005340576,
+      "latency_ms": 6675.748109817505,
       "schema_ok_first": true,
       "tool_precision": 1.0,
       "intent_match": false,
@@ -347,12 +347,12 @@
     {
       "scenario_id": 5,
       "success": true,
-      "latency_ms": 4842.4060344696045,
+      "latency_ms": 6675.66704750061,
       "schema_ok_first": true,
       "tool_precision": 0.5,
       "intent_match": false,
       "expected_intent": "memory.query",
-      "actual_intent": "calendar",
+      "actual_intent": "calendar.create_draft",
       "expected_tools": [
         "memory.query",
         "calendar.create_draft"
@@ -369,7 +369,7 @@
     {
       "scenario_id": "001",
       "success": true,
-      "latency_ms": 4842.23198890686,
+      "latency_ms": 6675.555944442749,
       "schema_ok_first": true,
       "tool_precision": 0.0,
       "intent_match": true,
@@ -388,7 +388,7 @@
     {
       "scenario_id": "036",
       "success": true,
-      "latency_ms": 4842.468976974487,
+      "latency_ms": 6674.668073654175,
       "schema_ok_first": true,
       "tool_precision": 1.0,
       "intent_match": false,
@@ -409,12 +409,12 @@
     {
       "scenario_id": "017",
       "success": true,
-      "latency_ms": 4841.7017459869385,
+      "latency_ms": 6675.482749938965,
       "schema_ok_first": true,
       "tool_precision": 1.0,
-      "intent_match": false,
+      "intent_match": true,
       "expected_intent": "weather.lookup",
-      "actual_intent": "weather",
+      "actual_intent": "weather.lookup",
       "expected_tools": [
         "weather.lookup"
       ],
@@ -430,12 +430,12 @@
     {
       "scenario_id": "008",
       "success": true,
-      "latency_ms": 4840.975999832153,
+      "latency_ms": 6675.001859664917,
       "schema_ok_first": true,
       "tool_precision": 1.0,
-      "intent_match": false,
+      "intent_match": true,
       "expected_intent": "weather.lookup",
-      "actual_intent": "weather",
+      "actual_intent": "weather.lookup",
       "expected_tools": [
         "weather.lookup"
       ],
@@ -451,12 +451,12 @@
     {
       "scenario_id": "023",
       "success": true,
-      "latency_ms": 4840.263843536377,
+      "latency_ms": 5906.578302383423,
       "schema_ok_first": true,
       "tool_precision": 1.0,
-      "intent_match": false,
+      "intent_match": true,
       "expected_intent": "calendar.create_draft",
-      "actual_intent": "calendar",
+      "actual_intent": "calendar.create_draft",
       "expected_tools": [
         "calendar.create_draft"
       ],
@@ -472,12 +472,12 @@
     {
       "scenario_id": "004",
       "success": true,
-      "latency_ms": 3837.6457691192627,
+      "latency_ms": 5908.123016357422,
       "schema_ok_first": true,
       "tool_precision": 1.0,
-      "intent_match": false,
+      "intent_match": true,
       "expected_intent": "weather.lookup",
-      "actual_intent": "weather",
+      "actual_intent": "weather.lookup",
       "expected_tools": [
         "weather.lookup"
       ],
@@ -493,7 +493,7 @@
     {
       "scenario_id": "009",
       "success": true,
-      "latency_ms": 3837.25905418396,
+      "latency_ms": 5907.853126525879,
       "schema_ok_first": true,
       "tool_precision": 1.0,
       "intent_match": true,
@@ -510,7 +510,7 @@
     {
       "scenario_id": "040",
       "success": true,
-      "latency_ms": 4224.600076675415,
+      "latency_ms": 5906.347036361694,
       "schema_ok_first": true,
       "tool_precision": 0.0,
       "intent_match": false,
@@ -529,7 +529,7 @@
     {
       "scenario_id": "015",
       "success": true,
-      "latency_ms": 4224.285125732422,
+      "latency_ms": 5907.508134841919,
       "schema_ok_first": true,
       "tool_precision": 1.0,
       "intent_match": true,
@@ -546,16 +546,18 @@
     {
       "scenario_id": "046",
       "success": true,
-      "latency_ms": 4224.240064620972,
+      "latency_ms": 5908.253908157349,
       "schema_ok_first": true,
-      "tool_precision": 0.0,
-      "intent_match": false,
+      "tool_precision": 1.0,
+      "intent_match": true,
       "expected_intent": "calendar.create_draft",
-      "actual_intent": "greeting.hello",
+      "actual_intent": "calendar.create_draft",
       "expected_tools": [
         "calendar.create_draft"
       ],
-      "actual_tools": [],
+      "actual_tools": [
+        "calendar.create_draft"
+      ],
       "max_latency_ms": 1500,
       "tags": [
         "HARD",
@@ -565,7 +567,7 @@
     {
       "scenario_id": "013",
       "success": true,
-      "latency_ms": 4224.137306213379,
+      "latency_ms": 5907.583951950073,
       "schema_ok_first": true,
       "tool_precision": 0.0,
       "intent_match": true,
@@ -584,7 +586,7 @@
     {
       "scenario_id": 4,
       "success": true,
-      "latency_ms": 4224.020004272461,
+      "latency_ms": 5908.167839050293,
       "schema_ok_first": true,
       "tool_precision": 1.0,
       "intent_match": false,
@@ -605,7 +607,7 @@
     {
       "scenario_id": "021",
       "success": true,
-      "latency_ms": 4224.020957946777,
+      "latency_ms": 5906.956911087036,
       "schema_ok_first": true,
       "tool_precision": 1.0,
       "intent_match": false,
@@ -626,16 +628,18 @@
     {
       "scenario_id": "039",
       "success": true,
-      "latency_ms": 4223.568916320801,
+      "latency_ms": 5907.238960266113,
       "schema_ok_first": true,
-      "tool_precision": 0.0,
-      "intent_match": false,
+      "tool_precision": 1.0,
+      "intent_match": true,
       "expected_intent": "calendar.create_draft",
-      "actual_intent": "greeting.hello",
+      "actual_intent": "calendar.create_draft",
       "expected_tools": [
         "calendar.create_draft"
       ],
-      "actual_tools": [],
+      "actual_tools": [
+        "calendar.create_draft"
+      ],
       "max_latency_ms": 500,
       "tags": [
         "MEDIUM",
@@ -645,12 +649,12 @@
     {
       "scenario_id": "014",
       "success": true,
-      "latency_ms": 4223.759174346924,
+      "latency_ms": 4651.930093765259,
       "schema_ok_first": true,
       "tool_precision": 1.0,
-      "intent_match": false,
+      "intent_match": true,
       "expected_intent": "weather.lookup",
-      "actual_intent": "weather",
+      "actual_intent": "weather.lookup",
       "expected_tools": [
         "weather.lookup"
       ],
@@ -666,17 +670,17 @@
     {
       "scenario_id": "049",
       "success": true,
-      "latency_ms": 4234.433889389038,
+      "latency_ms": 4651.707172393799,
       "schema_ok_first": true,
-      "tool_precision": 0.0,
-      "intent_match": false,
+      "tool_precision": 1.0,
+      "intent_match": true,
       "expected_intent": "memory.query",
-      "actual_intent": "time.now",
+      "actual_intent": "memory.query",
       "expected_tools": [
         "memory.query"
       ],
       "actual_tools": [
-        "time.now"
+        "memory.query"
       ],
       "max_latency_ms": 1500,
       "tags": [
@@ -687,12 +691,12 @@
     {
       "scenario_id": "027",
       "success": true,
-      "latency_ms": 4234.575033187866,
+      "latency_ms": 4651.078939437866,
       "schema_ok_first": true,
       "tool_precision": 1.0,
-      "intent_match": false,
+      "intent_match": true,
       "expected_intent": "calendar.create_draft",
-      "actual_intent": "calendar",
+      "actual_intent": "calendar.create_draft",
       "expected_tools": [
         "calendar.create_draft"
       ],
@@ -708,7 +712,7 @@
     {
       "scenario_id": "042",
       "success": true,
-      "latency_ms": 3901.2510776519775,
+      "latency_ms": 4650.585889816284,
       "schema_ok_first": true,
       "tool_precision": 0.5,
       "intent_match": false,
@@ -730,7 +734,7 @@
     {
       "scenario_id": "003",
       "success": true,
-      "latency_ms": 3902.0450115203857,
+      "latency_ms": 4650.969982147217,
       "schema_ok_first": true,
       "tool_precision": 0.0,
       "intent_match": true,
@@ -749,7 +753,7 @@
     {
       "scenario_id": "025",
       "success": true,
-      "latency_ms": 3901.0679721832275,
+      "latency_ms": 4650.482177734375,
       "schema_ok_first": true,
       "tool_precision": 1.0,
       "intent_match": false,
@@ -770,7 +774,7 @@
     {
       "scenario_id": "007",
       "success": true,
-      "latency_ms": 3900.9580612182617,
+      "latency_ms": 4650.435924530029,
       "schema_ok_first": true,
       "tool_precision": 0.0,
       "intent_match": true,
@@ -789,7 +793,7 @@
     {
       "scenario_id": "010",
       "success": true,
-      "latency_ms": 3900.9790420532227,
+      "latency_ms": 4650.340795516968,
       "schema_ok_first": true,
       "tool_precision": 0.0,
       "intent_match": true,
@@ -808,12 +812,12 @@
     {
       "scenario_id": "031",
       "success": true,
-      "latency_ms": 3900.895118713379,
+      "latency_ms": 4649.985074996948,
       "schema_ok_first": true,
       "tool_precision": 1.0,
-      "intent_match": false,
+      "intent_match": true,
       "expected_intent": "calendar.create_draft",
-      "actual_intent": "calendar",
+      "actual_intent": "calendar.create_draft",
       "expected_tools": [
         "calendar.create_draft"
       ],
@@ -829,7 +833,7 @@
     {
       "scenario_id": "047",
       "success": true,
-      "latency_ms": 3900.812864303589,
+      "latency_ms": 4649.945259094238,
       "schema_ok_first": true,
       "tool_precision": 0.0,
       "intent_match": false,
@@ -848,7 +852,7 @@
     {
       "scenario_id": "029",
       "success": true,
-      "latency_ms": 3900.3260135650635,
+      "latency_ms": 5917.311191558838,
       "schema_ok_first": true,
       "tool_precision": 1.0,
       "intent_match": false,
@@ -869,7 +873,7 @@
     {
       "scenario_id": "024",
       "success": true,
-      "latency_ms": 5317.763090133667,
+      "latency_ms": 5916.733264923096,
       "schema_ok_first": true,
       "tool_precision": 1.0,
       "intent_match": false,
@@ -890,16 +894,18 @@
     {
       "scenario_id": "011",
       "success": true,
-      "latency_ms": 5317.394018173218,
+      "latency_ms": 5916.15104675293,
       "schema_ok_first": true,
-      "tool_precision": 0.0,
-      "intent_match": false,
+      "tool_precision": 1.0,
+      "intent_match": true,
       "expected_intent": "weather.lookup",
-      "actual_intent": "greeting.hello",
+      "actual_intent": "weather.lookup",
       "expected_tools": [
         "weather.lookup"
       ],
-      "actual_tools": [],
+      "actual_tools": [
+        "weather.lookup"
+      ],
       "max_latency_ms": 200,
       "tags": [
         "EASY",
@@ -909,12 +915,12 @@
     {
       "scenario_id": "030",
       "success": true,
-      "latency_ms": 4873.855113983154,
+      "latency_ms": 5916.574954986572,
       "schema_ok_first": true,
       "tool_precision": 1.0,
-      "intent_match": false,
+      "intent_match": true,
       "expected_intent": "email.create_draft",
-      "actual_intent": "email",
+      "actual_intent": "email.create_draft",
       "expected_tools": [
         "email.create_draft"
       ],
@@ -930,7 +936,7 @@
     {
       "scenario_id": "033",
       "success": true,
-      "latency_ms": 4873.636245727539,
+      "latency_ms": 5916.723012924194,
       "schema_ok_first": true,
       "tool_precision": 1.0,
       "intent_match": false,
@@ -951,7 +957,7 @@
     {
       "scenario_id": "012",
       "success": true,
-      "latency_ms": 4873.326778411865,
+      "latency_ms": 5916.4979457855225,
       "schema_ok_first": true,
       "tool_precision": 1.0,
       "intent_match": true,
@@ -968,12 +974,12 @@
     {
       "scenario_id": "048",
       "success": true,
-      "latency_ms": 4873.064994812012,
+      "latency_ms": 5916.44287109375,
       "schema_ok_first": true,
       "tool_precision": 1.0,
-      "intent_match": false,
+      "intent_match": true,
       "expected_intent": "calendar.create_draft",
-      "actual_intent": "calendar",
+      "actual_intent": "calendar.create_draft",
       "expected_tools": [
         "calendar.create_draft"
       ],
@@ -989,16 +995,18 @@
     {
       "scenario_id": "035",
       "success": true,
-      "latency_ms": 4873.089075088501,
+      "latency_ms": 5916.478872299194,
       "schema_ok_first": true,
-      "tool_precision": 0.0,
-      "intent_match": false,
+      "tool_precision": 1.0,
+      "intent_match": true,
       "expected_intent": "calendar.create_draft",
-      "actual_intent": "greeting.hello",
+      "actual_intent": "calendar.create_draft",
       "expected_tools": [
         "calendar.create_draft"
       ],
-      "actual_tools": [],
+      "actual_tools": [
+        "calendar.create_draft"
+      ],
       "max_latency_ms": 500,
       "tags": [
         "MEDIUM",
@@ -1008,7 +1016,7 @@
     {
       "scenario_id": "034",
       "success": true,
-      "latency_ms": 4872.721195220947,
+      "latency_ms": 5916.13507270813,
       "schema_ok_first": true,
       "tool_precision": 1.0,
       "intent_match": false,
@@ -1029,7 +1037,7 @@
     {
       "scenario_id": "019",
       "success": true,
-      "latency_ms": 4872.722148895264,
+      "latency_ms": 5916.198015213013,
       "schema_ok_first": true,
       "tool_precision": 0.0,
       "intent_match": true,
@@ -1048,7 +1056,7 @@
     {
       "scenario_id": "037",
       "success": true,
-      "latency_ms": 4872.524976730347,
+      "latency_ms": 2105.365753173828,
       "schema_ok_first": true,
       "tool_precision": 1.0,
       "intent_match": false,
@@ -1069,12 +1077,12 @@
     {
       "scenario_id": "020",
       "success": true,
-      "latency_ms": 4060.1818561553955,
+      "latency_ms": 2105.311155319214,
       "schema_ok_first": true,
       "tool_precision": 1.0,
-      "intent_match": false,
+      "intent_match": true,
       "expected_intent": "weather.lookup",
-      "actual_intent": "weather",
+      "actual_intent": "weather.lookup",
       "expected_tools": [
         "weather.lookup"
       ],
@@ -1090,17 +1098,17 @@
     {
       "scenario_id": "043",
       "success": true,
-      "latency_ms": 4059.499979019165,
+      "latency_ms": 2105.2021980285645,
       "schema_ok_first": true,
       "tool_precision": 0.0,
       "intent_match": false,
       "expected_intent": "memory.query",
-      "actual_intent": "email",
+      "actual_intent": "calendar.create_draft",
       "expected_tools": [
         "memory.query"
       ],
       "actual_tools": [
-        "email.create_draft"
+        "calendar.create_draft"
       ],
       "max_latency_ms": 1500,
       "tags": [

@@ -168,15 +168,16 @@ Inga andra ord, inga förklaringar."""
         import hashlib
         
         try:
-            # Check cache first
-            cache_key = f"micro:{hashlib.md5(prompt.encode()).hexdigest()}"
+            # Check cache first with intent-aware key
+            enum_response = self._call_ollama(prompt, **kwargs)
+            intent_hash = hashlib.md5(enum_response.encode()).hexdigest()[:8]
+            cache_key = f"micro:{intent_hash}:{hashlib.md5(prompt.encode()).hexdigest()}"
             cached_response = self._get_from_cache(cache_key)
             if cached_response:
                 logger.info("Micro cache hit", cache_key=cache_key)
                 return cached_response
             
-            # Get enum response from Ollama
-            enum_response = self._call_ollama(prompt, **kwargs)
+            # Enum response already obtained above for cache key
             
             # Map enum to proper JSON format
             json_response = self._map_enum_to_json(enum_response, prompt)

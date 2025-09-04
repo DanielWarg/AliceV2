@@ -61,7 +61,7 @@ def pick_tool(text: str) -> Optional[str]:
     
     print(f"🔍 Tool match: '{text}' → {best_tool} (score: {best_score})")
     
-    if best_score >= 80:
+    if best_score >= 65:  # Lowered from 80 to catch more variants
         return best_tool
     
     print(f"❌ No tool match for: '{text}' (best score: {best_score})")
