@@ -1,0 +1,76 @@
+#!/usr/bin/env python3
+"""
+Cache key optimization for Alice v2
+Two-tier cache key system for better hit rates
+"""
+
+import hashlib
+from typing import Any, Dict, List
+from datetime import datetime
+
+def canonical_prompt(text: str) -> str:
+    """Normaliserar prompt för cache."""
+    text = " ".join(text.lower().split())           # case + whitespace
+    text = text.replace(""", "\"").replace(""", "\"").replace("'", "'")
+    return text.strip()
+
+def canonical_facts(facts: List[str]) -> List[str]:
+    """Sorterar och deduplikerar fakta."""
+    return sorted(set(facts))[:8]                  # top-8
+
+def bucket_5min() -> int:
+    """Returnerar 5-minuters bucket för nuvarande tid."""
+    now = datetime.utcnow()
+    return (now.hour * 60 + now.minute) // 5
+
+def build_cache_key(
+    intent: str,
+    prompt_raw: str,
+    facts: List[str] = None,
+    schema_version: str = "v4",
+    model_id: str = "llama3:8b",
+    time_bucket: int = None
+) -> str:
+    """
+    Två-tier cache key:
+    1. canonical_prompt + intent + schema_version + model_id + time_bucket
+    2. Fallback till SHA256(prompt_raw) om miss
+    """
+    if facts is None:
+        facts = []
+    
+    if time_bucket is None:
+        time_bucket = bucket_5min()
+    
+    cp = canonical_prompt(prompt_raw)
+    cf = "".join(canonical_facts(facts))
+    
+    # Primary key: normalized content
+    primary = f"{schema_version}:{model_id}:{intent}:{time_bucket}:{hashlib.md5((cp + cf).encode()).hexdigest()[:12]}"
+    
+    return primary
+
+def build_fallback_key(prompt_raw: str) -> str:
+    """Fallback cache key för exakt match."""
+    return f"fallback:{hashlib.md5(prompt_raw.encode()).hexdigest()[:16]}"
+
+# Test function
+def test_cache_keys():
+    """Test cache key generation"""
+    test_cases = [
+        ("time.now", "Vad är klockan?", []),
+        ("time.now", "vad är klockan?", []),
+        ("time.now", "Vad är klockan?", ["timezone: Europe/Stockholm"]),
+        ("weather.lookup", "Vad är vädret i Stockholm?", ["location: Stockholm"]),
+        ("greeting.hello", "Hej!", []),
+    ]
+    
+    print("🧪 Testing cache key generation...")
+    for intent, prompt, facts in test_cases:
+        key = build_cache_key(intent, prompt, facts)
+        fallback = build_fallback_key(prompt)
+        print(f"✅ {intent}: {prompt[:20]}... → {key}")
+        print(f"   Fallback: {fallback}")
+
+if __name__ == "__main__":
+    test_cache_keys()

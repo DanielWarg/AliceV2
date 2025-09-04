@@ -168,13 +168,23 @@ Inga andra ord, inga förklaringar."""
         import hashlib
         
         try:
-            # Check cache first with intent-aware key
+            # Check cache first with optimized two-tier key
+            from ..cache_key import build_cache_key, build_fallback_key
+            
+            # Get enum response for intent
             enum_response = self._call_ollama(prompt, **kwargs)
-            intent_hash = hashlib.md5(enum_response.encode()).hexdigest()[:8]
-            cache_key = f"micro:{intent_hash}:{hashlib.md5(prompt.encode()).hexdigest()}"
-            cached_response = self._get_from_cache(cache_key)
+            intent = self._enum_to_intent(enum_response)
+            
+            # Try primary cache key first
+            primary_key = build_cache_key(intent, prompt, model_id=self.model)
+            cached_response = self._get_from_cache(primary_key)
+            
+            if not cached_response:
+                # Try fallback key
+                fallback_key = build_fallback_key(prompt)
+                cached_response = self._get_from_cache(fallback_key)
             if cached_response:
-                logger.info("Micro cache hit", cache_key=cache_key)
+                logger.info("Micro cache hit", cache_key=primary_key or fallback_key)
                 return cached_response
             
             # Enum response already obtained above for cache key
@@ -200,8 +210,9 @@ Inga andra ord, inga förklaringar."""
                 "enum_response": enum_response
             }
             
-            # Cache the result
-            self._set_cache(cache_key, result)
+            # Cache the result with both keys
+            self._set_cache(primary_key, result)
+            self._set_cache(fallback_key, result)
             
             return result
             
@@ -335,6 +346,19 @@ Inga andra ord, inga förklaringar."""
         }
         
         return json.dumps(mapped, ensure_ascii=False)
+    
+    def _enum_to_intent(self, enum_response: str) -> str:
+        """Convert enum response to intent"""
+        enum_clean = enum_response.strip().lower()
+        intent_map = {
+            "time": "time.now",
+            "weather": "weather.lookup",
+            "memory": "memory.query",
+            "greeting": "greeting.hello",
+            "calendar": "calendar.create_draft",
+            "email": "email.create_draft"
+        }
+        return intent_map.get(enum_clean, "none")
     
     def _get_from_cache(self, cache_key: str) -> Optional[Dict[str, Any]]:
         """Get response from cache"""
