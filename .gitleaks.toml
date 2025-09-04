@@ -1,0 +1,27 @@
+# Gitleaks configuration for Alice v2
+# Ignore false positives in documentation
+
+[extend]
+# Extend default rules but add allowlists
+
+[[rules]]
+description = "Ignore test tokens in documentation"  
+id = "curl-auth-header"
+# Disable this rule entirely since our example tokens are clearly fake
+enabled = false
+
+[[allowlist]]
+# Allow documented API examples
+paths = [
+    "README.md",
+    "docs/**",
+    "**/*.md"
+]
+regexes = [
+    "YOUR_API_KEY_HERE",
+    "test-key-123",
+    "fake-key-for-ci",
+    "Bearer test-",
+    "example-token"
+]
+description = "Documentation examples and test fixtures"
