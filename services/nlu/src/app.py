@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from .schema import ParseRequest, ParseResponse
 from .model_registry import NLURegistry
 from .intent_embedder import IntentEmbedder
@@ -6,6 +6,8 @@ from .intent_validator import IntentValidator
 from .slot_sv import extract_slots_sv
 import time
 import structlog
+import os
+import httpx
 
 app = FastAPI(title="Alice NLU v1", version="1.0.0")
 
@@ -16,9 +18,23 @@ logger.info("Creating IntentValidator")
 validator = IntentValidator(registry)
 logger.info("IntentValidator created")
 
+# Environment variables
+NLU_PORT = int(os.getenv("NLU_PORT", "9002"))
+OLLAMA = os.getenv("OLLAMA_HOST", "http://ollama:11434")
+
 @app.get("/health")
 async def health():
     return {"ok": True, "service": "nlu", "version": "1.0.0"}
+
+@app.get("/healthz")
+async def healthz():
+    try:
+        # Lightweight ping to Ollama
+        r = httpx.get(f"{OLLAMA}/api/tags", timeout=1.0)
+        r.raise_for_status()
+        return {"ok": True, "ollama_ok": True, "service": "nlu", "version": "1.0.0"}
+    except Exception as e:
+        raise HTTPException(503, f"downstream: {e}")
 
 @app.post("/api/nlu/parse", response_model=ParseResponse)
 async def parse(req: ParseRequest):

@@ -18,7 +18,9 @@ def canonical_prompt(text: str) -> str:
     t = t.replace(""", '"').replace(""", '"').replace("'", "'")
     t = re.sub(r"\s+", " ", t).strip()
     # ta bort artiga prefix för bättre träff
-    t = re.sub(r"^(hej|snälla|kan du|skulle du kunna)\s+", "", t)
+    t = re.sub(r"^(hej|snälla|kan du|skulle du kunna|vänligen|tack)\s+", "", t)
+    # ta bort vanliga suffix
+    t = re.sub(r"\s+(tack|snälla|vänligen)$", "", t)
     return t
 
 def canonical_facts(facts: List[str]) -> List[str]:

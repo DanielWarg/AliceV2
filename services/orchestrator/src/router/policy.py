@@ -107,6 +107,26 @@ class RouterPolicy:
         if micro_score > 0.3:  # Lower threshold for micro
             micro_score *= 1.5  # Boost micro preference
             planner_score *= 0.5  # Reduce planner preference
+
+        # Apply MICRO_MAX_SHARE cap with real tracking
+        import os
+        from ..utils.quota_tracker import get_quota_tracker
+        
+        micro_max_share = float(os.getenv("MICRO_MAX_SHARE", "0.2"))
+        quota_tracker = get_quota_tracker("micro_routing")
+        
+        # Check if micro quota is exceeded
+        if quota_tracker.is_quota_exceeded(micro_max_share):
+            logger.info("MICRO quota exceeded - forcing planner route", 
+                       current_share=quota_tracker.get_current_share(),
+                       max_share=micro_max_share)
+            # Force planner route by boosting planner score
+            planner_score *= 3.0
+            micro_score *= 0.1
+        else:
+            # Normal routing with slight micro preference for better precision
+            if micro_score > 0.3:
+                micro_score *= 1.2
         
         # Normalize scores
         total_score = micro_score + planner_score + deep_score
@@ -127,11 +147,15 @@ class RouterPolicy:
         # Generate reasoning
         reason = self._generate_reason(best_route, features, scores)
         
+        # Record decision for quota tracking
+        quota_tracker.record_decision(best_route)
+        
         logger.info("Route decision made", 
                    route=best_route, 
                    confidence=best_score,
                    reason=reason,
-                   features=features)
+                   features=features,
+                   quota_share=quota_tracker.get_current_share())
         
         return RouteDecision(
             route=best_route,

@@ -12,6 +12,8 @@ import httpx
 from typing import AsyncGenerator
 
 from src.routers import chat, orchestrator, status, feedback, learn, memory, shadow_dashboard
+from src.routers.optimized_orchestrator import router as optimized_router
+from src.routers.monitoring import router as monitoring_router
 from src.security.router import router as security_router
 from src.middleware.logging import setup_logging, LoggingMiddleware
 from src.services.guardian_client import GuardianClient
@@ -170,6 +172,10 @@ app.include_router(shadow_dashboard.router, prefix="/api", tags=["shadow"])  # S
 
 # Include Fix Pack v1 status router with real metrics
 app.include_router(fix_status_router)
+
+# Include OPTIMIZED routers - THE GRYM SAUCE! 🚀
+app.include_router(optimized_router, tags=["optimized"])  # Optimized orchestrator
+app.include_router(monitoring_router, tags=["monitoring"])  # Performance monitoring
 
 # Root endpoint
 @app.get("/")
