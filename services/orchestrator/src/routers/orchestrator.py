@@ -526,10 +526,22 @@ async def orchestrator_chat(
         
         try:
             if route == "micro":
-                # Real micro calls - no more force mock
-                micro_driver = get_micro_driver()
-                llm_response = micro_driver.generate(chat_request.message)
-                model_used = llm_response["model"]
+                # Fast tool selector for EASY/MEDIUM intents
+                from ..tool_selector_fast import pick_tool
+                
+                # Try fast tool selector first
+                fast_tool = pick_tool(chat_request.message)
+                if fast_tool:
+                    print(f"🚀 Fast tool selector: {fast_tool}")
+                    # Generate response with fast tool
+                    micro_driver = get_micro_driver()
+                    llm_response = micro_driver.generate(chat_request.message)
+                    model_used = llm_response["model"]
+                else:
+                    # Fallback to regular micro
+                    micro_driver = get_micro_driver()
+                    llm_response = micro_driver.generate(chat_request.message)
+                    model_used = llm_response["model"]
                 
             elif route == "planner":
                 canary_router = CanaryRouter() if shadow_enabled else None
