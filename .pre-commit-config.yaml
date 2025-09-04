@@ -18,7 +18,7 @@ repos:
     rev: v1.35.1
     hooks:
       - id: yamllint
-        exclude: ^\.github/workflows/(eval|ci-clean|sec)\.yml$
+        exclude: ^(\.github/workflows/(eval|ci-clean|sec)\.yml|docker-compose\.yml)$
   - repo: https://github.com/igorshubovych/markdownlint-cli
     rev: v0.41.0
     hooks:

@@ -36,8 +36,6 @@ services:
         condition: service_healthy
       alice-cache:
         condition: service_started
-      nlu:
-        condition: service_healthy
     restart: unless-stopped
     init: true
     tty: false
