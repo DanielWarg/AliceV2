@@ -64,12 +64,30 @@ class PlannerClassifier:
                 r"vad\s+pratade\s+vi",
                 r"vad\s+diskuterade\s+vi"
             ],
-            "none": [
+            "time.now": [
+                r"vad\s+är\s+klockan",
+                r"hur\s+mycket\s+är\s+klockan",
+                r"klockan",
+                r"tid",
+                r"time",
+                r"vilken\s+tid",
+                r"nuvarande\s+tid",
+                r"current\s+time"
+            ],
+            "greeting.hello": [
                 r"hej\b",
                 r"hello\b",
                 r"hi\b",
                 r"tjena\b",
                 r"hallå\b",
+                r"god\s+morgon",
+                r"god\s+afton",
+                r"god\s+kväll",
+                r"trevligt\s+att\s+träffas",
+                r"good\s+morning",
+                r"good\s+evening"
+            ],
+            "none": [
                 r"tack\b",
                 r"thanks\b",
                 r"ja\b",
@@ -77,10 +95,6 @@ class PlannerClassifier:
                 r"ok\b",
                 r"okej\b",
                 r"bra\s+jobbat",
-                r"vad\s+är\s+klockan",
-                r"hur\s+mycket\s+är\s+klockan",
-                r"tid",
-                r"time",
                 r"kan\s+du\s+hjälpa",
                 r"help",
                 r"hjälp"

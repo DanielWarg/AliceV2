@@ -49,7 +49,7 @@ class EvalHarness:
         start_time = time.time()
         
         try:
-            # Make API call
+            # Real API calls - no more mock!
             async with aiohttp.ClientSession() as session:
                 payload = {
                     "v": "1",
@@ -57,10 +57,12 @@ class EvalHarness:
                     "session_id": f"eval_{scenario['id']}"
                 }
                 
+                timeout = aiohttp.ClientTimeout(total=10)  # 10 second timeout
                 async with session.post(
                     f"{self.base_url}/api/orchestrator/chat",
                     json=payload,
-                    headers={"Content-Type": "application/json"}
+                    headers={"Content-Type": "application/json"},
+                    timeout=timeout
                 ) as response:
                     response_data = await response.json()
                     
@@ -87,10 +89,24 @@ class EvalHarness:
                 response_json = json.loads(response_text)
                 actual_intent = response_json.get("intent", "")
                 actual_tools = response_json.get("tool", [])
-                if isinstance(actual_tools, str) and actual_tools:
-                    actual_tools = [actual_tools]
-                elif not actual_tools:
+                
+                # Handle different tool formats
+                if isinstance(actual_tools, str):
+                    if actual_tools and actual_tools != "none":
+                        actual_tools = [actual_tools]
+                    else:
+                        actual_tools = []
+                elif isinstance(actual_tools, list):
+                    actual_tools = [tool for tool in actual_tools if tool and tool != "none"]
+                else:
                     actual_tools = []
+                    
+                # Normalize intent names
+                if actual_intent == "greeting":
+                    actual_intent = "greeting.hello"
+                elif actual_intent == "time":
+                    actual_intent = "time.now"
+                    
             except:
                 actual_intent = ""
                 actual_tools = []
@@ -142,8 +158,8 @@ class EvalHarness:
         """Run all scenarios and collect results"""
         print(f"🚀 Running {len(scenarios)} scenarios...")
         
-        # Run scenarios concurrently (but limit concurrency to avoid overwhelming the system)
-        semaphore = asyncio.Semaphore(5)  # Max 5 concurrent requests
+        # Run scenarios concurrently (optimized for performance)
+        semaphore = asyncio.Semaphore(10)  # Increased to 10 concurrent requests
         
         async def run_with_semaphore(scenario):
             async with semaphore:

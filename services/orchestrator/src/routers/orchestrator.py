@@ -526,12 +526,10 @@ async def orchestrator_chat(
         
         try:
             if route == "micro":
-                # Force mock for Step 8 validation
-                from ..llm.micro_client import MockMicroClient
-                mock_client = MockMicroClient()
-                llm_response = mock_client.generate(chat_request.message)
+                # Real micro calls - no more force mock
+                micro_driver = get_micro_driver()
+                llm_response = micro_driver.generate(chat_request.message)
                 model_used = llm_response["model"]
-                fallback_used = True
                 
             elif route == "planner":
                 canary_router = CanaryRouter() if shadow_enabled else None
