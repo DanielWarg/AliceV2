@@ -154,26 +154,26 @@ services:
     profiles:
       - eval
 
-  voice:
-    build:
-      context: ./services/voice
-      dockerfile: Dockerfile
-    container_name: alice-voice
-    restart: unless-stopped
-    environment:
-      - WHISPER_MODEL=base
-      - TTS_MODEL_PATH=/models/piper
-    volumes:
-      - ./data/voice_cache:/data/voice_cache
-      - ./models:/models
-    ports:
-      - "8001:8001"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 20
-      start_period: 60s
+  # voice: # DISABLED for stabilization - large ML dependencies
+  #   build:
+  #     context: ./services/voice
+  #     dockerfile: Dockerfile
+  #   container_name: alice-voice
+  #   restart: unless-stopped
+  #   environment:
+  #     - WHISPER_MODEL=base
+  #     - TTS_MODEL_PATH=/models/piper
+  #   volumes:
+  #     - ./data/voice_cache:/data/voice_cache
+  #     - ./models:/models
+  #   ports:
+  #     - "8001:8001"
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 20
+  #     start_period: 60s
 
   redis:
     image: redis:7-alpine
@@ -326,29 +326,29 @@ services:
     profiles:
       - curator
 
-  memory:
-    build:
-      context: ./services/memory
-      dockerfile: Dockerfile
-    container_name: alice-memory
-    depends_on:
-      redis:
-        condition: service_healthy
-    restart: unless-stopped
-    environment:
-      - REDIS_URL=redis://redis:6379
-      - MEMORY_TTL_DAYS=7
-      - EMBEDDING_MODEL=KBLab/sentence-bert-swedish-cased
-    volumes:
-      - ./data/embeddings:/data/embeddings
-    ports:
-      - "8300:8300"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8300/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 20
-      start_period: 30s
+  # memory: # DISABLED for stabilization - large ML dependencies
+  #   build:
+  #     context: ./services/memory
+  #     dockerfile: Dockerfile
+  #   container_name: alice-memory
+  #   depends_on:
+  #     redis:
+  #       condition: service_healthy
+  #   restart: unless-stopped
+  #   environment:
+  #     - REDIS_URL=redis://redis:6379
+  #     - MEMORY_TTL_DAYS=7
+  #     - EMBEDDING_MODEL=KBLab/sentence-bert-swedish-cased
+  #   volumes:
+  #     - ./data/embeddings:/data/embeddings
+  #   ports:
+  #     - "8300:8300"
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:8300/health"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 20
+  #     start_period: 30s
 
   # scheduler: (disabled - use host cron instead)
   #   image: browt/supercronic:latest
