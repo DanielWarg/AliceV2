@@ -19,7 +19,7 @@ reverse_proxy @voice voice:8001
 reverse_proxy @memory memory:8300
 
 # API and health routed to orchestrator
-@api path /api/* /health /metrics
+@api path /api/* /health /metrics /chat
 reverse_proxy @api orchestrator:8000
 
 # Guardian endpoints (status/health)

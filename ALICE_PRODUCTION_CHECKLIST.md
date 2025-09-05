@@ -10,12 +10,13 @@
 ## ✅ COMPLETED COMPONENTS (PRODUCTION READY)
 
 ### **1. Core Services Architecture** ✅ **COMPLETE**
-- **Orchestrator Service** (Port 8001) ✅ - Request routing & response orchestration
-- **Guardian Service** (Port 8002) ✅ - System health & brownout protection  
-- **NLU Service** (Port 8003) ✅ - Swedish intent classification & slot extraction
-- **Memory Service** (Port 8005) ✅ - FAISS vector search + conversation context
-- **Cache Service (Redis)** ✅ - Response caching with PII filtering
-- **Voice Service** (Port 8004) ✅ - STT/TTS pipeline framework ready
+- **Orchestrator Service** (Port 18000/8000) ✅ - Main AI routing hub & response orchestration
+- **Guardian Service** (Port 8787) ✅ - Resource protection gate & brownout state machine  
+- **NLU Service** (Port 9002) ✅ - Swedish intent classification & slot extraction via E5+XNLI
+- **Smart Cache (Redis)** (Port 6379) ✅ - Multi-tier cache: L1 exact + L2 semantic + L3 negative
+- **dev-proxy (Caddy)** (Port 18000) ✅ - Reverse proxy with service routing
+- **Ollama Runtime** (Port 11434) ✅ - Local LLM serving (qwen2.5:3b loaded, 1.9GB)
+- **Voice Service** (Port 8001) ✅ - STT/TTS pipeline framework (disabled for stabilization)
 
 ### **2. LLM Integration & Planning** ✅ **COMPLETE**
 - **Hybrid Planner** ✅ - Qwen primary + OpenAI hybrid support via `PLANNER_HYBRID_ENABLED`
@@ -24,21 +25,44 @@
 - **Cost Control Framework** ✅ - Budget tracking preparation (ready for OpenAI key)
 - **Fallback Mechanisms** ✅ - Local model fallback when cloud unavailable
 
-### **3. Security & Privacy** ✅ **COMPLETE**
+### **3. Security Policy Engine** ✅ **COMPLETE** 
+- **Policy Enforcement** ✅ - YAML-based security policies with role-based access
 - **PII Detection & Masking** ✅ - Swedish patterns (email, phone, personnummer, names)
-- **Guardian Protection** ✅ - Resource monitoring, admission control, brownout
-- **Audit Logging** ✅ - Structured telemetry with hash-based deduplication
-- **Privacy Compliance** ✅ - Swedish privacy requirements, data retention policies
-- **API Authentication** ✅ - JWT framework ready for production keys
+- **Input Sanitization** ✅ - Comprehensive input validation and threat protection
+- **Safe External Calls** ✅ - Rate-limited, timeout-protected API calls
+- **Tool Gate Protection** ✅ - Security checks before tool execution
+- **HMAC Security** ✅ - n8n webhook validation with replay protection
+- **Security Metrics** ✅ - Real-time security event monitoring and alerting
 
-### **4. Monitoring & Observability** ✅ **COMPLETE**
-- **Health Endpoints** ✅ - All services have health checks
-- **Structured Logging** ✅ - JSON telemetry with PII masking
-- **SLO Monitoring** ✅ - Guardian tracks latency, success rates, resource usage
-- **Metrics Collection** ✅ - Performance, cache hit rates, error classification
-- **Real-time Dashboard** ✅ - HUD components for system monitoring
+### **4. RL/ML Optimization System** ✅ **COMPLETE**
+- **Smart Routing** ✅ - RL-based intent → model routing optimization  
+- **Multi-Armed Bandits** ✅ - Exploration/exploitation for tool selection
+- **Shadow Mode Testing** ✅ - Safe RL testing without affecting production
+- **DPO Training** ✅ - Direct Preference Optimization for model alignment
+- **RL Policy Integration** ✅ - Dynamic RL policy loading in orchestrator
+- **Reward Function** ✅ - Comprehensive reward modeling for system optimization
+- **Automated Pipeline** ✅ - End-to-end RL training and deployment automation
 
-### **5. Development & CI/CD** ✅ **COMPLETE**
+### **5. Advanced Testing & Observability** ✅ **COMPLETE**
+- **Health Endpoints** ✅ - All services have comprehensive health checks
+- **Structured Logging** ✅ - JSON telemetry with PII masking  
+- **SLO Monitoring** ✅ - Real-time SLO compliance tracking
+- **Energy Tracking** ✅ - Per-turn energy consumption monitoring (Wh)
+- **RAM Peak Detection** ✅ - Memory usage spike identification and alerting
+- **Tool Error Classification** ✅ - Timeout/5xx/429/schema/other categorization
+- **Circuit Breaker** ✅ - Automatic failover for unreliable services
+- **Load Testing Suite** ✅ - Multi-vector stress tests (CPU/Memory/Tool/Vision)
+- **Real-time Dashboard** ✅ - HUD with comprehensive system metrics
+
+### **6. Data Pipeline & Curation** ✅ **COMPLETE**
+- **Dataset Curation** ✅ - Intelligent filtering and preparation of training data
+- **Data Ingestion** ✅ - Automated pipeline for external data sources  
+- **Quality Control** ✅ - Data validation and cleaning processes
+- **Format Conversion** ✅ - Multi-format data processing and normalization
+- **Curator Service** ✅ - Containerized curation pipeline
+- **Ingest Service** ✅ - Automated data ingestion orchestrator
+
+### **7. Development & CI/CD** ✅ **COMPLETE**
 - **Docker Environment** ✅ - 3-file setup (main, CI, dev override)
 - **Pre-commit Hooks** ✅ - ruff, black, isort, yaml, markdown lint
 - **GitHub Actions** ✅ - Lint, security scan, integration tests
@@ -49,12 +73,12 @@
 
 ## 🔄 IN PROGRESS / READY TO ENHANCE
 
-### **6. Voice Pipeline** 🔄 **FRAMEWORK READY**
-**Status**: Service running, basic endpoints implemented, needs production enhancement
+### **8. Voice Pipeline** 🔄 **FRAMEWORK READY** 
+**Status**: Service framework implemented, disabled for stabilization
 
 **Ready Components:**
-- ✅ Voice Service (Port 8004) - Health checks working
-- ✅ STT Framework - Whisper integration ready
+- ✅ Voice Service (Port 8001) - STT/TTS pipeline framework ready
+- ✅ STT Framework - Whisper integration ready 
 - ✅ TTS Framework - Text-to-speech placeholder ready
 - ✅ Audio Processing - Basic pipeline implemented
 
@@ -65,7 +89,7 @@
 - 🔄 Voice activity detection (VAD)
 - 🔄 Social benchmark implementation
 
-### **7. Advanced Memory & RAG** 🔄 **CORE READY**
+### **9. Advanced Memory & RAG** 🔄 **CORE READY**
 **Status**: Basic FAISS + Redis working, ready for enhancement
 
 **Ready Components:**
@@ -80,7 +104,7 @@
 - 🔄 Knowledge base integration
 - 🔄 Memory consolidation algorithms
 
-### **8. Frontend & HUD** 🔄 **COMPONENTS READY**
+### **10. Frontend & HUD** 🔄 **COMPONENTS READY**
 **Status**: HUD framework exists, needs production enhancement
 
 **Ready Components:**

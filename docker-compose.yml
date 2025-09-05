@@ -83,8 +83,7 @@ services:
       - PLANNER_SCHEMA_VERSION=4
       - CACHE_ENABLED=1
       - REDIS_URL=redis://alice-cache:6379
-    ports:
-      - "18000:8000"
+    # ports managed by dev-proxy
     volumes:
       - ./data/telemetry:/data/telemetry
     healthcheck:
@@ -288,7 +287,7 @@ services:
     restart: unless-stopped
     environment:
       - NLU_PORT=9002
-      - OLLAMA_HOST=http://ollama:11434
+      - OLLAMA_HOST=http://host.docker.internal:11434
       - NLU_LANG=sv
       - NLU_SIM_THRESH=0.62
       - NLU_MARGIN_MIN=0.06
