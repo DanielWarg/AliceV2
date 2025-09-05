@@ -79,7 +79,7 @@ jobs:
         run: |
           echo "🚀 Starting core services with --wait for health..."
           set -e
-          docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d --wait || {
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d --wait guardian orchestrator alice-cache || {
             echo "❌ Services failed to start or become healthy"
             docker compose ps
             docker compose logs --no-color
