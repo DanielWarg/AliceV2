@@ -67,11 +67,20 @@ alice-v2/
 
 ## 🚀 Quick Start
 
+### Docker Compose Setup
+Alice v2 uses 3 Docker Compose files for different environments:
+
+- **`docker-compose.yml`** - Main services definition (all environments)
+- **`docker-compose.ci.yml`** - CI-specific overrides (health checks, timeouts)  
+- **`docker-compose.override.yml`** - Development overrides (loadgen, guardian tuning)
+
+Docker Compose automatically merges these files when running `docker compose` commands.
+
 ### Minimal Setup (Demo)
 ```bash
 git clone https://github.com/DanielWarg/AliceV2.git
 cd alice-v2
-make up
+make up     # Uses docker-compose.yml + docker-compose.override.yml
 open http://localhost:3001
 ```
 
