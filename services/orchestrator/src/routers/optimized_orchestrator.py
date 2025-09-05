@@ -81,9 +81,16 @@ class OptimizedOrchestrator:
         )
 
         try:
-            # STEP 1: Check cache first (fastest path)
+            # STEP 1: Quick NLU for cache key (parallel optimization)
+            nlu_task = asyncio.create_task(self._process_nlu(request.message))
+
+            # STEP 2: Check cache with proper intent (after NLU)
+            nlu_result = await nlu_task
             cache_start = time.perf_counter()
-            cache_result = await self.smart_cache.get("unknown", request.message)
+            cache_intent = (
+                nlu_result.intent if nlu_result.confidence > 0.5 else "general"
+            )
+            cache_result = await self.smart_cache.get(cache_intent, request.message)
             cache_ms = (time.perf_counter() - cache_start) * 1000
 
             if cache_result.hit:
@@ -98,21 +105,19 @@ class OptimizedOrchestrator:
                     response=cache_result.data.get("render_instruction", {}).get(
                         "content", "Cached response"
                     ),
-                    model=f"cache_{cache_result.source}",
-                    meta={
+                    model_used=f"cache_{cache_result.source}",
+                    session_id=request.session_id,
+                    latency_ms=int((time.perf_counter() - start_time) * 1000),
+                    metadata={
                         "trace_id": trace_id,
                         "route": "cache",
-                        "latency_ms": (time.perf_counter() - start_time) * 1000,
                         "cache_hit": True,
                         "cache_source": cache_result.source,
                     },
                 )
 
-            # STEP 2: NLU processing (parallel with cache miss handling)
-            nlu_task = asyncio.create_task(self._process_nlu(request.message))
-
             # STEP 3: Route decision based on NLU and text analysis
-            nlu_result = await nlu_task
+            # (NLU already processed for cache key)
             route_decision = self.router_policy.decide_route(request.message)
 
             # Override route based on NLU hint
@@ -162,13 +167,14 @@ class OptimizedOrchestrator:
                 response=response_data.get("render_instruction", {}).get(
                     "content", "Response generated"
                 ),
-                model=response_data.get("meta", {}).get(
+                model_used=response_data.get("meta", {}).get(
                     "model_id", route_decision.route
                 ),
-                meta={
+                session_id=request.session_id,
+                latency_ms=int(total_latency_ms),
+                metadata={
                     "trace_id": trace_id,
                     "route": route_decision.route,
-                    "latency_ms": total_latency_ms,
                     "cache_hit": False,
                     "nlu_intent": nlu_result.intent,
                     "nlu_source": nlu_result.source,
@@ -204,11 +210,12 @@ class OptimizedOrchestrator:
 
             return ChatResponse(
                 response="Ursäkta, jag stötte på ett tekniskt problem. Försök igen om en stund.",
-                model="error_handler",
-                meta={
+                model_used="error_handler",
+                session_id=request.session_id,
+                latency_ms=int(error_latency_ms),
+                metadata={
                     "trace_id": trace_id,
                     "error": str(e),
-                    "latency_ms": error_latency_ms,
                     "route": "error",
                 },
             )

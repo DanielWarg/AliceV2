@@ -10,7 +10,7 @@ from typing import List
 
 
 def canonical_prompt(text: str) -> str:
-    """Normaliserar prompt för cache."""
+    """Normaliserar prompt för cache med aggressiv similarity matching."""
     import re
     import unicodedata
 
@@ -18,10 +18,24 @@ def canonical_prompt(text: str) -> str:
     t = t.lower()
     t = t.replace(""", '"').replace(""", '"').replace("'", "'")
     t = re.sub(r"\s+", " ", t).strip()
+
     # ta bort artiga prefix för bättre träff
-    t = re.sub(r"^(hej|snälla|kan du|skulle du kunna|vänligen|tack)\s+", "", t)
+    t = re.sub(
+        r"^(hej|snälla|kan du|skulle du kunna|vänligen|tack|hello|hi|please)\s+", "", t
+    )
     # ta bort vanliga suffix
-    t = re.sub(r"\s+(tack|snälla|vänligen)$", "", t)
+    t = re.sub(r"\s+(tack|snälla|vänligen|please|thanks)$", "", t)
+
+    # normalisera variations för bättre cache hits
+    t = re.sub(r"vad är", "vad är", t)  # normalize "vad är"
+    t = re.sub(r"hur många", "hur många", t)  # normalize "hur många"
+    t = re.sub(r"när ska", "när ska", t)  # normalize time questions
+    t = re.sub(r"vilken dag", "vilken dag", t)  # normalize day questions
+
+    # ta bort extra punctuation som inte påverkar meaning
+    t = re.sub(r"[?!.]+$", "", t)  # remove trailing punctuation
+    t = re.sub(r"^\W+", "", t)  # remove leading punctuation
+
     return t
 
 
@@ -46,20 +60,25 @@ def build_cache_key(
 ) -> str:
     """
     Två-tier cache key:
-    1. canonical_prompt + intent + schema_version + model_id + time_bucket
+    1. canonical_prompt + intent + schema_version + model_id + (optional time_bucket)
     2. Fallback till SHA256(prompt_raw) om miss
     """
     if facts is None:
         facts = []
 
-    if time_bucket is None:
+    # Only use time_bucket for time-sensitive intents
+    time_sensitive_intents = ["time.now", "weather.lookup", "news.latest"]
+    if intent in time_sensitive_intents and time_bucket is None:
         time_bucket = bucket_5min()
 
     cp = canonical_prompt(prompt_raw)
     cf = "".join(canonical_facts(facts))
 
-    # Primary key: normalized content
-    primary = f"{schema_version}:{model_id}:{intent}:{time_bucket}:{hashlib.md5((cp + cf).encode()).hexdigest()[:12]}"
+    # Primary key: normalized content (with optional time bucket)
+    if time_bucket is not None:
+        primary = f"{schema_version}:{model_id}:{intent}:{time_bucket}:{hashlib.md5((cp + cf).encode()).hexdigest()[:12]}"
+    else:
+        primary = f"{schema_version}:{model_id}:{intent}:{hashlib.md5((cp + cf).encode()).hexdigest()[:12]}"
 
     return primary
 

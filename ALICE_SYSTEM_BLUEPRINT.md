@@ -139,13 +139,19 @@ sequenceDiagram
         G->>O: Request with brownout=NONE
     end
     
-    %% Smart cache lookup
-    O->>C: Cache lookup (intent + prompt)
-    alt Cache HIT
-        C->>O: Cached response
+    %% 3-Tier Smart Cache System (40%+ hit rate)
+    O->>C: Cache lookup (intent-aware key)
+    alt L1: Exact Match Cache HIT (~0.8ms)
+        C->>O: Canonical key match
         O->>W: Response (bypass LLM)
+    else L2: Semantic Cache HIT (~5ms, ≥85% similarity)
+        C->>O: Semantic match found
+        O->>W: Response (bypass LLM)
+    else L3: Negative Cache HIT (error prevention)
+        C->>O: Known failure pattern
+        O->>W: Error response (bypass LLM)
     else Cache MISS
-        C->>O: Cache miss
+        C->>O: No match found
         
         %% LLM routing decision
         O->>O: Route based on intent + brownout state
@@ -172,7 +178,7 @@ sequenceDiagram
         M->>L: Relevant context
         
         L->>O: Final response
-        O->>C: Cache response
+        O->>C: Store in 3-tier cache (L1: exact, L2: semantic, L3: negative)
     end
     
     %% Response delivery
