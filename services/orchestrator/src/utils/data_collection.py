@@ -14,6 +14,10 @@ from datetime import datetime
 from threading import Lock
 from typing import Any, Dict, Optional, Tuple
 
+import structlog
+
+logger = structlog.get_logger(__name__)
+
 # Thread-safe logging setup
 _log_lock = Lock()
 _log_file = None
@@ -186,9 +190,8 @@ def log_event(payload: Dict[str, Any]):
             _log_file.flush()
         except Exception as e:
             # Fallback logging to stderr if main logging fails
-            import sys
 
-            print(f"Logging failed: {e}", file=sys.stderr)
+            logger.error("Logging failed", error=str(e))
 
 
 def log_test_event(test_name: str, **kwargs):
@@ -372,7 +375,7 @@ def cleanup_old_logs(retention_days: int = 7):
                 import shutil
 
                 shutil.rmtree(date_dir)
-                print(f"Removed old log directory: {date_dir}")
+                logger.info("Removed old log directory", directory=str(date_dir))
         except ValueError:
             # Invalid date format, skip
             continue

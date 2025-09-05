@@ -11,15 +11,6 @@ router = APIRouter(prefix="/api/status", tags=["status"])
 guardian_client = GuardianClient()
 
 
-async def poll_and_log():
-    """Poll Guardian health and return status"""
-    try:
-        health = await guardian_client.get_health()
-        return health
-    except Exception as e:
-        return {"state": "ERROR", "error": str(e)}
-
-
 @router.get("/simple")
 async def simple():
     """Get system status with Guardian health check - always returns 200"""
@@ -64,8 +55,12 @@ async def simple():
 
 @router.get("/guardian")
 async def guardian():
-    g = await poll_and_log()
-    return {"ok": bool(g), "guardian": g}
+    """Get Guardian status"""
+    try:
+        health = await guardian_client.get_health()
+        return {"ok": bool(health), "guardian": health}
+    except Exception as e:
+        return {"ok": False, "guardian": {"state": "ERROR", "error": str(e)}}
 
 
 @router.get("/routes")

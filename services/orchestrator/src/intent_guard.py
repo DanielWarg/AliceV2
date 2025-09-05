@@ -83,26 +83,3 @@ def grammar_for(text: str) -> str:
         return (
             'root ::= ("time"|"weather"|"memory"|"greeting"|"calendar"|"email"|"none")'
         )
-
-
-def test_intent_guard():
-    """Test the intent guard with sample inputs"""
-    test_cases = [
-        ("Vad är vädret i Stockholm?", "weather.lookup"),
-        ("Boka ett möte imorgon", "calendar.create_draft"),
-        ("Skicka ett mail till Anna", "email.create_draft"),
-        ("Kom ihåg att köpa mjölk", "memory.query"),
-        ("Hej Alice!", "greeting.hello"),
-        ("Vad är klockan?", "weather.lookup"),  # time -> weather.lookup
-        ("Random text utan tydlig intent", None),
-    ]
-
-    print("🧪 Testing Intent Guard:")
-    for text, expected in test_cases:
-        result = guard_intent_sv(text)
-        status = "✅" if result == expected else "❌"
-        print(f"{status} '{text}' → {result} (expected: {expected})")
-
-
-if __name__ == "__main__":
-    test_intent_guard()

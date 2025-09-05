@@ -20,12 +20,37 @@ logger = structlog.get_logger(__name__)
 
 
 class PlannerQwenDriver:
-    """Planner driver using Qwen model with minimal tool selection"""
+    """Planner driver using Qwen model with optional hybrid OpenAI support"""
 
     def __init__(self):
         self.model = os.getenv("LLM_PLANNER", "llama3.2:1b-instruct-q4_K_M")
         self.client = get_ollama_client()
         self.classifier = get_planner_classifier()
+
+        # Hybrid mode support
+        self.hybrid_enabled = os.getenv("PLANNER_HYBRID_ENABLED", "0") == "1"
+        self.openai_client = None
+        self.openai_model = os.getenv("OPENAI_PLANNER_MODEL", "gpt-4o-mini")
+
+        if self.hybrid_enabled:
+            api_key = os.getenv("OPENAI_API_KEY")
+            if api_key:
+                try:
+                    import openai
+
+                    self.openai_client = openai.OpenAI(api_key=api_key)
+                    logger.info(
+                        "Hybrid mode enabled - OpenAI client initialized",
+                        model=self.openai_model,
+                    )
+                except ImportError:
+                    logger.warning(
+                        "OpenAI package not available, disabling hybrid mode"
+                    )
+                    self.hybrid_enabled = False
+            else:
+                logger.warning("No OpenAI API key, disabling hybrid mode")
+                self.hybrid_enabled = False
 
         # Robust debug settings - can never crash
         self.debug_dump = os.getenv("PLANNER_DEBUG_DUMP", "0") not in (
@@ -150,6 +175,19 @@ Svar: {"version":1,"tool":"none","reason":"Tack, inget verktyg behövs"}"""
                 reason=classification.reason,
             )
 
+            # Check for hybrid routing to OpenAI for hard tasks
+            if (
+                self.hybrid_enabled
+                and classification.complexity == "HARD"
+                and self.openai_client
+            ):
+                openai_result = self._generate_openai(
+                    prompt, classification, start_time
+                )
+                if openai_result is not None:
+                    return openai_result
+                # Continue to local generation if OpenAI failed
+
             # If high confidence classification, skip LLM
             if not classification.use_llm:
                 logger.info("Using classifier result, skipping LLM")
@@ -255,14 +293,12 @@ Svar: {"version":1,"tool":"none","reason":"Tack, inget verktyg behövs"}"""
 
             # JSON parse with retry logic
             parsed_json = None
-            parse_error = None
 
             for attempt in range(2):  # Try twice
                 try:
                     parsed_json = json.loads(processed_text)
                     break
                 except json.JSONDecodeError as e:
-                    parse_error = e
                     if (
                         attempt == 0
                     ):  # First attempt failed, try one more time with same prompt
@@ -293,7 +329,6 @@ Svar: {"version":1,"tool":"none","reason":"Tack, inget verktyg behövs"}"""
             # Validate with minimal schema
             try:
                 validated_output = PlannerOutput(**parsed_json)
-                schema_ok = True
             except ValidationError as e:
                 logger.warning(
                     "planner.schema_validation_failed", err=str(e), obj=parsed_json
@@ -418,6 +453,72 @@ Svar: {"version":1,"tool":"none","reason":"Tack, inget verktyg behövs"}"""
                 "Planner health check failed", model=self.model, error=str(e)
             )
             return False
+
+    def _generate_openai(
+        self, prompt: str, classification, start_time: float
+    ) -> Dict[str, Any]:
+        """Generate using OpenAI for complex scenarios"""
+        if not self.openai_client:
+            logger.error("OpenAI client not available for hybrid mode")
+            return self._fallback_response("openai_unavailable")
+
+        try:
+            import json
+
+            generation_start = time.time()
+            response = self.openai_client.chat.completions.create(
+                model=self.openai_model,
+                messages=[
+                    {"role": "system", "content": self.system_prompt},
+                    {"role": "user", "content": prompt},
+                ],
+                temperature=0.0,
+                max_tokens=150,
+                response_format={"type": "json_object"},
+            )
+
+            generation_time = (time.time() - generation_start) * 1000
+            content = response.choices[0].message.content
+
+            result = json.loads(content)
+
+            logger.info(
+                "OpenAI hybrid generation completed",
+                model=self.openai_model,
+                generation_time_ms=generation_time,
+                tool=result.get("tool", "unknown"),
+            )
+
+            # Create compatible response format
+            return {
+                "text": content,
+                "model": f"openai:{self.openai_model}",
+                "tokens_used": (
+                    getattr(response.usage, "total_tokens", 0)
+                    if hasattr(response, "usage")
+                    else 0
+                ),
+                "temperature": 0.0,
+                "route": "planner",
+                "json_parsed": True,
+                "schema_ok": True,
+                "tool": result.get("tool", "none"),
+                "reason": result.get("reason", ""),
+                "generation_time_ms": generation_time,
+                "total_time_ms": (time.perf_counter() - start_time) * 1000,
+                "fallback_used": False,
+                "fallback_reason": None,
+                "circuit_open": False,
+                "openai_used": True,
+                "complexity": classification.complexity,
+                "plan": result,
+            }
+
+        except Exception as e:
+            logger.error("OpenAI hybrid generation failed", error=str(e))
+            # Fallback to local generation by continuing with normal flow
+            logger.info("Falling back to local generation after OpenAI failure")
+            return None  # Let caller handle local fallback
 
 
 # Global planner driver instance

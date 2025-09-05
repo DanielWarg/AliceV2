@@ -19,6 +19,9 @@ from pathlib import Path
 from typing import Callable, Dict, List, Optional
 
 import httpx
+import structlog
+
+logger = structlog.get_logger(__name__)
 
 
 # SLO Status Colors
@@ -669,7 +672,6 @@ def slack_webhook_alert(webhook_url: str):
 
 def console_alert(result: SLOResult):
     """Simple console alert for development"""
-    emoji = {"green": "🟢", "yellow": "🟡", "red": "🔴"}[result.status]
-    print(f"\n{emoji} SLO Alert: {result.message}")
-    for issue in result.issues:
-        print(f"  ⚠️  {issue}")
+    logger.warning(
+        "SLO Alert", status=result.status, message=result.message, issues=result.issues
+    )

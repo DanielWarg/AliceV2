@@ -3,10 +3,8 @@ Orchestrator API Router
 Handles LLM routing and ingestion requests with LLM integration v1
 """
 
-import hashlib
 import json
 import os
-import pathlib
 import time
 from datetime import datetime
 from typing import Any, Dict, List
@@ -15,10 +13,12 @@ import httpx
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 
+# Import system prompt hash from central config
+from ...config.system_prompt import get_system_prompt_hash
+
 # LLM Integration v1 imports
 from ..llm import (
     get_deep_driver,
-    get_hybrid_planner_driver,
     get_micro_driver,
     get_planner_driver,
     get_planner_v2_driver,
@@ -39,24 +39,6 @@ from ..shadow import CanaryRouter
 from ..utils.energy import EnergyMeter
 from ..utils.ram_peak import ram_peak_mb
 from ..utils.tool_errors import classify_tool_error, record_tool_call
-
-
-# Calculate system prompt hash directly
-def get_system_prompt_hash() -> str:
-    """Calculate SHA256 hash of system prompt"""
-    try:
-        prompt_path = pathlib.Path("config/system_prompt.txt")
-        if prompt_path.exists():
-            system_prompt = prompt_path.read_text(encoding="utf-8")
-            return hashlib.sha256(system_prompt.encode()).hexdigest()
-        else:
-            # Fallback to default prompt
-            default_prompt = "You are Alice, a helpful AI assistant."
-            return hashlib.sha256(default_prompt.encode()).hexdigest()
-    except Exception:
-        # Return hash of error state
-        return hashlib.sha256(b"error_reading_prompt").hexdigest()
-
 
 SYSTEM_PROMPT_SHA256 = get_system_prompt_hash()
 
@@ -568,7 +550,11 @@ async def orchestrator_chat(
                     from ..intent_guard import intent_to_tool
 
                     tool_name = intent_to_tool(guard_intent)
-                    print(f"🛡️ Intent guard hit: {guard_intent} → {tool_name}")
+                    logger.info(
+                        "Intent guard hit",
+                        guard_intent=guard_intent,
+                        tool_name=tool_name,
+                    )
                     llm_response = {
                         "text": json.dumps(
                             {
@@ -614,22 +600,21 @@ async def orchestrator_chat(
                             response_json = json.loads(llm_response["response"])
                             response_json["tool"] = fast_tool
                             llm_response["response"] = json.dumps(response_json)
-                            print(f"🚀 Fast tool selector override: {fast_tool}")
-                        except:
+                            logger.info("Fast tool selector override", tool=fast_tool)
+                        except Exception:
                             pass  # Keep original if parsing fails
 
             elif route == "planner":
                 canary_router = CanaryRouter() if shadow_enabled else None
 
-                # Use hybrid planner if enabled, otherwise fallback to local
-                if os.getenv("PLANNER_HYBRID_ENABLED", "0") == "1":
-                    planner_driver = get_hybrid_planner_driver()
-                    logger.info(
-                        "Using hybrid planner (EASY/MEDIUM → local, HARD → OpenAI)"
-                    )
-                else:
-                    planner_driver = get_planner_driver()
-                    logger.info("Using local planner only")
+                # Use primary planner (now with integrated hybrid support)
+                planner_driver = get_planner_driver()
+                hybrid_status = (
+                    "enabled"
+                    if os.getenv("PLANNER_HYBRID_ENABLED", "0") == "1"
+                    else "disabled"
+                )
+                logger.info("Using primary planner", hybrid_mode=hybrid_status)
 
                 # Generate primary response
                 llm_response = planner_driver.generate(chat_request.message)

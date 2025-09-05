@@ -121,12 +121,11 @@ def pick_tool(text: str) -> Optional[str]:
                 best_score = score
                 best_tool = tool
 
-    print(f"🔍 Tool match: '{text}' → {best_tool} (score: {best_score})")
-
+    # Tool matched with sufficient confidence
     if best_score >= 65:  # Lowered from 80 to catch more variants
         return best_tool
 
-    print(f"❌ No tool match for: '{text}' (best score: {best_score})")
+    # No confident match found
     return None
 
 
@@ -147,29 +146,3 @@ def get_tool_confidence(text: str, expected_tool: str) -> float:
         best_score = max(best_score, score)
 
     return best_score / 100.0
-
-
-# Test function
-def test_tool_selector():
-    """Test the tool selector with sample inputs"""
-    test_cases = [
-        ("Vad är klockan?", "time.now"),
-        ("Vad är vädret i Stockholm?", "weather.lookup"),
-        ("Hej!", "greeting.hello"),
-        ("Boka ett möte imorgon", "calendar.create_draft"),
-        ("Skicka ett mail till chef@företag.se", "email.create_draft"),
-        ("Kommer du ihåg vad vi pratade om?", "memory.query"),
-    ]
-
-    print("🧪 Testing tool selector...")
-    for text, expected in test_cases:
-        result = pick_tool(text)
-        confidence = get_tool_confidence(text, expected)
-        status = "✅" if result == expected else "❌"
-        print(
-            f"{status} '{text}' → {result} (expected: {expected}, confidence: {confidence:.1%})"
-        )
-
-
-if __name__ == "__main__":
-    test_tool_selector()

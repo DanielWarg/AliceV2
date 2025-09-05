@@ -74,26 +74,3 @@ def micro_key(intent: str, text: str) -> str:
 def build_fallback_key(prompt_raw: str) -> str:
     """Fallback cache key för exakt match."""
     return f"fallback:{hashlib.md5(prompt_raw.encode()).hexdigest()[:16]}"
-
-
-# Test function
-def test_cache_keys():
-    """Test cache key generation"""
-    test_cases = [
-        ("time.now", "Vad är klockan?", []),
-        ("time.now", "vad är klockan?", []),
-        ("time.now", "Vad är klockan?", ["timezone: Europe/Stockholm"]),
-        ("weather.lookup", "Vad är vädret i Stockholm?", ["location: Stockholm"]),
-        ("greeting.hello", "Hej!", []),
-    ]
-
-    print("🧪 Testing cache key generation...")
-    for intent, prompt, facts in test_cases:
-        key = build_cache_key(intent, prompt, facts)
-        fallback = build_fallback_key(prompt)
-        print(f"✅ {intent}: {prompt[:20]}... → {key}")
-        print(f"   Fallback: {fallback}")
-
-
-if __name__ == "__main__":
-    test_cache_keys()

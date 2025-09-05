@@ -14,15 +14,7 @@ from src.health import check_liveness, check_readiness, wait_for_readiness
 from src.middleware.logging import LoggingMiddleware, setup_logging
 from src.mw_metrics import MetricsMiddleware
 from src.privacy import privacy_manager
-from src.routers import (
-    chat,
-    feedback,
-    learn,
-    memory,
-    orchestrator,
-    shadow_dashboard,
-    status,
-)
+from src.routers import chat, feedback, learn, memory, orchestrator, status
 from src.routers.monitoring import router as monitoring_router
 from src.routers.optimized_orchestrator import router as optimized_router
 from src.security.metrics import set_mode
@@ -189,9 +181,6 @@ app.include_router(status.router, prefix="/api/status", tags=["status"])
 app.include_router(feedback.router)
 app.include_router(learn.router, tags=["learning"])  # Learning API endpoints
 app.include_router(memory.router, tags=["memory"])  # Memory service endpoints
-app.include_router(
-    shadow_dashboard.router, prefix="/api", tags=["shadow"]
-)  # Shadow mode dashboard
 
 # Include Fix Pack v1 status router with real metrics
 app.include_router(fix_status_router)

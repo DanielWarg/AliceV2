@@ -4,32 +4,14 @@ Separates liveness (process alive) from readiness (dependencies ready)
 """
 
 import asyncio
-import hashlib
-import pathlib
 import time
 from typing import Any, Dict
 
 import structlog
 
+# Import system prompt hash from central config
+from ..config.system_prompt import get_system_prompt_hash
 from .services.guardian_client import GuardianClient
-
-
-# Calculate system prompt hash directly
-def get_system_prompt_hash() -> str:
-    """Calculate SHA256 hash of system prompt"""
-    try:
-        prompt_path = pathlib.Path("config/system_prompt.txt")
-        if prompt_path.exists():
-            system_prompt = prompt_path.read_text(encoding="utf-8")
-            return hashlib.sha256(system_prompt.encode()).hexdigest()
-        else:
-            # Fallback to default prompt
-            default_prompt = "You are Alice, a helpful AI assistant."
-            return hashlib.sha256(default_prompt.encode()).hexdigest()
-    except Exception:
-        # Return hash of error state
-        return hashlib.sha256(b"error_reading_prompt").hexdigest()
-
 
 SYSTEM_PROMPT_SHA256 = get_system_prompt_hash()
 

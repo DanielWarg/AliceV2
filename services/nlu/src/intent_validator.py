@@ -23,14 +23,10 @@ class IntentValidator:
         self._sess: Optional["ort.InferenceSession"] = None
         self._tokenizer = None
         self._ent_thresh = float(os.getenv("NLU_XNLI_ENT_THRESH", "0.3"))
-        print(f"XNLI INIT: enabled={self.enabled}, ort={ort is not None}")
+        # XNLI initialization with fallback to keyword matching
         self._init_xnli()
-        print(
-            f"XNLI INIT DONE: sess={self._sess is not None}, tokenizer={self._tokenizer}"
-        )
         # Force keyword fallback for now (skip transformers issues)
         self._tokenizer = "keyword_fallback"
-        print(f"XNLI FORCE KEYWORD: tokenizer={self._tokenizer}")
 
     def _init_xnli(self) -> None:
         if not self.enabled:
@@ -49,7 +45,6 @@ class IntentValidator:
         # Go directly to keyword fallback for reliable validation
         if self._sess is None:
             self._tokenizer = "keyword_fallback"
-            print(f"XNLI INIT: Using keyword fallback, tokenizer={self._tokenizer}")
 
     def _softmax(self, x: np.ndarray) -> np.ndarray:
         x = x - np.max(x, axis=-1, keepdims=True)
@@ -175,16 +170,12 @@ class IntentValidator:
             return None
 
     def validate(self, text: str, labels: list[str]) -> tuple[bool, str]:
-        print(
-            f"XNLI VALIDATE: enabled={self.enabled}, sess={self._sess is not None}, tokenizer={self._tokenizer is not None}, labels={labels}"
-        )
         if (
             not self.enabled
             or self._sess is None
             or self._tokenizer is None
             or len(labels) < 1
         ):
-            print("XNLI VALIDATE: Early return - missing components")
             return False, labels[0] if labels else "info.query"
         # Use Swedish descriptions from registry as hypotheses
         label_to_desc = getattr(self.registry, "intent_labels", {}) or {}
@@ -196,9 +187,7 @@ class IntentValidator:
         p1 = self._entailment_prob(text, hyp1) or 0.0
         p2 = self._entailment_prob(text, hyp2) or 0.0
         # Debug: print entailment probabilities
-        print(
-            f"XNLI DEBUG: text='{text}', best='{best_label}' (p1={p1:.3f}), second='{second_label}' (p2={p2:.3f}), thresh={self._ent_thresh}"
-        )
+        # Entailment probabilities calculated for validation
         # Accept best if entailment prob passes threshold and beats second
         if p1 >= self._ent_thresh and p1 >= p2:
             return True, best_label

@@ -54,28 +54,15 @@ class TestHealthEndpoints:
         assert "docs" in data
         assert "health" in data
 
-    @patch("src.services.guardian_client.GuardianClient.get_health")
-    def test_health_endpoint_healthy(
-        self, mock_get_health, client, mock_guardian_healthy
-    ):
-        """Test health endpoint when Guardian is healthy"""
-        mock_get_health.return_value = mock_guardian_healthy
-
+    def test_health_endpoint_healthy(self, client):
+        """Test health endpoint returns alive status"""
         response = client.get("/health")
         assert response.status_code == 200
 
         data = response.json()
-        assert data["status"] == "healthy"
-        assert data["service"] == "orchestrator"
-        assert data["dependencies"]["guardian"] == "NORMAL"
-
-    @patch("src.services.guardian_client.GuardianClient.get_health")
-    def test_health_endpoint_guardian_error(self, mock_get_health, client):
-        """Test health endpoint when Guardian is unreachable"""
-        mock_get_health.side_effect = Exception("Connection failed")
-
-        response = client.get("/health")
-        assert response.status_code == 503
+        assert data["alive"] is True
+        assert "uptime_s" in data
+        assert "pid" in data
 
 
 class TestChatAPI:
@@ -180,7 +167,7 @@ class TestOrchestratorAPI:
         data = response.json()
         assert data["v"] == "1"
         assert data["session_id"] == "test_session"
-        assert data["accepted"] == True
+        assert data["accepted"] is True
         assert data["model"] == "micro"  # Phase 1: always micro
         assert 1 <= data["priority"] <= 10
         assert data["estimated_latency_ms"] > 0

@@ -16,7 +16,6 @@ from .planner_classifier import (
     PlannerClassifier,
     get_planner_classifier,
 )
-from .planner_hybrid import PlannerHybridDriver, get_hybrid_planner_driver
 from .planner_qwen import PlannerQwenDriver, get_planner_driver
 from .planner_v2 import PlannerV2Driver, get_planner_v2_driver
 
@@ -35,8 +34,6 @@ __all__ = [
     "get_planner_classifier",
     "PlannerClassifier",
     "ClassificationResult",
-    "get_hybrid_planner_driver",
-    "PlannerHybridDriver",
     "get_planner_v2_driver",
     "PlannerV2Driver",
     "get_deep_driver",
