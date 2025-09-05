@@ -3,6 +3,7 @@ Alice Voice Service
 Local speech-to-text and text-to-speech processing
 """
 
+import asyncio
 import base64
 import os
 import tempfile
@@ -147,8 +148,8 @@ async def startup_event():
 async def health_check():
     """Health check endpoint"""
     try:
-        whisper_model = get_whisper_model()
-        tts_model = get_tts_model()
+        get_whisper_model()  # Ensure model is available
+        get_tts_model()  # Ensure TTS is available
 
         return {
             "status": "healthy",

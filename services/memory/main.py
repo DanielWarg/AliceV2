@@ -45,6 +45,13 @@ logger = structlog.get_logger(__name__)
 REDIS_URL = os.getenv("REDIS_URL", "redis://redis:6379")
 MEMORY_TTL_DAYS = int(os.getenv("MEMORY_TTL_DAYS", "7"))
 PERSONA_TTL_DAYS = int(os.getenv("PERSONA_TTL_DAYS", "90"))  # Longer TTL for persona
+
+
+def get_ttl_for_namespace(namespace) -> int:
+    """Get TTL days for memory namespace"""
+    return PERSONA_TTL_DAYS if namespace == MemoryNamespace.PERSONA else MEMORY_TTL_DAYS
+
+
 EMBEDDING_MODEL = os.getenv(
     "EMBEDDING_MODEL", "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 )
@@ -408,7 +415,7 @@ async def health_check():
         redis_client.ping()
 
         # Test embedding model
-        model = get_embedding_model()
+        get_embedding_model()
 
         # Test FAISS indices
         for namespace in [
@@ -488,11 +495,7 @@ async def store_memory(request: StoreMemoryRequest):
         }
 
         # Determine TTL based on namespace
-        ttl_days = (
-            PERSONA_TTL_DAYS
-            if request.namespace == MemoryNamespace.PERSONA
-            else MEMORY_TTL_DAYS
-        )
+        ttl_days = get_ttl_for_namespace(request.namespace)
 
         redis_client.setex(
             redis_key,
@@ -528,11 +531,7 @@ async def store_memory(request: StoreMemoryRequest):
         )
 
         # Determine TTL based on namespace
-        ttl_days = (
-            PERSONA_TTL_DAYS
-            if request.namespace == MemoryNamespace.PERSONA
-            else MEMORY_TTL_DAYS
-        )
+        ttl_days = get_ttl_for_namespace(request.namespace)
 
         return {
             "success": True,
@@ -753,7 +752,7 @@ async def forget_memory(request: ForgetRequest):
 async def get_stats():
     """Get memory service statistics"""
     try:
-        redis_client = get_redis_client()
+        get_redis_client()  # Ensure Redis is available
 
         # Count active chunks per user and namespace
         user_stats = {}

@@ -1,27 +1,40 @@
-# Code ownership for Alice v2
+# Alice v2 Code Ownership
 # Each line is a file pattern followed by one or more owners
 
-# Core services
-/services/orchestrator/   @DanielWarg
-/services/guardian/       @DanielWarg
-/services/memory/         @DanielWarg
-/services/voice/          @DanielWarg
+# Global ownership (fallback)
+* @DanielWarg
 
-# Frontend and HUD
-/apps/                    @DanielWarg
-/monitoring/              @DanielWarg
+# Core services - CRITICAL PATH
+/services/orchestrator/ @DanielWarg
+/services/guardian/ @DanielWarg  
+/services/memory/ @DanielWarg
+/services/voice/ @DanielWarg
+/services/nlu/ @DanielWarg
+/services/cache/ @DanielWarg
 
-# Configuration and deployment
-/docker-compose.yml       @DanielWarg
-/ops/                     @DanielWarg
-/scripts/                 @DanielWarg
+# Security and middleware - REQUIRES REVIEW
+/services/orchestrator/src/security/ @DanielWarg
+/services/orchestrator/src/middleware/ @DanielWarg
+
+# Monitoring and observability
+/monitoring/ @DanielWarg
+/services/loadgen/ @DanielWarg
+
+# CI/CD and infrastructure - PRODUCTION IMPACT
+/.github/workflows/ @DanielWarg
+/docker-compose*.yml @DanielWarg
+/Makefile @DanielWarg
+/scripts/ @DanielWarg
+
+# Configuration - ENVIRONMENT CRITICAL
+/.env* @DanielWarg
+/config/ @DanielWarg
 
 # Documentation and architecture
-/.cursor/rules/           @DanielWarg
-/README.md                @DanielWarg
-/ROADMAP.md               @DanielWarg
-/ALICE_SYSTEM_BLUEPRINT.md @DanielWarg
+/.cursor/rules/ @DanielWarg
+/docs/ @DanielWarg
+/*.md @DanielWarg
 
-# Tests and data
-/data/                    @DanielWarg
-/tests/                   @DanielWarg
+# Evaluation and testing
+/eval/ @DanielWarg
+/test-results/ @DanielWarg
