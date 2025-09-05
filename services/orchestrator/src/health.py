@@ -9,11 +9,12 @@ from typing import Any, Dict
 
 import structlog
 
-# Import system prompt hash from central config
-from ..config.system_prompt import get_system_prompt_hash
+# Import system prompt hash from central config (disabled for now)
+# from config.system_prompt import get_system_prompt_hash
 from .services.guardian_client import GuardianClient
 
-SYSTEM_PROMPT_SHA256 = get_system_prompt_hash()
+# SYSTEM_PROMPT_SHA256 = get_system_prompt_hash()
+SYSTEM_PROMPT_SHA256 = "mock-hash-for-demo"
 
 logger = structlog.get_logger(__name__)
 

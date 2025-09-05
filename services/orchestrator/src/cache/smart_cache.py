@@ -1,6 +1,7 @@
 """
 Smart cache system with telemetry, semantic matching and multi-tier storage.
-Designed for maximum hit rate and minimum latency.
+Enhanced with Fibonacci spiral matching for natural similarity curves.
+Designed for maximum hit rate and minimum latency using mathematical harmony.
 """
 
 import hashlib
@@ -13,6 +14,9 @@ import redis
 import structlog
 
 from ..cache_key import build_cache_key, canonical_prompt
+from ..config.fibonacci import GOLDEN_RATIO
+from .fibonacci_hierarchy_cache import create_fibonacci_hierarchy_cache
+from .fibonacci_spiral_matcher import create_fibonacci_matcher
 
 logger = structlog.get_logger(__name__)
 
@@ -36,17 +40,37 @@ class CacheResult:
 
 
 class SmartCache:
-    """Multi-tier cache with semantic understanding and telemetry"""
+    """Multi-tier cache with Fibonacci spiral semantic understanding and telemetry"""
 
     def __init__(self):
         self.redis_url = os.getenv("REDIS_URL", "redis://alice-cache:6379")
         self.semantic_threshold = float(os.getenv("CACHE_SEMANTIC_THRESHOLD", "0.85"))
 
-        # Statistics tracking
+        # Golden ratio based threshold for optimal cache performance
+        self.golden_threshold = 1.0 / GOLDEN_RATIO  # ≈ 0.618
+        self.fibonacci_threshold = self.golden_threshold * (
+            1.0 / GOLDEN_RATIO
+        )  # ≈ 0.382
+
+        # Initialize Fibonacci spiral matcher for advanced semantic matching
+        self.spiral_matcher = create_fibonacci_matcher(
+            {
+                "dimensions": int(os.getenv("FIBONACCI_CACHE_DIMENSIONS", "512")),
+                "resolution": int(os.getenv("FIBONACCI_SPIRAL_RESOLUTION", "89")),
+            }
+        )
+
+        # Initialize Fibonacci Hierarchy Cache (L1-L10)
+        self.hierarchy_cache = create_fibonacci_hierarchy_cache(self.redis_url)
+
+        # Enhanced statistics tracking with Fibonacci metrics
         self.stats = {
             "total_requests": 0,
             "l1_hits": 0,  # Exact matches
             "l2_hits": 0,  # Semantic matches
+            "spiral_hits": 0,  # Fibonacci spiral matches
+            "golden_ratio_hits": 0,  # Golden ratio optimized hits
+            "fibonacci_weighted_hits": 0,  # Fibonacci weighted matches
             "negative_hits": 0,  # Negative cache hits
             "misses": 0,
             "errors": 0,
@@ -106,6 +130,20 @@ class SmartCache:
                 self._update_hit_latency(latency_ms)
                 return l2_result
 
+            # L2.5: Fibonacci spiral matching (advanced semantic matching)
+            spiral_result = await self._fibonacci_spiral_lookup(
+                intent, prompt, model_id
+            )
+            if spiral_result.hit:
+                latency_ms = (time.perf_counter() - start_time) * 1000
+                self.stats["spiral_hits"] += 1
+                if spiral_result.source == "golden_ratio":
+                    self.stats["golden_ratio_hits"] += 1
+                elif spiral_result.source == "fibonacci_weighted":
+                    self.stats["fibonacci_weighted_hits"] += 1
+                self._update_hit_latency(latency_ms)
+                return spiral_result
+
             # L3: Check negative cache (known failures)
             neg_key = f"neg:{hashlib.md5(prompt.encode()).hexdigest()[:12]}"
             if self.redis_client.get(neg_key):
@@ -141,6 +179,79 @@ class SmartCache:
             self.stats["errors"] += 1
             logger.error("Cache lookup failed", error=str(e))
             return CacheResult(False, reason=f"error: {e}")
+
+    async def get_hierarchical(
+        self, query: str, context: Dict[str, Any] = None
+    ) -> CacheResult:
+        """
+        Get from Fibonacci Hierarchy Cache (L1-L10) with full tier progression
+
+        This method uses the advanced L1-L10 cache hierarchy for maximum hit rates
+        and natural cache progression following Fibonacci principles.
+        """
+        start_time = time.perf_counter()
+
+        if not self.hierarchy_cache:
+            return CacheResult(False, reason="hierarchy_cache_unavailable")
+
+        try:
+            # Use Fibonacci Hierarchy Cache for comprehensive lookup
+            hierarchy_result = await self.hierarchy_cache.get(query, context)
+
+            latency_ms = (time.perf_counter() - start_time) * 1000
+
+            if hierarchy_result.hit:
+                # Update statistics based on tier
+                if hierarchy_result.tier <= 2:
+                    self.stats["l1_hits"] += 1
+                elif hierarchy_result.tier <= 5:
+                    self.stats["l2_hits"] += 1
+                else:
+                    self.stats["spiral_hits"] += 1
+
+                # Track golden ratio optimizations
+                if hierarchy_result.golden_ratio_factor > 1.0:
+                    self.stats["golden_ratio_hits"] += 1
+                if hierarchy_result.fibonacci_weight > 1:
+                    self.stats["fibonacci_weighted_hits"] += 1
+
+                self._update_hit_latency(latency_ms)
+
+                logger.info(
+                    "Fibonacci Hierarchy Cache HIT",
+                    tier=hierarchy_result.tier,
+                    fibonacci_weight=hierarchy_result.fibonacci_weight,
+                    similarity=hierarchy_result.similarity_score,
+                    golden_ratio_factor=hierarchy_result.golden_ratio_factor,
+                    latency_ms=latency_ms,
+                )
+
+                return CacheResult(
+                    True,
+                    hierarchy_result.data,
+                    f"L{hierarchy_result.tier}_fibonacci_hit",
+                    f"L{hierarchy_result.tier}",
+                    latency_ms,
+                )
+            else:
+                # Complete miss across all L1-L10 tiers
+                self.stats["misses"] += 1
+                self._update_miss_latency(latency_ms)
+
+                logger.info(
+                    "Fibonacci Hierarchy Cache MISS",
+                    tiers_searched=len(hierarchy_result.cache_path),
+                    latency_ms=latency_ms,
+                )
+
+                return CacheResult(
+                    False, reason="no_match_l1_l10", latency_ms=latency_ms
+                )
+
+        except Exception as e:
+            self.stats["errors"] += 1
+            logger.error("Hierarchy cache lookup failed", error=str(e))
+            return CacheResult(False, reason=f"hierarchy_error: {e}")
 
     async def _semantic_lookup(
         self, intent: str, prompt: str, model_id: str
@@ -195,6 +306,123 @@ class SmartCache:
         except Exception as e:
             logger.warn("Semantic lookup failed", error=str(e))
             return CacheResult(False, reason=f"semantic_error: {e}")
+
+    async def _fibonacci_spiral_lookup(
+        self, intent: str, prompt: str, model_id: str = "qwen2.5:3b"
+    ) -> CacheResult:
+        """
+        Advanced Fibonacci spiral semantic matching for cache lookups
+        Uses golden ratio spirals to find naturally similar cache entries
+        """
+        if not self.redis_client:
+            return CacheResult(False, reason="redis_unavailable")
+
+        try:
+            # Get all cached entries for this intent using spiral pattern
+            pattern = f"l2:{intent}:*"
+            keys = self.redis_client.keys(pattern)
+
+            if not keys:
+                return CacheResult(False, reason="no_spiral_candidates")
+
+            # Prepare entries for spiral matching
+            cached_entries = []
+            for key in keys[:13]:  # Limit to Fibonacci number for efficiency
+                cached_item = self.redis_client.hgetall(key)
+                if cached_item:
+                    cached_entries.append(
+                        {
+                            "id": key.decode() if isinstance(key, bytes) else key,
+                            "query": (
+                                cached_item.get("canonical_prompt", "").decode()
+                                if isinstance(
+                                    cached_item.get("canonical_prompt"), bytes
+                                )
+                                else cached_item.get("canonical_prompt", "")
+                            ),
+                            "metadata": {
+                                "intent": intent,
+                                "model_id": model_id,
+                                "timestamp": cached_item.get("timestamp"),
+                            },
+                            "response": cached_item.get("response", "{}"),
+                            "canonical_prompt": cached_item.get("canonical_prompt", ""),
+                        }
+                    )
+
+            if not cached_entries:
+                return CacheResult(False, reason="no_valid_spiral_entries")
+
+            # Use Fibonacci spiral matcher to find best matches
+            query_metadata = {
+                "intent": intent,
+                "model_id": model_id,
+                "context": {"semantic_threshold": self.semantic_threshold},
+            }
+
+            spiral_matches = self.spiral_matcher.find_spiral_matches(
+                query=canonical_prompt(prompt),
+                metadata=query_metadata,
+                cached_entries=cached_entries,
+                max_matches=5,  # Fibonacci number
+            )
+
+            if not spiral_matches:
+                return CacheResult(False, reason="no_spiral_matches")
+
+            # Find best match using golden ratio and Fibonacci weighting
+            best_match = None
+            best_source = "spiral"
+
+            for match in spiral_matches:
+                # Check if match exceeds golden ratio threshold
+                if match.similarity_score >= self.golden_threshold:
+                    best_match = match
+                    best_source = "golden_ratio"
+                    break
+                # Check if match exceeds Fibonacci threshold
+                elif match.similarity_score >= self.fibonacci_threshold:
+                    best_match = match
+                    best_source = "fibonacci_weighted"
+                    break
+
+            if best_match:
+                # Find the corresponding cached entry
+                matching_entry = None
+                for entry in cached_entries:
+                    if entry["id"] == best_match.matching_metadata.get("entry_id"):
+                        matching_entry = entry
+                        break
+
+                if matching_entry:
+                    response_data = (
+                        json.loads(matching_entry["response"])
+                        if isinstance(matching_entry["response"], str)
+                        else matching_entry["response"]
+                    )
+
+                    logger.info(
+                        "Fibonacci spiral cache HIT",
+                        similarity=best_match.similarity_score,
+                        cache_tier=best_match.cache_tier,
+                        fibonacci_weight=best_match.fibonacci_weight,
+                        golden_ratio_efficiency=best_match.golden_ratio_efficiency,
+                        spiral_distance=best_match.spiral_distance,
+                        source=best_source,
+                    )
+
+                    return CacheResult(
+                        True,
+                        response_data,
+                        f"spiral_match_{best_match.similarity_score:.3f}_{best_match.cache_tier}",
+                        best_source,
+                    )
+
+            return CacheResult(False, reason="spiral_threshold_not_met")
+
+        except Exception as e:
+            logger.warn("Fibonacci spiral lookup failed", error=str(e))
+            return CacheResult(False, reason=f"spiral_error: {e}")
 
     def set(
         self,
@@ -310,8 +538,28 @@ class SmartCache:
         else:
             self.stats["avg_miss_latency_ms"] = latency_ms
 
+    async def put_hierarchical(
+        self, query: str, data: Any, tier: int = None, context: Dict[str, Any] = None
+    ) -> bool:
+        """Store data in Fibonacci Hierarchy Cache with optimal tier selection"""
+        if not self.hierarchy_cache:
+            return False
+
+        try:
+            success = await self.hierarchy_cache.put(query, data, tier, context)
+            if success:
+                logger.debug(
+                    "Stored in Fibonacci Hierarchy Cache",
+                    tier=tier,
+                    query_length=len(query),
+                )
+            return success
+        except Exception as e:
+            logger.error("Failed to store in hierarchy cache", error=str(e))
+            return False
+
     def get_stats(self) -> Dict[str, Any]:
-        """Get comprehensive cache statistics"""
+        """Get comprehensive cache statistics including hierarchy metrics"""
 
         total = self.stats["total_requests"]
         hit_rate = 0.0
@@ -319,18 +567,40 @@ class SmartCache:
             hits = (
                 self.stats["l1_hits"]
                 + self.stats["l2_hits"]
+                + self.stats["spiral_hits"]
+                + self.stats["golden_ratio_hits"]
+                + self.stats["fibonacci_weighted_hits"]
                 + self.stats["negative_hits"]
             )
             hit_rate = hits / total
 
+        # Get hierarchy cache stats if available
+        hierarchy_stats = {}
+        if self.hierarchy_cache:
+            try:
+                hierarchy_stats = self.hierarchy_cache.get_hierarchy_stats()
+            except Exception as e:
+                logger.warning("Failed to get hierarchy stats", error=str(e))
+
         return {
             **self.stats,
+            "cache_type": "fibonacci_smart_cache_with_hierarchy",
             "hit_rate": hit_rate,
             "l1_hit_rate": self.stats["l1_hits"] / total if total > 0 else 0.0,
             "l2_hit_rate": self.stats["l2_hits"] / total if total > 0 else 0.0,
+            "spiral_hit_rate": self.stats["spiral_hits"] / total if total > 0 else 0.0,
+            "golden_ratio_hit_rate": (
+                self.stats["golden_ratio_hits"] / total if total > 0 else 0.0
+            ),
+            "fibonacci_weighted_hit_rate": (
+                self.stats["fibonacci_weighted_hits"] / total if total > 0 else 0.0
+            ),
             "miss_rate": self.stats["misses"] / total if total > 0 else 0.0,
             "error_rate": self.stats["errors"] / total if total > 0 else 0.0,
             "semantic_threshold": self.semantic_threshold,
+            "golden_threshold": self.golden_threshold,
+            "fibonacci_threshold": self.fibonacci_threshold,
+            "hierarchy_cache": hierarchy_stats,
         }
 
     def clear_stats(self):

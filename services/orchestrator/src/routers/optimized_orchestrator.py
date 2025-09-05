@@ -15,7 +15,7 @@ from fastapi import APIRouter
 from ..cache.smart_cache import get_smart_cache
 from ..clients.nlu_client import NLUResult, get_nlu_client
 from ..llm.micro_client import MockMicroClient, RealMicroClient
-from ..models.api import ChatRequest, ChatResponse
+from ..models.api import ChatRequest, ChatResponse, ModelType
 from ..router.policy import get_router_policy
 from ..services.guardian_client import GuardianClient
 from ..utils.circuit_breaker import (
@@ -26,6 +26,18 @@ from ..utils.circuit_breaker import (
 
 logger = structlog.get_logger(__name__)
 router = APIRouter()
+
+
+def _route_to_model_type(route: str) -> ModelType:
+    """Convert route string to ModelType enum"""
+    route_map = {
+        "micro": ModelType.MICRO,
+        "planner": ModelType.PLANNER,
+        "deep": ModelType.DEEP,
+        "cache": ModelType.AUTO,
+        "error": ModelType.AUTO,
+    }
+    return route_map.get(route, ModelType.AUTO)
 
 
 class OptimizedOrchestrator:
@@ -105,7 +117,7 @@ class OptimizedOrchestrator:
                     response=cache_result.data.get("render_instruction", {}).get(
                         "content", "Cached response"
                     ),
-                    model_used=f"cache_{cache_result.source}",
+                    model_used=_route_to_model_type("cache"),
                     session_id=request.session_id,
                     latency_ms=int((time.perf_counter() - start_time) * 1000),
                     metadata={
@@ -167,9 +179,7 @@ class OptimizedOrchestrator:
                 response=response_data.get("render_instruction", {}).get(
                     "content", "Response generated"
                 ),
-                model_used=response_data.get("meta", {}).get(
-                    "model_id", route_decision.route
-                ),
+                model_used=_route_to_model_type(route_decision.route),
                 session_id=request.session_id,
                 latency_ms=int(total_latency_ms),
                 metadata={
@@ -210,7 +220,7 @@ class OptimizedOrchestrator:
 
             return ChatResponse(
                 response="Ursäkta, jag stötte på ett tekniskt problem. Försök igen om en stund.",
-                model_used="error_handler",
+                model_used=ModelType.AUTO,
                 session_id=request.session_id,
                 latency_ms=int(error_latency_ms),
                 metadata={

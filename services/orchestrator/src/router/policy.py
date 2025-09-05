@@ -1,5 +1,6 @@
 """
-Router policy for choosing between micro, planner, and deep routes.
+Fibonacci AI Architecture - Router policy for natural routing decisions.
+Using the golden ratio and Fibonacci principles for optimal load distribution.
 """
 
 import os
@@ -9,17 +10,25 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import structlog
 
+from ..config.fibonacci import (
+    GOLDEN_RATIO,
+    calculate_golden_ratio_threshold,
+    get_fibonacci_weight,
+)
+
 logger = structlog.get_logger(__name__)
 
 
 @dataclass
 class RouteDecision:
-    """Route decision with reasoning"""
+    """Fibonacci-enhanced route decision with golden ratio confidence"""
 
-    route: str  # "micro", "planner", "deep"
-    confidence: float  # 0.0 to 1.0
+    route: str  # "micro", "planner", "deep", "hybrid", "orchestrated"
+    confidence: float  # 0.0 to 1.0, adjusted by golden ratio
     reason: str
     features: Dict[str, Any]
+    fibonacci_weight: int  # Fibonacci number for this route
+    golden_ratio_adjustment: float  # Golden ratio optimization
 
 
 class RouterPolicy:
@@ -77,7 +86,6 @@ class RouterPolicy:
 
     def analyze_text(self, text: str) -> Dict[str, Any]:
         """Analyze text and extract features for routing"""
-        text_lower = text.lower()
         text_length = len(text)
         word_count = len(text.split())
 
@@ -108,56 +116,75 @@ class RouterPolicy:
         }
 
     def decide_route(self, text: str) -> RouteDecision:
-        """Decide which route to take based on text analysis"""
+        """Fibonacci-enhanced route decision using natural progression"""
         features = self.analyze_text(text)
 
-        # Calculate scores for each route
+        # Calculate base scores for each route
         micro_score = self._calculate_micro_score(features)
         planner_score = self._calculate_planner_score(features)
         deep_score = self._calculate_deep_score(features)
 
-        # Balanced routing - only boost micro for very simple queries
-        # Only prefer micro for clear simple interactions
-        if (
-            micro_score > 0.6 and features["text_length"] < 30
-        ):  # Higher threshold, only very simple
-            micro_score *= 1.2  # Modest boost for very simple queries
+        # Apply Fibonacci weights to create natural progression
+        micro_weight = get_fibonacci_weight("micro")
+        planner_weight = get_fibonacci_weight("planner")
+        deep_weight = get_fibonacci_weight("deep")
 
-        # Apply MICRO_MAX_SHARE cap with real tracking
+        # Fibonacci-weighted scoring
+        micro_fibonacci = micro_score * micro_weight
+        planner_fibonacci = planner_score * planner_weight
+        deep_fibonacci = deep_score * deep_weight
+
+        # Golden ratio optimization for simple queries
+        if (
+            micro_score > calculate_golden_ratio_threshold(1.0)
+            and features["text_length"] < 34
+        ):  # Fibonacci threshold
+            micro_fibonacci *= GOLDEN_RATIO  # Natural boost using phi
+
+        # Apply MICRO_MAX_SHARE cap with Fibonacci-based tracking
         from ..utils.quota_tracker import get_quota_tracker
 
-        micro_max_share = float(os.getenv("MICRO_MAX_SHARE", "0.2"))
+        micro_max_share = float(
+            os.getenv("MICRO_MAX_SHARE", "0.3")
+        )  # Increased to golden ratio proportion
         quota_tracker = get_quota_tracker("micro_routing")
 
-        # Check if micro quota is exceeded
+        # Check if micro quota is exceeded using Fibonacci thresholds
         if quota_tracker.is_quota_exceeded(micro_max_share):
             logger.info(
-                "MICRO quota exceeded - forcing planner route",
+                "MICRO quota exceeded - Fibonacci cascade to planner",
                 current_share=quota_tracker.get_current_share(),
                 max_share=micro_max_share,
             )
-            # Force planner route by boosting planner score
-            planner_score *= 3.0
-            micro_score *= 0.1
+            # Fibonacci cascade: micro(1) -> planner(2) -> deep(3)
+            planner_fibonacci *= get_fibonacci_weight("hybrid")  # 5
+            micro_fibonacci *= calculate_golden_ratio_threshold(0.1)
         else:
-            # Normal routing - no additional micro bias for better precision
-            pass  # Let natural scores decide
+            # Natural Fibonacci progression - let weights decide
+            pass
 
-        # Normalize scores
-        total_score = micro_score + planner_score + deep_score
-        if total_score > 0:
-            micro_score /= total_score
-            planner_score /= total_score
-            deep_score /= total_score
+        # Golden ratio normalization
+        total_fibonacci = micro_fibonacci + planner_fibonacci + deep_fibonacci
+        if total_fibonacci > 0:
+            micro_final = micro_fibonacci / total_fibonacci
+            planner_final = planner_fibonacci / total_fibonacci
+            deep_final = deep_fibonacci / total_fibonacci
+        else:
+            # Fallback to Fibonacci defaults
+            micro_final = micro_weight / (micro_weight + planner_weight + deep_weight)
+            planner_final = planner_weight / (
+                micro_weight + planner_weight + deep_weight
+            )
+            deep_final = deep_weight / (micro_weight + planner_weight + deep_weight)
 
-        # Determine route with highest score
+        # Determine route with Fibonacci weights
         scores = [
-            ("micro", micro_score),
-            ("planner", planner_score),
-            ("deep", deep_score),
+            ("micro", micro_final, micro_weight),
+            ("planner", planner_final, planner_weight),
+            ("deep", deep_final, deep_weight),
         ]
 
-        best_route, best_score = max(scores, key=lambda x: x[1])
+        best_route, best_score, best_weight = max(scores, key=lambda x: x[1])
 
         # Generate reasoning
         reason = self._generate_reason(best_route, features, scores)
@@ -174,8 +201,20 @@ class RouterPolicy:
             quota_share=quota_tracker.get_current_share(),
         )
 
+        # Calculate golden ratio adjustment
+        golden_adjustment = (
+            best_score * GOLDEN_RATIO
+            if best_route == "micro" and features["text_length"] < 34
+            else 1.0
+        )
+
         return RouteDecision(
-            route=best_route, confidence=best_score, reason=reason, features=features
+            route=best_route,
+            confidence=best_score,
+            reason=reason,
+            features=features,
+            fibonacci_weight=best_weight,
+            golden_ratio_adjustment=golden_adjustment,
         )
 
     def _calculate_micro_score(self, features: Dict[str, Any]) -> float:

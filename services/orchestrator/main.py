@@ -17,6 +17,7 @@ from src.privacy import privacy_manager
 from src.routers import chat, feedback, learn, memory, orchestrator, status
 from src.routers.monitoring import router as monitoring_router
 from src.routers.optimized_orchestrator import router as optimized_router
+from src.routers.predictive import router as predictive_router
 from src.security.metrics import set_mode
 from src.security.policy import load_policy
 from src.security.router import router as security_router
@@ -53,6 +54,17 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         # Health check Guardian connection
         guardian_status = await guardian_client.get_health()
         logger.info("Guardian connection established", status=guardian_status)
+
+        # Initialize Predictive Assistant
+        try:
+            from src.predictive.proactive_assistant import get_proactive_assistant
+
+            proactive_assistant = get_proactive_assistant()
+            await proactive_assistant.initialize()
+            logger.info("Predictive Assistant initialized successfully")
+        except Exception as e:
+            logger.warning("Predictive Assistant initialization failed", error=str(e))
+
         # Load security policy and set default mode
         try:
             import os as _os
@@ -188,6 +200,7 @@ app.include_router(fix_status_router)
 # Include OPTIMIZED routers - THE GRYM SAUCE! 🚀
 app.include_router(optimized_router, tags=["optimized"])  # Optimized orchestrator
 app.include_router(monitoring_router, tags=["monitoring"])  # Performance monitoring
+app.include_router(predictive_router, tags=["predictive"])  # Predictive AI assistant
 
 
 # Root endpoint
