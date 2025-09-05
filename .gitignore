@@ -177,3 +177,4 @@ test_*.py
 
 # Canary monitoring files
 data/monitoring/canary_checkpoint_*.json
+# CI trigger
