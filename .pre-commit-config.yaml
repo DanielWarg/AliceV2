@@ -67,3 +67,10 @@ repos:
         files: ^(services/.*\.py|docs/.*\.md|.*\.yml|.*\.yaml)$
         pass_filenames: false
         always_run: false
+      - id: sync-markdown-files
+        name: Synchronize All Markdown Documentation
+        entry: python scripts/auto_docs/markdown_sync_system.py --check
+        language: system
+        files: ^.*\.md$
+        pass_filenames: false
+        always_run: false

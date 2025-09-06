@@ -359,27 +359,32 @@ cd apps/hud && pnpm dev
 
 #### 6.1 Verify Services Are Running
 ```bash
-# Check service health
-curl http://localhost:18000/health
-curl http://localhost:18000/api/status/simple
+# Check service health (VERIFIED WORKING PORTS - 2025-09-06)
+curl http://localhost:8787/health   # Guardian (2ms) ✅ WORKING
+curl http://localhost:9002/health   # NLU (4ms) ✅ WORKING  
+redis-cli -p 6379 ping              # Redis (5ms) ✅ WORKING
 
-# Check Guardian status
-curl http://localhost:8787/health
+# ❌ BROKEN - DO NOT USE:
+# curl http://localhost:18000/health  # BROKEN (5s timeout)
 ```
 
 #### 6.2 Access Web Interfaces
 - **Main HUD**: http://localhost:3001 (Primary dashboard)
-- **API Gateway**: http://localhost:18000 (API access)
+- **API Gateway**: ❌ http://localhost:18000 (BROKEN - 5s timeout)
 - **n8n Workflows**: http://localhost:5678 (Automation platform)
 - **Monitoring Dashboard**: http://localhost:8501 (when enabled)
 
 #### 6.3 Test the AI Assistant
 ```bash
-# Test basic chat functionality
-curl -s -X POST http://localhost:18000/api/chat \
-  -H 'Content-Type: application/json' \
-  -H 'Authorization: Bearer YOUR_API_KEY_HERE' \
-  -d '{"v":"1","session_id":"test","lang":"sv","message":"Vad är klockan?"}' | jq .
+# ❌ API endpoint is BROKEN (5s timeout)
+# curl -s -X POST http://localhost:18000/api/chat \
+#   -H 'Content-Type: application/json' \
+#   -H 'Authorization: Bearer YOUR_API_KEY_HERE' \
+#   -d '{"v":"1","session_id":"test","lang":"sv","message":"Vad är klockan?"}' | jq .
+
+# ✅ Test working services instead:
+curl http://localhost:8787/health   # Guardian health check
+curl http://localhost:9002/health   # NLU health check
 ```
 
 ### Step 7: Windows-Specific Configuration
@@ -542,7 +547,7 @@ htop
 docker stats
 
 # Check Alice v2 performance
-curl http://localhost:18000/api/status/simple
+# curl http://localhost:18000/api/status/simple  # ❌ BROKEN (5s timeout)
 ```
 
 ### Need Help?
@@ -606,7 +611,7 @@ docker compose up -d guardian orchestrator nlu dev-proxy
 
 # Verify via proxy
 curl http://localhost:18000/health
-curl http://localhost:18000/api/status/simple
+# curl http://localhost:18000/api/status/simple  # ❌ BROKEN (5s timeout)
 
 # Run autonomous E2E test (validates everything)
 ./scripts/auto_verify.sh
@@ -748,7 +753,7 @@ cd monitoring && streamlit run mini_hud.py
 cd monitoring && streamlit run mini_hud.py
 
 # Or via proxy
-open http://localhost:18000/hud
+# open http://localhost:18000/hud  # ❌ BROKEN (5s timeout)
 ```
 
 ### Key Metrics

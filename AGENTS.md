@@ -1,123 +1,143 @@
-# Alice v2 Agent Status & Development Priorities
-*Current system status and development context for AI agents*
+# 🤖 AI Agent Orientation - Alice v2
 
-## 🎯 **CURRENT STATUS: SYSTEM OPTIMIZED & PRODUCTION READY**
+**För AI-agenter som börjar arbeta med Alice-projektet**
 
-### **📊 System Health Status (Live)**
-- **All Services**: ✅ HEALTHY
-- **Orchestrator**: ✅ Running (Port 8001)
-- **Guardian**: ✅ Running (Port 8002)
-- **NLU Service**: ✅ OPERATIONAL (Port 8003) - Intent classification working
-- **Memory**: ✅ Running (Port 8005) - Vector search functional
-- **Voice**: ✅ Running (Port 8004) - Audio processing ready
-- **Cache (Redis)**: ✅ Running - PII filtering active
+## 📚 Kritiska filer att läsa FÖRST (i denna ordning)
 
-### **🚀 Recent Major Achievements**
+### Steg 1: Grundförståelse (5 min)
+```
+README.md                           # Vad är Alice + hur startar man
+ALICE_SYSTEM_BLUEPRINT.md           # Arkitektur + tjänster + portar  
+STATUS.md                           # Nuvarande version + status
+```
 
-#### **Comprehensive System Cleanup (COMPLETED)**
-- **Architecture Audit**: PRISTINE - zero service boundary violations
-- **Code Quality**: Removed ~3,000 lines dead code (0.6% of codebase)
-- **Bug Fixes**: Critical import errors, memory leaks, duplication resolved
-- **Test Optimization**: Streamlined test suite (-36% reduction)
-- **Planner Consolidation**: Merged hybrid implementations (-40% reduction)
+### Steg 2: Projektkontext (10 min)
+```
+ROADMAP.md                          # Vart vi är på väg
+COMPLETE_ROADMAP_EXECUTION_PLAN.md  # Vad som redan är klart
+OPTIMIZATION_MASTER_PLAN.md         # Performance-strategi + mål
+```
 
-#### **Production Readiness**
-- **Import Fixes**: Resolved asyncio import in voice service
-- **Memory Optimization**: Eliminated TTL duplication in memory service
-- **CI/CD**: All critical security and build checks passing
-- **Lint Compliance**: 100% pre-commit hook compliance
-- **Service Dependencies**: Clean separation, no circular dependencies
+### Steg 3: Säkerhet & Drift (5 min)
+```
+SECURITY_AND_PRIVACY.md             # Säkerhetspolicys
+TESTING_STRATEGY.md                 # Hur vi testar
+.pre-commit-config.yaml             # Code quality rules
+```
 
-### **🎯 NEXT DEVELOPMENT PRIORITIES**
+### Steg 4: Utvecklingsregler (2 min)
+```
+ONBOARDING_GUIDE.md                 # Fullständig orientering
+denne fil (AGENTS.md)               # AI-specifika regler
+```
 
-#### **Phase 1: Performance Baseline & Monitoring**
-1. **Establish New Benchmarks**
-   - Run comprehensive performance tests post-cleanup
-   - Document improved metrics and SLO compliance
-   - Create performance regression detection
+## 🎯 Vad detta hade hjälpt mig med
 
-2. **Enhanced Monitoring**
-   - Improve cache hit rate tracking
-   - Add detailed service health metrics
-   - Implement performance alerting
+**JA - Hade sparat timmar:**
+- ✅ Förstått att Fibonacci-optimering är central (φ=1.618)
+- ✅ Vetat att orchestrator exponeras via Caddy proxy på port 18000 
+- ✅ Förstått att `make up` inte startar dev-proxy automatiskt
+- ✅ Förstått att pre-commit hooks behöver fixas ordentligt
+- ✅ Vetat att Guardian är brownout-protection systemet
+- ✅ Förstått cache-hierarkin (L1-L10) och hit-rate mål
+- ✅ Vetat att git/CI-problem var högsta prioritet
 
-#### **Phase 2: Feature Enhancement Options**
+**Hade undvikit:**
+- ❌ Gissning om portar och service-endpoints
+- ❌ Förvirring om dokumentationshierarki
+- ❌ Pre-commit hook-trial-and-error
+- ❌ Onödiga service-restarter
+- ❌ Port-förvirring mellan 8000 (intern) och 18000 (extern via Caddy)
 
-**Option A: AI/ML Improvements**
-- Enhanced Swedish language processing
-- Better intent classification models
-- Context-aware response generation
-- Hybrid LLM routing optimization
+## 📋 AI Agent Regler
 
-**Option B: Scalability & Performance**
-- Load testing and optimization
-- Redis clustering for cache scaling
-- Service auto-scaling implementation
-- Advanced SLO monitoring
+### DO (Gör detta):
+1. **Alltid läs filerna ovan INNAN du börjar koda**
+2. **Uppdatera STATUS.md när du gör betydande ändringar**
+3. **Följ conventional commits** (`feat:`, `fix:`, `docs:`, `chore:`)
+4. **Kör `make down && make up` när services är konstiga**
+5. **Starta dev-proxy om port 18000 inte fungerar**: `docker compose up -d dev-proxy`
+6. **Använd TodoWrite verktyget för att spåra framsteg**
+7. **Respektera Fibonacci-principerna** (Golden Ratio optimization)
 
-**Option C: Production Hardening**
-- Kubernetes deployment setup
-- Advanced monitoring (Grafana/Prometheus)
-- Backup & disaster recovery
-- Security audit & penetration testing
+### DON'T (Rör inte):
+1. **`docs/ADR/`** utan att skapa ny ADR först
+2. **`.github/workflows/`** utan att testa lokalt först  
+3. **`services/orchestrator/src/config/`** utan att förstå konsekvenser
+4. **Production secrets** - aldrig commita nycklar/tokens
+5. **`eval/` resultat** - dessa är faktiska benchmark-data
 
-**Option D: Developer Experience**
-- Comprehensive API documentation
-- Integration examples and guides
-- Developer onboarding automation
-- Community tooling
+### Vid osäkerhet:
+- **Fibonacci-frågor** → `docs/fibonacci/` hierarchy
+- **Service-problem** → `ALICE_SYSTEM_BLUEPRINT.md`
+- **Performance** → `OPTIMIZATION_MASTER_PLAN.md`
+- **Testing** → `TESTING_STRATEGY.md`
+- **Allt annat** → `ONBOARDING_GUIDE.md`
 
-### **🔧 Technical Context for Development**
+## 🚦 Quick Health Check
 
-#### **Current Architecture Strengths**
-- **Microservice Design**: Clean separation of concerns
-- **Health Management**: Guardian service provides robust brownout protection
-- **Caching Strategy**: Redis with PII filtering for compliance
-- **NLU Pipeline**: Working intent classification with Swedish support
-- **Memory System**: FAISS vector search with conversation context
-- **Voice Processing**: STT/TTS pipeline ready for enhancement
+Innan du börjar jobba, verifiera:
+```bash
+# Services (inkluderar dev-proxy på port 18000)
+docker ps | grep alice
 
-#### **Optimization Opportunities**
-- **Cache Hit Rates**: Current ~10%, opportunity for improvement
-- **Request Routing**: Fine-tune micro/full LLM distribution
-- **Response Latency**: Optimize P95 latency further
-- **Resource Usage**: Memory and CPU optimization potential
+# Health (VERIFIED WORKING PORTS - 2025-09-06)
+curl http://localhost:8787/health   # Guardian (2ms) ✅ WORKING
+curl http://localhost:9002/health   # NLU (4ms) ✅ WORKING
+redis-cli -p 6379 ping              # Redis (5ms) ✅ WORKING
 
-### **🎪 Development Guidelines**
+# ❌ BROKEN - DO NOT USE:
+# curl http://localhost:18000/health  # BROKEN (5s timeout)
 
-#### **Code Quality Standards**
-- All changes must pass pre-commit hooks (ruff, black, isort)
-- Maintain service boundary integrity (no cross-service imports)
-- Follow existing patterns for consistency
-- Add comprehensive tests for new features
+# Cache test
+docker exec alice-cache redis-cli ping
+```
 
-#### **Architecture Principles**
-- Preserve microservice independence
-- Maintain Guardian health monitoring integration
-- Ensure PII filtering in all data paths
-- Keep fallback mechanisms robust
+## 🎪 Common Tasks & Their Docs
 
-#### **Performance Requirements**
-- P95 latency targets: <900ms for most requests
-- Cache hit rates: Aim for >70% for repeated queries
-- Service availability: >99.9% uptime
-- Resource usage: Monitor and optimize continuously
-
-### **📈 Success Metrics & KPIs**
-
-#### **System Health KPIs**
-- Service uptime: >99.9%
-- Response latency P95: <900ms
-- Error rates: <0.1%
-- Cache efficiency: >70% hit rate
-
-#### **Development Velocity KPIs**
-- Code quality: 100% lint compliance
-- Test coverage: Maintain current levels
-- Deployment success: 100% automated
-- Documentation: Keep current with changes
+| Uppgift | Läs först |
+|---------|-----------|
+| Fix CI workflows | `.github/workflows/` + `TESTING_STRATEGY.md` |
+| Optimize performance | `OPTIMIZATION_MASTER_PLAN.md` + `docs/fibonacci/` |
+| Add new service | `ALICE_SYSTEM_BLUEPRINT.md` + `docker-compose.yml` |
+| Debug cache issues | `CACHE.md` + `services/cache/` |
+| Update documentation | `ONBOARDING_GUIDE.md` + denna fil |
 
 ---
-*Last Updated: 2025-09-05*
-*Status: All services operational, ready for next development phase*
-*Next Review: After feature development planning*
+
+## 🚨 KRITISK PORT DISCOVERY - 2025-09-06
+
+**TESTED RESULTS:**
+- ✅ Guardian: 8787 (2ms respons) - WORKING
+- ✅ NLU: 9002 (4ms respons) - WORKING  
+- ✅ Redis: 6379 (5ms respons) - WORKING
+- ❌ Alice API: 18000 (5s timeout) - BROKEN
+
+**ROOT CAUSE FOUND:**
+Orchestrator har INGEN extern portmappning:
+```bash
+docker ps --format "table {{.Names}}\t{{.Ports}}"
+alice-orchestrator   8000/tcp  # ← Ingen 0.0.0.0 mappning!
+```
+
+**IMMEDIATE FIX FOR TRAINING SCRIPTS:**
+Använd Guardian istället för port 18000 till dess att orchestrator-porten fixas:
+```python
+# ISTÄLLET FÖR:
+# orchestrator_url = "http://localhost:18000"
+
+# ANVÄND:
+# health_check_url = "http://localhost:8787/health"  # Guardian fungerar
+```
+
+**DOKUMENTERAT I:**
+- `PORT_REFERENCE.md` - Fullständiga testresultat
+- Alla script måste uppdateras till att använda fungerande portar
+
+---
+
+**💡 Pro tip:** Alice v2 är ett produktionssystem med Fibonacci mathematical optimization. Respektera Golden Ratio-principerna (φ=1.618) i all performance-tuning!
+
+---
+
+*Skapad: 2025-09-06 | Uppdaterad: 2025-09-06 | För: AI Agents working on Alice v2*

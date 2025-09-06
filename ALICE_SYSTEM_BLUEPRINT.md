@@ -954,7 +954,7 @@ if cache_hit_rate < 0.7:
 ```mermaid
 graph TB
     subgraph "Host Machine"
-        Browser[Web Browser<br/>localhost:18000] --> DevProxy[dev-proxy<br/>Caddy Reverse Proxy<br/>Container: alice-dev-proxy<br/>Port: 18000→80]
+        Browser[Web Browser<br/>❌ localhost:18000 BROKEN] --> DevProxy[dev-proxy<br/>Caddy Reverse Proxy<br/>Container: alice-dev-proxy<br/>Port: 18000→80<br/>❌ 5s timeout issues]
     end
     
     subgraph "Docker Bridge Network"
