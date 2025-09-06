@@ -178,3 +178,6 @@ test_*.py
 # Canary monitoring files
 data/monitoring/canary_checkpoint_*.json
 # CI trigger
+# Training result files - now stored in logs/ directory
+fibonacci_training_results_*.json
+fibonacci_training_progress_*.json

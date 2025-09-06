@@ -1,0 +1,310 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Fibonacci Training Results Schema",
+  "description": "Standardized schema for all Fibonacci training sessions - ensures consistent machine-readable output",
+  "version": "1.0.0",
+  "type": "object",
+  "required": [
+    "session_metadata",
+    "performance_metrics", 
+    "cache_metrics",
+    "fibonacci_analysis",
+    "phase_results",
+    "recommendations",
+    "thresholds"
+  ],
+  "properties": {
+    "session_metadata": {
+      "type": "object",
+      "required": ["session_id", "timestamp", "duration_seconds", "golden_ratio", "version"],
+      "properties": {
+        "session_id": {
+          "type": "string",
+          "pattern": "^fibonacci_training_\\d{8}_\\d{6}$",
+          "description": "Unique session identifier"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when training started"
+        },
+        "duration_seconds": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Total training duration in seconds"
+        },
+        "golden_ratio": {
+          "type": "number",
+          "const": 1.618033988749,
+          "description": "Golden ratio constant used for optimization"
+        },
+        "version": {
+          "type": "string",
+          "description": "Training script version"
+        }
+      }
+    },
+    "performance_metrics": {
+      "type": "object",
+      "required": ["avg_response_time_ms", "min_response_time_ms", "max_response_time_ms", "success_rate_percent", "total_requests", "successful_requests", "failed_requests"],
+      "properties": {
+        "avg_response_time_ms": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Average response time across all successful requests"
+        },
+        "min_response_time_ms": {
+          "type": "number", 
+          "minimum": 0,
+          "description": "Fastest response time recorded"
+        },
+        "max_response_time_ms": {
+          "type": "number",
+          "minimum": 0, 
+          "description": "Slowest response time recorded"
+        },
+        "success_rate_percent": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Percentage of successful requests"
+        },
+        "total_requests": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of requests made"
+        },
+        "successful_requests": {
+          "type": "integer", 
+          "minimum": 0,
+          "description": "Number of successful requests"
+        },
+        "failed_requests": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of failed requests"
+        },
+        "performance_rating": {
+          "type": "string",
+          "enum": ["excellent", "good", "moderate", "poor"],
+          "description": "Overall performance classification"
+        },
+        "improvement_percent": {
+          "type": "number",
+          "description": "Improvement percentage from 417ms baseline"
+        },
+        "target_progress_percent": {
+          "type": "number", 
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Progress towards 35.9ms target (100% = target achieved)"
+        }
+      }
+    },
+    "cache_metrics": {
+      "type": "object",
+      "required": ["initial_hit_rate_percent", "final_hit_rate_percent", "hit_rate_improvement", "total_hits", "total_misses"],
+      "properties": {
+        "initial_hit_rate_percent": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Cache hit rate at start of training"
+        },
+        "final_hit_rate_percent": {
+          "type": "number", 
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Cache hit rate at end of training"
+        },
+        "hit_rate_improvement": {
+          "type": "number",
+          "description": "Improvement in hit rate (percentage points)"
+        },
+        "total_hits": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total cache hits during training"
+        },
+        "total_misses": {
+          "type": "integer",
+          "minimum": 0, 
+          "description": "Total cache misses during training"
+        },
+        "target_hit_rate_percent": {
+          "type": "number",
+          "const": 70,
+          "description": "Target cache hit rate (70%)"
+        }
+      }
+    },
+    "fibonacci_analysis": {
+      "type": "object",
+      "required": ["golden_ratio_efficiency", "fibonacci_status", "optimization_achieved"],
+      "properties": {
+        "golden_ratio_efficiency": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2.0,
+          "description": "Efficiency relative to golden ratio target (1.0 = optimal)"
+        },
+        "fibonacci_status": {
+          "type": "string",
+          "enum": ["excellent", "good", "needs_improvement"],
+          "description": "Fibonacci optimization status classification"
+        },
+        "optimization_achieved": {
+          "type": "boolean",
+          "description": "Whether Fibonacci optimization targets were met"
+        },
+        "golden_ratio_target": {
+          "type": "number",
+          "description": "Target hit rate based on golden ratio (≈61.8%)"
+        }
+      }
+    },
+    "phase_results": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["phase_name", "queries", "avg_response_time_ms", "success_rate_percent", "duration_seconds"],
+        "properties": {
+          "phase_name": {
+            "type": "string",
+            "enum": ["rapid_warm_up", "pattern_boost", "optimization_sprint"],
+            "description": "Name of the training phase"
+          },
+          "phase_display_name": {
+            "type": "string",
+            "description": "Human-readable phase name"
+          },
+          "queries": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Number of queries in this phase"
+          },
+          "avg_response_time_ms": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Average response time for this phase"
+          },
+          "success_rate_percent": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Success rate for this phase"
+          },
+          "duration_seconds": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Duration of this phase in seconds"
+          },
+          "performance_rating": {
+            "type": "string", 
+            "enum": ["excellent", "good", "moderate", "poor"],
+            "description": "Performance classification for this phase"
+          }
+        }
+      }
+    },
+    "thresholds": {
+      "type": "object",
+      "description": "Numerical thresholds for automated analysis and alerting",
+      "properties": {
+        "response_time": {
+          "type": "object",
+          "properties": {
+            "excellent_max_ms": {"type": "number", "const": 1000},
+            "good_max_ms": {"type": "number", "const": 5000},
+            "poor_min_ms": {"type": "number", "const": 10000}
+          }
+        },
+        "success_rate": {
+          "type": "object", 
+          "properties": {
+            "excellent_min_percent": {"type": "number", "const": 95},
+            "good_min_percent": {"type": "number", "const": 80},
+            "poor_max_percent": {"type": "number", "const": 50}
+          }
+        },
+        "cache": {
+          "type": "object",
+          "properties": {
+            "target_hit_rate_percent": {"type": "number", "const": 70},
+            "baseline_hit_rate_percent": {"type": "number", "const": 10}
+          }
+        },
+        "targets": {
+          "type": "object",
+          "properties": {
+            "target_response_time_ms": {"type": "number", "const": 35.9},
+            "baseline_response_time_ms": {"type": "number", "const": 417}
+          }
+        }
+      }
+    },
+    "recommendations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["priority", "category", "description", "actionable"],
+        "properties": {
+          "priority": {
+            "type": "string",
+            "enum": ["critical", "high", "medium", "low"],
+            "description": "Priority level for this recommendation"
+          },
+          "category": {
+            "type": "string",
+            "enum": ["performance", "cache", "fibonacci", "system", "monitoring"],
+            "description": "Category of recommendation"
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable recommendation"
+          },
+          "actionable": {
+            "type": "boolean", 
+            "description": "Whether this recommendation can be acted upon immediately"
+          },
+          "technical_details": {
+            "type": "string",
+            "description": "Optional technical implementation details"
+          }
+        }
+      }
+    },
+    "alerts": {
+      "type": "array",
+      "description": "Automated alerts based on thresholds",
+      "items": {
+        "type": "object",
+        "required": ["severity", "message", "threshold_breached"],
+        "properties": {
+          "severity": {
+            "type": "string",
+            "enum": ["critical", "warning", "info"],
+            "description": "Alert severity level"
+          },
+          "message": {
+            "type": "string",
+            "description": "Alert message"
+          },
+          "threshold_breached": {
+            "type": "string",
+            "description": "Which threshold was breached"
+          },
+          "current_value": {
+            "type": "number",
+            "description": "Current measured value"
+          },
+          "threshold_value": {
+            "type": "number", 
+            "description": "Threshold value that was breached"
+          }
+        }
+      }
+    }
+  }
+}

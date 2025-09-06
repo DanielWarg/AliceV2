@@ -11,7 +11,7 @@ Guardian is Alice's rule-based security system that protects against overload of
 ```
 ┌─────────────────┐    HTTP     ┌─────────────────┐
 │   Alice Server  │◄──────────► │  Guardian       │
-│   :8000         │             │  :8787          │
+│   [API_PORT]    │             │  [GUARDIAN_PORT]│
 └─────────────────┘             └─────────────────┘
          ▲                               │
          │ admission control             │ system monitoring
@@ -41,7 +41,7 @@ Guardian is Alice's rule-based security system that protects against overload of
 - Rate limiting and lockdown on too many kills
 
 ### 4. API Server (`src/api/server.py`)
-- FastAPI server on port :8787
+- FastAPI server on port [GUARDIAN_PORT] (See AGENTS.md)
 - `/health` - Guardian status
 - Control endpoints for degrade/stop-intake/resume
 
@@ -84,7 +84,7 @@ python src/guardian.py
 python -m guardian.guardian
 
 # With environment variables
-ALICE_API_URL=http://localhost:8000 \
+ALICE_API_URL=http://localhost:[API_PORT] \  # See AGENTS.md for port
 GUARDIAN_PORT=8787 \
 python src/guardian.py
 ```
@@ -93,21 +93,21 @@ python src/guardian.py
 
 #### Health Check
 ```bash
-curl http://localhost:8787/health
+curl http://localhost:[GUARDIAN_PORT]/health  # See AGENTS.md for port
 ```
 
 #### Control Endpoints
 ```bash
 # Degrade system
-curl -X POST http://localhost:8787/degrade \
+curl -X POST http://localhost:[GUARDIAN_PORT]/degrade \  # See AGENTS.md for port
   -H "Content-Type: application/json" \
   -d '{"level": "MODERATE"}'
 
 # Stop intake
-curl -X POST http://localhost:8787/stop-intake
+curl -X POST http://localhost:[GUARDIAN_PORT]/stop-intake  # See AGENTS.md for port
 
 # Resume normal operation
-curl -X POST http://localhost:8787/resume
+curl -X POST http://localhost:[GUARDIAN_PORT]/resume  # See AGENTS.md for port
 ```
 
 ## 🔒 Security Features

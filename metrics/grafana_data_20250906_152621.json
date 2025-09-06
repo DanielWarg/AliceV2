@@ -1,0 +1,52 @@
+{
+  "dashboard": {
+    "title": "Fibonacci Training Metrics",
+    "tags": [
+      "fibonacci",
+      "training",
+      "performance"
+    ],
+    "timezone": "UTC",
+    "panels": []
+  },
+  "timeSeries": {
+    "responseTime": {
+      "target": "fibonacci.response_time",
+      "datapoints": [
+        [
+          0,
+          1757165181756
+        ]
+      ]
+    },
+    "cacheHitRate": {
+      "target": "fibonacci.cache_hit_rate",
+      "datapoints": [
+        [
+          0,
+          1757165181756
+        ]
+      ]
+    },
+    "goldenRatioEfficiency": {
+      "target": "fibonacci.golden_ratio_efficiency",
+      "datapoints": [
+        [
+          0,
+          1757165181756
+        ]
+      ]
+    }
+  },
+  "annotations": [
+    {
+      "time": 1757165181756,
+      "title": "Training Session: fibonacci_training_20250906_152621",
+      "text": "Performance: poor | Fibonacci Status: needs_improvement",
+      "tags": [
+        "training",
+        "fibonacci"
+      ]
+    }
+  ]
+}

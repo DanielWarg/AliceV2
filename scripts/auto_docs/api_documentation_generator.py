@@ -31,6 +31,7 @@ import structlog
 try:
     import fastapi  # noqa: F401
     import pydantic  # noqa: F401
+
     FASTAPI_AVAILABLE = True
 except ImportError:
     FASTAPI_AVAILABLE = False
@@ -163,8 +164,6 @@ class APIDocumentationGenerator:
             sys.path.insert(0, str(service_dir.parent))
 
             # Import the main module
-            module_name = f"{service_name}.main"
-            spec = importlib.util.spec_from_file_location(module_name, main_file)
             # Don't execute the module (might start servers), just analyze statically
             endpoints = self._extract_endpoints_from_ast(tree, service_dir)
             models = self._extract_models_from_directory(service_dir)

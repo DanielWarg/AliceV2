@@ -168,28 +168,29 @@ kill -9 $(pgrep ollama)     # Kill local Ollama if needed
 make up                     # Start with health checks
 
 # Verify services
-curl http://localhost:18000/health     # Via dev-proxy
-curl http://localhost:9002/health      # NLU direct
-curl http://localhost:8787/health      # Guardian direct
+# See AGENTS.md for current port assignments and health endpoints
+curl [API_ENDPOINT]/health        # Via dev-proxy
+curl [NLU_ENDPOINT]/health        # NLU direct
+curl [GUARDIAN_ENDPOINT]/health   # Guardian direct
 docker ps                              # Check containers
 ```
 
 #### **2. Routing Complexity Tests**
 ```bash
 # EASY Query (micro route)
-curl -X POST "http://localhost:18000/api/chat" \
+curl -X POST "[API_ENDPOINT]/api/chat" \
 -H "Content-Type: application/json" \
 -d '{"message": "hej!", "user_id": "test_user", "session_id": "easy_test"}'
 # Expected: micro route, ~30-50ms
 
 # MEDIUM Query (planner route)  
-curl -X POST "http://localhost:18000/api/chat" \
+curl -X POST "[API_ENDPOINT]/api/chat" \
 -H "Content-Type: application/json" \
 -d '{"message": "boka möte med Anna imorgon klockan 14", "user_id": "test_user", "session_id": "medium_test"}'
 # Expected: planner route, 150-200ms
 
 # API-TRIGGERING Query (weather tool)
-curl -X POST "http://localhost:18000/api/chat" \
+curl -X POST "[API_ENDPOINT]/api/chat" \
 -H "Content-Type: application/json" \
 -d '{"message": "Vad är vädret i Stockholm idag?", "user_id": "test_user", "session_id": "api_test"}'
 # Expected: weather.lookup tool, micro route, 40-60ms
@@ -504,9 +505,10 @@ services:
       - voice
       - redis
     environment:
-      - API_BASE=http://orchestrator:8000
-      - WS_ASR=ws://orchestrator:8000/ws/asr
-      - GUARDIAN_URL=http://guardian:8787
+      # See AGENTS.md for current service ports
+      - API_BASE=http://orchestrator:[ORCHESTRATOR_PORT]
+      - WS_ASR=ws://orchestrator:[ORCHESTRATOR_PORT]/ws/asr
+      - GUARDIAN_URL=http://guardian:[GUARDIAN_PORT]
       - EMAIL_SMTP_URL=${TEST_SMTP_URL}
       - CALDAV_URL=${TEST_CALDAV_URL} 
       - RTSP_URL=${TEST_CAMERA_URL}
@@ -540,32 +542,33 @@ make up                             # Auto health-checked startup
 # ✅ guardian (Resource protection) 
 # ✅ alice-nlu (Swedish NLU)
 # ✅ alice-orchestrator (Main API)
-# ✅ alice-dev-proxy (Caddy on :18000)
+# See AGENTS.md for current proxy port
 ```
 
 #### **Testing & Verification**
 ```bash
 # 1. Health Check All Services
-curl http://localhost:18000/health          # Main API via proxy
-curl http://localhost:9002/health           # NLU service direct
-curl http://localhost:8787/health           # Guardian direct
+# See AGENTS.md for current port assignments
+curl [API_ENDPOINT]/health          # Main API via proxy
+curl [NLU_ENDPOINT]/health          # NLU service direct
+curl [GUARDIAN_ENDPOINT]/health     # Guardian direct
 
 # 2. Run Full Test Suite
 ./scripts/test_a_z_real_data.sh            # 10 Swedish test scenarios
 
 # 3. Manual Routing Tests
 # Easy query (micro route)
-curl -X POST "http://localhost:18000/api/chat" \
+curl -X POST "[API_ENDPOINT]/api/chat" \
   -H "Content-Type: application/json" \
   -d '{"message": "hej!", "user_id": "test", "session_id": "easy"}'
 
 # Complex query (planner route)
-curl -X POST "http://localhost:18000/api/chat" \
+curl -X POST "[API_ENDPOINT]/api/chat" \
   -H "Content-Type: application/json" \
   -d '{"message": "boka möte med Anna imorgon kl 14", "user_id": "test", "session_id": "complex"}'
 
 # API tool query (weather)
-curl -X POST "http://localhost:18000/api/chat" \
+curl -X POST "[API_ENDPOINT]/api/chat" \
   -H "Content-Type: application/json" \
   -d '{"message": "Vad är vädret i Stockholm idag?", "user_id": "test", "session_id": "weather"}'
 

@@ -39,14 +39,18 @@ project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 # Import local modules after path setup
-from scripts.auto_docs.api_documentation_generator import APIDocumentationGenerator  # noqa: E402
-from scripts.auto_docs.architecture_diagram_generator import (
-    ArchitectureDiagramGenerator,  # noqa: E402
+from scripts.auto_docs.api_documentation_generator import (  # noqa: E402
+    APIDocumentationGenerator,
 )
-from scripts.auto_docs.documentation_validator import DocumentationValidator  # noqa: E402
+from scripts.auto_docs.architecture_diagram_generator import (  # noqa: E402
+    ArchitectureDiagramGenerator,
+)
+from scripts.auto_docs.documentation_validator import (  # noqa: E402
+    DocumentationValidator,
+)
 from scripts.auto_docs.performance_reporter import PerformanceReporter  # noqa: E402
-from scripts.auto_docs.service_documentation_generator import (
-    ServiceDocumentationGenerator,  # noqa: E402
+from scripts.auto_docs.service_documentation_generator import (  # noqa: E402
+    ServiceDocumentationGenerator,
 )
 
 
@@ -610,7 +614,7 @@ class DocumentationOrchestrator:
         tasks = self.create_full_generation_tasks()
 
         # Execute tasks
-        results = self.execute_tasks_parallel(tasks)
+        self.execute_tasks_parallel(tasks)
 
         # Validate documentation
         validation_passed = self.validate_documentation()
@@ -649,7 +653,7 @@ class DocumentationOrchestrator:
             return True
 
         # Execute tasks
-        results = self.execute_tasks_parallel(tasks)
+        self.execute_tasks_parallel(tasks)
 
         # Validate updated documentation
         validation_passed = self.validate_documentation()

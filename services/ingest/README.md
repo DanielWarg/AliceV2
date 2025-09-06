@@ -173,7 +173,8 @@ learn:
 	python services/ingest/run_ingest.py --input $(LEARN_INPUT_DIR) --tests $(LEARN_TESTS_FILE) --parquet_out $(LEARN_OUT_PARQUET) --snapshot_out $(LEARN_OUT_SNAPSHOT) --log_out $(LEARN_LOG)
 
 learn-daily:
-	curl -s -X POST http://localhost:8000/api/learn/snapshot | jq .
+	# See AGENTS.md for current API endpoint and port
+	curl -s -X POST [API_ENDPOINT]/api/learn/snapshot | jq .
 ```
 
 **Cron (dagligen 14:00, host):**

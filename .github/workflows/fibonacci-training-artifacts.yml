@@ -1,0 +1,224 @@
+---
+name: Fibonacci Training Artifacts
+
+on:
+  workflow_dispatch:
+    inputs:
+      export_metrics:
+        description: 'Export training metrics to monitoring formats'
+        required: false
+        default: true
+        type: boolean
+  schedule:
+    # Run every 6 hours to capture training artifacts
+    - cron: '0 */6 * * *'
+  push:
+    paths:
+      - 'logs/fibonacci_training_results_*.json'
+      - 'scripts/fibonacci_*.py'
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  export-training-artifacts:
+    runs-on: ubuntu-latest
+    if: github.repository_owner == 'anthropics' || github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          
+      - name: Install dependencies
+        run: |
+          pip install jsonschema
+          
+      - name: Check for training results
+        id: check_results
+        run: |
+          if ls logs/fibonacci_training_results_*.json 1> /dev/null 2>&1; then
+            echo "results_found=true" >> $GITHUB_OUTPUT
+            echo "Latest results found - proceeding with export"
+          else
+            echo "results_found=false" >> $GITHUB_OUTPUT
+            echo "No training results found - skipping export"
+          fi
+          
+      - name: Export training metrics
+        if: steps.check_results.outputs.results_found == 'true'
+        run: |
+          python scripts/auto_docs/fibonacci_metrics_exporter.py
+          
+      - name: Generate trend analysis
+        if: steps.check_results.outputs.results_found == 'true'
+        run: |
+          echo "# Fibonacci Training Trend Report" > TRAINING_TREND_REPORT.md
+          echo "Generated: $(date -u)" >> TRAINING_TREND_REPORT.md
+          echo "" >> TRAINING_TREND_REPORT.md
+          
+          # Count total training sessions
+          session_count=$(find logs/ -name "fibonacci_training_results_*.json" | wc -l)
+          echo "**Total Training Sessions:** $session_count" >> TRAINING_TREND_REPORT.md
+          echo "" >> TRAINING_TREND_REPORT.md
+          
+          # Latest session summary if available
+          if [ -f "metrics/canonical_"*.json ]; then
+            latest_canonical=$(ls -t metrics/canonical_*.json | head -1)
+            echo "## Latest Session Summary" >> TRAINING_TREND_REPORT.md
+            echo '```json' >> TRAINING_TREND_REPORT.md
+            jq '.session_metadata + .performance_metrics + .fibonacci_analysis' "$latest_canonical" >> TRAINING_TREND_REPORT.md
+            echo '```' >> TRAINING_TREND_REPORT.md
+            echo "" >> TRAINING_TREND_REPORT.md
+          fi
+          
+          # Performance trend if CSV exists
+          if [ -f "metrics/fibonacci_training_history.csv" ]; then
+            echo "## Performance Trends" >> TRAINING_TREND_REPORT.md
+            echo "| Session | Avg Response (ms) | Success Rate | Cache Hit Rate | Fibonacci Status |" >> TRAINING_TREND_REPORT.md
+            echo "|---------|-------------------|--------------|----------------|------------------|" >> TRAINING_TREND_REPORT.md
+            tail -n 5 metrics/fibonacci_training_history.csv | while IFS=, read -r timestamp session_id duration avg_response success_rate improvement target_progress initial_cache final_cache cache_improvement golden_efficiency fib_status opt_achieved perf_rating alert_count rec_count; do
+              if [[ "$timestamp" != "timestamp" ]]; then
+                short_session=$(echo "$session_id" | cut -d'_' -f3-4)
+                echo "| $short_session | $avg_response | ${success_rate}% | ${final_cache}% | $fib_status |" >> TRAINING_TREND_REPORT.md
+              fi
+            done
+          fi
+          
+      - name: Upload training artifacts
+        if: steps.check_results.outputs.results_found == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: fibonacci-training-artifacts-${{ github.run_number }}
+          path: |
+            logs/FINAL_REPORT_*.txt
+            metrics/canonical_*.json
+            metrics/fibonacci_metrics_*.prom
+            metrics/grafana_data_*.json
+            metrics/fibonacci_training_history.csv
+            TRAINING_TREND_REPORT.md
+          retention-days: 30
+          
+      - name: Upload latest final report
+        if: steps.check_results.outputs.results_found == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: latest-fibonacci-training-report
+          path: |
+            logs/FINAL_REPORT_*.txt
+            TRAINING_TREND_REPORT.md
+          retention-days: 90
+          
+      - name: Comment on commit with results
+        if: steps.check_results.outputs.results_found == 'true' && github.event_name == 'push'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Find latest canonical result
+            const metricsDir = 'metrics';
+            if (!fs.existsSync(metricsDir)) return;
+            
+            const canonicalFiles = fs.readdirSync(metricsDir)
+              .filter(f => f.startsWith('canonical_') && f.endsWith('.json'))
+              .map(f => ({
+                name: f,
+                time: fs.statSync(path.join(metricsDir, f)).mtime.getTime()
+              }))
+              .sort((a, b) => b.time - a.time);
+            
+            if (canonicalFiles.length === 0) return;
+            
+            const latestFile = path.join(metricsDir, canonicalFiles[0].name);
+            const result = JSON.parse(fs.readFileSync(latestFile, 'utf8'));
+            
+            const comment = `## 🧮 Fibonacci Training Results
+            
+            **Session:** \`${result.session_metadata.session_id}\`
+            **Performance:** ${result.performance_metrics.performance_rating} (${result.performance_metrics.avg_response_time_ms.toFixed(1)}ms avg)
+            **Cache Hit Rate:** ${result.cache_metrics.final_hit_rate_percent.toFixed(1)}%
+            **Fibonacci Status:** ${result.fibonacci_analysis.fibonacci_status}
+            **Target Progress:** ${result.performance_metrics.target_progress_percent.toFixed(1)}%
+            
+            ${result.alerts.length > 0 ? `⚠️ **${result.alerts.length} alerts active**` : '✅ No alerts'}
+            ${result.recommendations.length > 0 ? `💡 **${result.recommendations.length} recommendations pending**` : ''}
+            
+            [View Full Artifacts](${context.payload.repository.html_url}/actions/runs/${context.runId})`;
+            
+            github.rest.repos.createCommitComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+              body: comment
+            });
+
+  validate-schema-compliance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          
+      - name: Install dependencies
+        run: |
+          pip install jsonschema
+          
+      - name: Validate training results against schema
+        run: |
+          echo "🔍 Validating all training results against canonical schema..."
+          
+          if [ ! -f "schemas/fibonacci_training_schema.json" ]; then
+            echo "❌ Schema file not found"
+            exit 1
+          fi
+          
+          validation_failed=false
+          
+          for result_file in logs/fibonacci_training_results_*.json; do
+            if [ -f "$result_file" ]; then
+              echo "Validating $result_file..."
+              if ! python -c "
+import json
+import jsonschema
+import sys
+
+with open('schemas/fibonacci_training_schema.json', 'r') as f:
+    schema = json.load(f)
+
+with open('$result_file', 'r') as f:
+    result = json.load(f)
+
+# Convert to canonical format first
+from scripts.auto_docs.fibonacci_metrics_exporter import FibonacciMetricsExporter
+exporter = FibonacciMetricsExporter()
+canonical = exporter.standardize_training_result(result)
+
+try:
+    jsonschema.validate(canonical, schema)
+    print(f'✅ $result_file is valid')
+except jsonschema.ValidationError as e:
+    print(f'❌ $result_file validation failed: {e}')
+    sys.exit(1)
+              "; then
+                validation_failed=true
+              fi
+            fi
+          done
+          
+          if [ "$validation_failed" = true ]; then
+            echo "❌ Schema validation failed for some files"
+            exit 1
+          else
+            echo "✅ All training results are schema-compliant"
+          fi

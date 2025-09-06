@@ -14,7 +14,7 @@
 ```bash
 git clone https://github.com/DanielWarg/AliceV2.git && cd alice-v2
 make up
-open http://localhost:3001   # HUD
+# See AGENTS.md for current port assignments
 ```
 
 ## 🎯 Project Overview
@@ -84,7 +84,7 @@ Docker Compose automatically merges these files when running `docker compose` co
 git clone https://github.com/DanielWarg/AliceV2.git
 cd alice-v2
 make up     # Uses docker-compose.yml + docker-compose.override.yml
-open http://localhost:3001
+# See AGENTS.md for current port assignments
 ```
 
 ### Full Setup (Development)
@@ -143,7 +143,7 @@ make up
 make test-all
 
 # Access HUD
-open http://localhost:3001
+# See AGENTS.md for current port assignments
 ```
 
 ## 🪟 Windows Setup Guide
@@ -305,8 +305,9 @@ N8N_ENCRYPTION_KEY=change-me-to-secure-key
 OPENAI_API_KEY=sk-your-api-key-here
 
 # WSL2 specific Ollama configuration
-OLLAMA_BASE_URL=http://localhost:11434
-OLLAMA_HOST=http://localhost:11434
+# See AGENTS.md for current port assignments
+OLLAMA_BASE_URL=http://localhost:[OLLAMA_PORT]
+OLLAMA_HOST=http://localhost:[OLLAMA_PORT]
 
 # Logging
 LOG_LEVEL=INFO
@@ -359,32 +360,24 @@ cd apps/hud && pnpm dev
 
 #### 6.1 Verify Services Are Running
 ```bash
-# Check service health (VERIFIED WORKING PORTS - 2025-09-06)
-curl http://localhost:8787/health   # Guardian (2ms) ✅ WORKING
-curl http://localhost:9002/health   # NLU (4ms) ✅ WORKING  
-redis-cli -p 6379 ping              # Redis (5ms) ✅ WORKING
-
-# ❌ BROKEN - DO NOT USE:
-# curl http://localhost:18000/health  # BROKEN (5s timeout)
+# Check service health - See AGENTS.md for current port assignments
+# Example health checks:
+curl http://localhost:[GUARDIAN_PORT]/health   # Guardian
+curl http://localhost:[NLU_PORT]/health        # NLU
+redis-cli -p [REDIS_PORT] ping                # Redis
 ```
 
 #### 6.2 Access Web Interfaces
-- **Main HUD**: http://localhost:3001 (Primary dashboard)
-- **API Gateway**: ❌ http://localhost:18000 (BROKEN - 5s timeout)
-- **n8n Workflows**: http://localhost:5678 (Automation platform)
-- **Monitoring Dashboard**: http://localhost:8501 (when enabled)
+# See AGENTS.md for current port assignments
+- **Main HUD**: [See AGENTS.md for HUD port]
+- **n8n Workflows**: [See AGENTS.md for N8N port]
+- **Monitoring Dashboard**: [See AGENTS.md for Streamlit port]
 
 #### 6.3 Test the AI Assistant
 ```bash
-# ❌ API endpoint is BROKEN (5s timeout)
-# curl -s -X POST http://localhost:18000/api/chat \
-#   -H 'Content-Type: application/json' \
-#   -H 'Authorization: Bearer YOUR_API_KEY_HERE' \
-#   -d '{"v":"1","session_id":"test","lang":"sv","message":"Vad är klockan?"}' | jq .
-
-# ✅ Test working services instead:
-curl http://localhost:8787/health   # Guardian health check
-curl http://localhost:9002/health   # NLU health check
+# See AGENTS.md for current working endpoints and ports
+# Test health checks for all services
+# Example: curl http://localhost:[PORT]/health
 ```
 
 ### Step 7: Windows-Specific Configuration
@@ -446,9 +439,8 @@ sudo usermod -aG docker $USER
 # Kill conflicting processes
 ./scripts/ports-kill.sh
 
-# Check what's using ports
-sudo netstat -tulpn | grep :8000
-sudo netstat -tulpn | grep :3001
+# Check what's using ports - see AGENTS.md for current assignments
+sudo netstat -tulpn | grep :[PORT]
 ```
 
 #### 8.3 Ollama Issues
@@ -547,7 +539,7 @@ htop
 docker stats
 
 # Check Alice v2 performance
-# curl http://localhost:18000/api/status/simple  # ❌ BROKEN (5s timeout)
+# See AGENTS.md for current API endpoints and ports
 ```
 
 ### Need Help?
@@ -574,19 +566,17 @@ ollama pull qwen2.5:3b-instruct-q4_K_M
 docker compose up -d guardian orchestrator nlu dev-proxy n8n-db n8n
 
 # Quick test
-curl -s -X POST http://localhost:18000/api/chat \
-  -H 'Content-Type: application/json' -H 'Authorization: Bearer test-key-123' \
-  -d '{"v":"1","session_id":"test","lang":"sv","message":"Vad är klockan?"}' | jq .
+# See AGENTS.md for current API endpoints and usage examples
 
 # Open HUD
-open http://localhost:3001
+# See AGENTS.md for current port assignments
 ```
 
 ### n8n Setup
 ```bash
-# UI: http://localhost:5678 (create account with email)
+# See AGENTS.md for N8N UI port and setup instructions
 # Import flows: services/n8n/flows/*.json
-# Verify: curl -s http://localhost:5678/healthz
+# Verify: curl -s http://localhost:[N8N_PORT]/healthz
 ```
 
 ### 🔧 Troubleshooting
@@ -597,7 +587,7 @@ open http://localhost:3001
 docker compose down --remove-orphans        # Container issues
 ollama pull qwen2.5:3b phi3:mini           # Missing models
 docker compose logs -f orchestrator         # View logs
-open http://localhost:3001                  # HUD
+# See AGENTS.md for current port assignments                  # HUD
 ```
 
 ### 🔧 Manual Setup (Alternative)
@@ -610,14 +600,14 @@ cd alice-v2
 docker compose up -d guardian orchestrator nlu dev-proxy
 
 # Verify via proxy
-curl http://localhost:18000/health
-# curl http://localhost:18000/api/status/simple  # ❌ BROKEN (5s timeout)
+# See AGENTS.md for current health check endpoints
+# See AGENTS.md for current API endpoints and ports
 
 # Run autonomous E2E test (validates everything)
 ./scripts/auto_verify.sh
 
 # HUD
-open http://localhost:3001
+# See AGENTS.md for current port assignments
 ```
 
 ### 🧪 Development Workflow
@@ -729,8 +719,7 @@ python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
 # Test
-curl http://localhost:8000/api/status/simple
-curl http://localhost:8787/health
+# See AGENTS.md for current service endpoints
 
 # Run validation
 ./scripts/auto_verify.sh
@@ -753,7 +742,7 @@ cd monitoring && streamlit run mini_hud.py
 cd monitoring && streamlit run mini_hud.py
 
 # Or via proxy
-# open http://localhost:18000/hud  # ❌ BROKEN (5s timeout)
+# See AGENTS.md for current HUD endpoint
 ```
 
 ### Key Metrics

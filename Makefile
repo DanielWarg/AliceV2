@@ -84,7 +84,7 @@ preflight: ## Light checks (Docker + ports)
 
 up: ## Start all services (fast)  
 	@echo "🚀 Starting Alice v2 services..."
-	docker compose up -d guardian orchestrator alice-cache nlu
+	docker compose up -d guardian orchestrator alice-cache nlu dev-proxy
 	@echo "⏳ Waiting for services to start..."
 	@sleep 5
 	@$(MAKE) health
@@ -96,7 +96,7 @@ status: ## Show service status
 health: ## Check all health endpoints
 	@echo "🏥 Health Check:"
 	@echo -n "  Orchestrator: "
-	@curl -sf http://localhost:18000/health >/dev/null && echo "✅ OK" || echo "❌ FAIL"
+	@curl -sf http://localhost:8001/health >/dev/null && echo "✅ OK" || echo "❌ FAIL"
 	@echo -n "  Guardian: "
 	@curl -sf http://localhost:8787/health >/dev/null && echo "✅ OK" || echo "❌ FAIL"
 	@echo -n "  NLU: "
@@ -185,7 +185,7 @@ test-a-z: ## Comprehensive A-Z system test
 test-e2e: ## Run end-to-end tests
 	@echo "🧪 Running E2E tests..."
 	@echo "🚀 Ensuring stack is running..."
-	@if ! curl -s http://localhost:18000/health >/dev/null 2>&1; then \
+	@if ! curl -s http://localhost:8001/health >/dev/null 2>&1; then \
 		echo "⚠️  Stack not running, starting it..."; \
 		$(MAKE) up; \
 		sleep 10; \
@@ -197,18 +197,18 @@ test-e2e: ## Run end-to-end tests
 test-integration: ## Run integration tests
 	@echo "🧪 Running integration tests..."
 	@echo "🚀 Ensuring stack is running..."
-	@if ! curl -s http://localhost:18000/health >/dev/null 2>&1; then \
+	@if ! curl -s http://localhost:8001/health >/dev/null 2>&1; then \
 		echo "⚠️  Stack not running, starting it..."; \
 		$(MAKE) up; \
 		sleep 10; \
 	fi
 	@echo "🔍 Testing API endpoints..."
-	@curl -s http://localhost:18000/health | jq . || echo "⚠️  Health endpoint test failed"
-	@curl -s http://localhost:18000/api/status/simple | jq . || echo "⚠️  Status endpoint test failed"
+	@curl -s http://localhost:8001/health | jq . || echo "⚠️  Health endpoint test failed"
+	@curl -s http://localhost:8001/api/status/simple | jq . || echo "⚠️  Status endpoint test failed"
 	@echo "🔍 Testing Guardian integration..."
 	@curl -s http://localhost:8787/health | jq . || echo "⚠️  Guardian health test failed"
 	@echo "🔍 Testing Learning API..."
-	@curl -s http://localhost:18000/api/learn/stats | jq . || echo "⚠️  Learning stats test failed"
+	@curl -s http://localhost:8001/api/learn/stats | jq . || echo "⚠️  Learning stats test failed"
 	@echo "✅ Integration tests completed!"
 
 learn: ## Run learning ingestion pipeline
@@ -222,11 +222,11 @@ learn: ## Run learning ingestion pipeline
 
 learn-daily: ## Create daily learning snapshot
 	@echo "📊 Creating daily learning snapshot..."
-	@curl -s -X POST http://localhost:18000/api/learn/snapshot | jq .
+	@curl -s -X POST http://localhost:8001/api/learn/snapshot | jq .
 
 learn-stats: ## Get learning statistics
 	@echo "📈 Getting learning statistics..."
-	@curl -s http://localhost:18000/api/learn/stats | jq .
+	@curl -s http://localhost:8001/api/learn/stats | jq .
 
 # Learning environment variables
 LEARN_INPUT_DIR ?= data/telemetry
@@ -334,7 +334,7 @@ clean-docker: ## Clean Docker containers and system
 dev-start: down up health ## Start development environment
 	@echo "🚀 Development environment ready!"
 	@echo "📊 Access points:"
-	@echo "  Orchestrator: http://localhost:18000"
+	@echo "  Orchestrator: http://localhost:8001"
 	@echo "  Guardian: http://localhost:8787" 
 	@echo "  NLU: http://localhost:9002"
 	@echo "  Cache: localhost:6379"

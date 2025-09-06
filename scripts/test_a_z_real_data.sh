@@ -5,7 +5,7 @@ echo "🔥 A-Z REAL DATA TEST - ELIMINATING STUPID ASSUMPTIONS"
 echo "======================================================"
 
 # Configuration
-ORCHESTRATOR_URL="http://localhost:18000"
+ORCHESTRATOR_URL="http://localhost:8001"
 GUARDIAN_URL="http://localhost:8787"
 NLU_URL="http://localhost:9002"
 REDIS_URL="localhost:6379"

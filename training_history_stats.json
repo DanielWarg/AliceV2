@@ -1,0 +1,24 @@
+{
+  "fibonacci": {
+    "runs": [
+      {
+        "timestamp": "2025-09-06T17:39:22.175372",
+        "duration_seconds": 743.795949,
+        "avg_response_time_ms": 0,
+        "cache_hit_rate_percent": 13.9,
+        "success_rate_percent": 90.5,
+        "improvement_percent": 0,
+        "target_progress_percent": 13.9
+      }
+    ],
+    "best_avg_ms": 999,
+    "best_cache_rate": 13.9,
+    "best_improvement": 0
+  },
+  "fibonacci_loop": {
+    "runs": [],
+    "best_avg_ms": 999,
+    "best_cache_rate": 0,
+    "best_improvement": 0
+  }
+}

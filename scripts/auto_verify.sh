@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-API_BASE="${API_BASE:-http://localhost:18000}"
-GUARD_BASE="${GUARD_BASE:-http://localhost:18000}"
-DASH_URL="${DASH_URL:-http://localhost:18000}"
+API_BASE="${API_BASE:-http://localhost:8001}"
+GUARD_BASE="${GUARD_BASE:-http://localhost:8787}"
+DASH_URL="${DASH_URL:-http://localhost:8001}"
 ART_DIR="${ART_DIR:-data/tests}"
 TEL_DIR="${TEL_DIR:-data/telemetry}"
 SLO_FAST_P95=${SLO_FAST_P95:-250}

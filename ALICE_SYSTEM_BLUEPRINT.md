@@ -18,17 +18,17 @@ Alice v2 follows a **clean microservices architecture** with deterministic secur
 graph TB
     %% User Interface Layer
     User[🧑‍💻 User<br/>Swedish speech] --> WebUI[Web UI<br/>Next.js frontend<br/>Voice interface]
-    WebUI --> DevProxy[dev-proxy<br/>Caddy reverse proxy<br/>Port 18000]
+    WebUI --> DevProxy[dev-proxy<br/>Caddy reverse proxy<br/>[See AGENTS.md]]
     
     %% Voice Processing Pipeline
-    DevProxy --> ASR[ASR Service<br/>Whisper.cpp + VAD<br/>Swedish speech-to-text<br/>Port 8001]
-    ASR --> NLU[NLU Service<br/>Swedish intent classification<br/>E5 embeddings + XNLI<br/>Ollama integration<br/>Port 9002]
+    DevProxy --> ASR[ASR Service<br/>Whisper.cpp + VAD<br/>Swedish speech-to-text<br/>[See AGENTS.md]]
+    ASR --> NLU[NLU Service<br/>Swedish intent classification<br/>E5 embeddings + XNLI<br/>Ollama integration<br/>[See AGENTS.md]]
     
     %% Security Gateway
-    NLU --> Guardian[Guardian Service<br/>Resource protection gate<br/>RAM/CPU/temp/battery monitoring<br/>Brownout state machine<br/>Port 8787]
+    NLU --> Guardian[Guardian Service<br/>Resource protection gate<br/>RAM/CPU/temp/battery monitoring<br/>Brownout state machine<br/>[See AGENTS.md]]
     
     %% Core Orchestration
-    Guardian --> Orchestrator[Orchestrator Service<br/>Main AI routing hub<br/>LLM provider management<br/>Tool execution & policies<br/>Complete observability<br/>Port 18000/8000]
+    Guardian --> Orchestrator[Orchestrator Service<br/>Main AI routing hub<br/>LLM provider management<br/>Tool execution & policies<br/>Complete observability<br/>[See AGENTS.md]]
     
     %% LLM Processing Tier
     Orchestrator --> Micro[Micro-LLM<br/>Quick responses<br/>Qwen2.5:3b via Ollama<br/>< 250ms target]
@@ -36,7 +36,7 @@ graph TB
     Orchestrator --> Deep[Deep Reasoning<br/>Complex analysis<br/>Llama-3.1-8B on-demand<br/>Guardian-gated]
     
     %% Memory & Knowledge
-    Micro --> Memory[Memory Service<br/>FAISS vector store + Redis<br/>RAG pipeline<br/>User consent management<br/>Port 8300]
+    Micro --> Memory[Memory Service<br/>FAISS vector store + Redis<br/>RAG pipeline<br/>User consent management<br/>[See AGENTS.md]]
     Planner --> Memory
     Deep --> Memory
     
@@ -48,9 +48,9 @@ graph TB
     %% Observability & Management
     Guardian --> GuardianDaemon[Guardian Daemon<br/>System metrics collection<br/>psutil/energy monitoring<br/>Kill sequence management]
     
-    Orchestrator --> Cache[Smart Cache<br/>Redis-based multi-tier cache<br/>L1: exact matches<br/>L2: semantic similarity<br/>L3: negative cache<br/>Port 6379]
+    Orchestrator --> Cache[Smart Cache<br/>Redis-based multi-tier cache<br/>L1: exact matches<br/>L2: semantic similarity<br/>L3: negative cache<br/>[See AGENTS.md]]
     
-    Orchestrator --> HUD[Observability HUD<br/>Streamlit dashboard<br/>Real-time metrics<br/>P50/P95, RAM-peak, energy<br/>Tool error classification<br/>Port 8501]
+    Orchestrator --> HUD[Observability HUD<br/>Streamlit dashboard<br/>Real-time metrics<br/>P50/P95, RAM-peak, energy<br/>Tool error classification<br/>[See AGENTS.md]]
     
     %% Advanced Features
     Proactivity[Proactivity Engine<br/>Prophet/Goal Scheduler<br/>Seasonal pattern detection<br/>Preemptive actions] --> Orchestrator
@@ -60,7 +60,7 @@ graph TB
     Cost[Cost Management<br/>OpenAI token tracking<br/>Budget enforcement<br/>Auto-fallback on breach] --> Orchestrator
     
     %% External Services & ML Pipeline
-    Ollama[Ollama LLM Runtime<br/>Local model serving<br/>qwen2.5:3b, llama-3.1<br/>GPU acceleration<br/>Port 11434] --> Micro
+    Ollama[Ollama LLM Runtime<br/>Local model serving<br/>qwen2.5:3b, llama-3.1<br/>GPU acceleration<br/>[See AGENTS.md]] --> Micro
     Ollama --> Planner
     Ollama --> Deep
     Ollama --> NLU
@@ -476,7 +476,7 @@ services/orchestrator/src/cache/
 - **Key Strategy**: `build_cache_key(intent, prompt, [], schema_version, model_id)`
 - **Semantic Threshold**: 0.85 configurable via `CACHE_SEMANTIC_THRESHOLD`
 - **TTL**: 300s default, configurable per cache level
-- **Connection**: Redis cluster at `redis://alice-cache:6379`
+- **Connection**: Redis cluster at `redis://alice-cache:[REDIS_PORT]` (See AGENTS.md for port)
 
 **Cache Flow:**
 1. **L1 Lookup**: Exact match on canonical prompt hash
@@ -762,13 +762,13 @@ N8N_REPLAY_WINDOW_S=300                # Replay protection window
 
 ### Development
 ```bash
-# Frontend
-pnpm run dev                 # Next.js :3000
+# Frontend - see AGENTS.md for port assignments
+pnpm run dev                 # Next.js
 
-# Backend Services  
-pnpm run guardian:start      # Guardian :8787
-pnpm run voice:start         # Voice :8001
-pnpm run orchestrator:start  # LLM :8002
+# Backend Services - see AGENTS.md for port assignments
+pnpm run guardian:start      # Guardian
+pnpm run voice:start         # Voice
+pnpm run orchestrator:start  # LLM
 
 # Autonomous E2E Testing
 ./scripts/auto_verify.sh     # Complete system validation
@@ -776,22 +776,23 @@ pnpm run orchestrator:start  # LLM :8002
 
 ### Production (Docker Compose)
 ```yaml
+# See AGENTS.md for current port assignments
 services:
   alice-web:
-    ports: ["3000:3000"]
+    ports: ["[WEB_PORT]:[WEB_PORT]"]
     
   alice-guardian:
-    ports: ["8787:8787"]
+    ports: ["[GUARDIAN_PORT]:[GUARDIAN_PORT]"]
     deploy:
       resources:
         limits: { memory: 512M }
         
   alice-voice:
-    ports: ["8001:8001"]  
+    ports: ["[VOICE_PORT]:[VOICE_PORT]"]  
     volumes: ["./models:/models"]
     
   alice-orchestrator:
-    ports: ["8002:8002"]
+    ports: ["[ORCHESTRATOR_PORT]:[ORCHESTRATOR_PORT]"]
     volumes: ["./ollama:/ollama"]
     
   alice-eval:
@@ -799,7 +800,7 @@ services:
     volumes: ["./data/tests:/data/tests"]
     
   alice-dashboard:
-    ports: ["8501:8501"]
+    ports: ["[DASHBOARD_PORT]:[DASHBOARD_PORT]"]
     volumes: ["./data:/data"]
     profiles: ["dashboard"]
 ```
@@ -954,7 +955,7 @@ if cache_hit_rate < 0.7:
 ```mermaid
 graph TB
     subgraph "Host Machine"
-        Browser[Web Browser<br/>❌ localhost:18000 BROKEN] --> DevProxy[dev-proxy<br/>Caddy Reverse Proxy<br/>Container: alice-dev-proxy<br/>Port: 18000→80<br/>❌ 5s timeout issues]
+        Browser[Web Browser<br/>See AGENTS.md] --> DevProxy[dev-proxy<br/>Caddy Reverse Proxy<br/>Container: alice-dev-proxy<br/>See AGENTS.md for port info]
     end
     
     subgraph "Docker Bridge Network"

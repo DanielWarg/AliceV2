@@ -1,0 +1,438 @@
+{
+  "timestamp": "2025-09-06T15:08:33.121022",
+  "total_files": 55,
+  "categories": {
+    "fibonacci_docs": [
+      ".cursor/rules/FIBONACCI_TESTING_PROTOCOL.md",
+      "docs/fibonacci/FIBONACCI_MASTER_GUIDE.md",
+      "docs/fibonacci/README.md",
+      "docs/fibonacci/architecture/FIBONACCI_SYSTEM_STACK.md",
+      "docs/fibonacci/architecture/FIBONACCI_TRANSFORMATION_PLAN.md",
+      "docs/fibonacci/benchmarks/FIBONACCI_COMPREHENSIVE_BENCHMARK_REPORT.md",
+      "docs/fibonacci/implementation/FIBONACCI_SUCCESS_REPORT.md",
+      "docs/fibonacci/implementation/FIBONACCI_TRANSFORMATION_COMPLETE.md",
+      "docs/fibonacci/implementation/README_FIBONACCI_UPDATE.md",
+      "docs/fibonacci/testing/FIBONACCI_BUILD_AND_TEST_GUIDE.md",
+      "docs/fibonacci/testing/FIBONACCI_LIVE_VALIDATION_REPORT.md",
+      "docs/fibonacci/testing/LIVE_FIBONACCI_TEST_REPORT.md",
+      "docs/fibonacci/training/FIBONACCI_TRAINING_OPTIMIZATION_GUIDE.md"
+    ],
+    "cursor_config": [
+      ".cursor/rules/REAL_DATA_ONLY.md"
+    ],
+    "github_templates": [
+      ".github/ISSUE_TEMPLATE/bug_report.md",
+      ".github/ISSUE_TEMPLATE/feature_request.md",
+      ".github/pull_request_template.md"
+    ],
+    "core_docs": [
+      "AGENTS.md",
+      "README.md",
+      "ROADMAP.md"
+    ],
+    "general": [
+      "ALICE_PRODUCTION_CHECKLIST.md",
+      "ALICE_SYSTEM_BLUEPRINT.md",
+      "CACHE.md",
+      "CONTRIBUTING.md",
+      "GPT_VS_REALITY_COMPARISON.md",
+      "PROJECT_STATUS.md",
+      "SECURITY_AND_PRIVACY.md",
+      "STATUS.md",
+      "SYSTEM_INVENTORY.md",
+      "docs/DEV_CONTROL.md",
+      "docs/REPO_SETUP.md",
+      "docs/REPO_STRUCTURE.md",
+      "docs/STATUS_METRICS.md",
+      "docs/development/docker_cache_lessons.md",
+      "models/README.md",
+      "monitoring/README.md",
+      "services/guardian/README.md",
+      "services/ingest/README.md",
+      "services/loadgen/README.md",
+      "services/rl/README.md",
+      "services/rl/SHADOW_MODE_STRATEGY.md"
+    ],
+    "test_docs": [
+      "TESTING_STRATEGY.md",
+      "apps/hud/test-integration.md",
+      "docs/test_results/planner_step7_results.md",
+      "services/guardian/.pytest_cache/README.md",
+      "services/nlu/.pytest_cache/README.md",
+      "services/orchestrator/.pytest_cache/README.md"
+    ],
+    "archived": [
+      "docs/archive/DAILY_STATUS.md",
+      "docs/archive/DOCS_INDEX.md",
+      "docs/archive/LOOSE_THREADS.md",
+      "docs/archive/PORT_MANAGEMENT_ISSUE.md",
+      "docs/archive/README.md"
+    ],
+    "runbooks": [
+      "runbooks/guardian.md",
+      "runbooks/planner_debug.md",
+      "runbooks/slo.md"
+    ]
+  },
+  "duplicates": {
+    "similar_headers_pytestcachedirectory": [
+      "services/guardian/.pytest_cache/README.md",
+      "services/nlu/.pytest_cache/README.md",
+      "services/orchestrator/.pytest_cache/README.md"
+    ],
+    "similar_names_readme": [
+      "README.md",
+      "docs/archive/README.md",
+      "docs/fibonacci/README.md",
+      "models/README.md",
+      "monitoring/README.md",
+      "services/guardian/.pytest_cache/README.md",
+      "services/guardian/README.md",
+      "services/ingest/README.md",
+      "services/loadgen/README.md",
+      "services/nlu/.pytest_cache/README.md",
+      "services/orchestrator/.pytest_cache/README.md",
+      "services/rl/README.md"
+    ]
+  },
+  "recommendations": {
+    "critical_updates": [
+      {
+        "file": ".cursor/rules/FIBONACCI_TESTING_PROTOCOL.md",
+        "issues": [
+          "old_port"
+        ],
+        "priority": "medium"
+      },
+      {
+        "file": ".cursor/rules/REAL_DATA_ONLY.md",
+        "issues": [
+          "old_port"
+        ],
+        "priority": "medium"
+      },
+      {
+        "file": ".github/ISSUE_TEMPLATE/feature_request.md",
+        "issues": [
+          "deprecated_script"
+        ],
+        "priority": "medium"
+      },
+      {
+        "file": ".github/pull_request_template.md",
+        "issues": [
+          "deprecated_script"
+        ],
+        "priority": "medium"
+      },
+      {
+        "file": "ALICE_PRODUCTION_CHECKLIST.md",
+        "issues": [
+          "old_phase"
+        ],
+        "priority": "medium"
+      },
+      {
+        "file": "ALICE_SYSTEM_BLUEPRINT.md",
+        "issues": [
+          "old_phase",
+          "old_port",
+          "deprecated_script"
+        ],
+        "priority": "medium"
+      },
+      {
+        "file": "CACHE.md",
+        "issues": [
+          "old_port"
+        ],
+        "priority": "medium"
+      },
+      {
+        "file": "CONTRIBUTING.md",
+        "issues": [
+          "deprecated_script"
+        ],
+        "priority": "medium"
+      },
+      {
+        "file": "PROJECT_STATUS.md",
+        "issues": [
+          "old_step",
+          "specific_old_step"
+        ],
+        "priority": "medium"
+      },
+      {
+        "file": "README.md",
+        "issues": [
+          "old_step",
+          "old_metrics",
+          "old_port",
+          "deprecated_script",
+          "old_component"
+        ],
+        "priority": "medium"
+      },
+      {
+        "file": "ROADMAP.md",
+        "issues": [
+          "old_phase",
+          "old_component"
+        ],
+        "priority": "medium"
+      },
+      {
+        "file": "STATUS.md",
+        "issues": [
+          "old_phase"
+        ],
+        "priority": "medium"
+      },
+      {
+        "file": "SYSTEM_INVENTORY.md",
+        "issues": [
+          "specific_old_step"
+        ],
+        "priority": "medium"
+      },
+      {
+        "file": "TESTING_STRATEGY.md",
+        "issues": [
+          "old_port",
+          "deprecated_script",
+          "old_component"
+        ],
+        "priority": "medium"
+      },
+      {
+        "file": "docs/REPO_SETUP.md",
+        "issues": [
+          "deprecated_script"
+        ],
+        "priority": "medium"
+      },
+      {
+        "file": "docs/archive/DAILY_STATUS.md",
+        "issues": [
+          "old_port",
+          "deprecated_script"
+        ],
+        "priority": "medium"
+      },
+      {
+        "file": "docs/archive/LOOSE_THREADS.md",
+        "issues": [
+          "deprecated_script"
+        ],
+        "priority": "medium"
+      },
+      {
+        "file": "docs/fibonacci/FIBONACCI_MASTER_GUIDE.md",
+        "issues": [
+          "old_phase"
+        ],
+        "priority": "medium"
+      },
+      {
+        "file": "docs/fibonacci/architecture/FIBONACCI_SYSTEM_STACK.md",
+        "issues": [
+          "old_phase"
+        ],
+        "priority": "medium"
+      },
+      {
+        "file": "docs/fibonacci/benchmarks/FIBONACCI_COMPREHENSIVE_BENCHMARK_REPORT.md",
+        "issues": [
+          "old_phase"
+        ],
+        "priority": "medium"
+      },
+      {
+        "file": "docs/fibonacci/implementation/FIBONACCI_SUCCESS_REPORT.md",
+        "issues": [
+          "old_phase"
+        ],
+        "priority": "medium"
+      },
+      {
+        "file": "docs/fibonacci/implementation/FIBONACCI_TRANSFORMATION_COMPLETE.md",
+        "issues": [
+          "old_phase",
+          "old_port"
+        ],
+        "priority": "medium"
+      },
+      {
+        "file": "docs/fibonacci/implementation/README_FIBONACCI_UPDATE.md",
+        "issues": [
+          "old_port"
+        ],
+        "priority": "medium"
+      },
+      {
+        "file": "docs/fibonacci/testing/FIBONACCI_LIVE_VALIDATION_REPORT.md",
+        "issues": [
+          "old_phase"
+        ],
+        "priority": "medium"
+      },
+      {
+        "file": "docs/fibonacci/testing/LIVE_FIBONACCI_TEST_REPORT.md",
+        "issues": [
+          "old_phase",
+          "old_port"
+        ],
+        "priority": "medium"
+      },
+      {
+        "file": "docs/fibonacci/training/FIBONACCI_TRAINING_OPTIMIZATION_GUIDE.md",
+        "issues": [
+          "old_step",
+          "old_phase"
+        ],
+        "priority": "medium"
+      },
+      {
+        "file": "docs/test_results/planner_step7_results.md",
+        "issues": [
+          "old_step",
+          "old_port"
+        ],
+        "priority": "medium"
+      },
+      {
+        "file": "monitoring/README.md",
+        "issues": [
+          "old_port"
+        ],
+        "priority": "medium"
+      },
+      {
+        "file": "runbooks/planner_debug.md",
+        "issues": [
+          "old_port"
+        ],
+        "priority": "medium"
+      },
+      {
+        "file": "runbooks/slo.md",
+        "issues": [
+          "old_phase"
+        ],
+        "priority": "medium"
+      },
+      {
+        "file": "services/rl/README.md",
+        "issues": [
+          "specific_old_step",
+          "old_metrics"
+        ],
+        "priority": "medium"
+      },
+      {
+        "file": "services/rl/SHADOW_MODE_STRATEGY.md",
+        "issues": [
+          "old_phase",
+          "old_metrics"
+        ],
+        "priority": "medium"
+      }
+    ],
+    "merge_candidates": [
+      {
+        "group": "similar_headers_pytestcachedirectory",
+        "files": [
+          "services/guardian/.pytest_cache/README.md",
+          "services/nlu/.pytest_cache/README.md",
+          "services/orchestrator/.pytest_cache/README.md"
+        ],
+        "action": "consider_merging"
+      },
+      {
+        "group": "similar_names_readme",
+        "files": [
+          "README.md",
+          "docs/archive/README.md",
+          "docs/fibonacci/README.md",
+          "models/README.md",
+          "monitoring/README.md",
+          "services/guardian/.pytest_cache/README.md",
+          "services/guardian/README.md",
+          "services/ingest/README.md",
+          "services/loadgen/README.md",
+          "services/nlu/.pytest_cache/README.md",
+          "services/orchestrator/.pytest_cache/README.md",
+          "services/rl/README.md"
+        ],
+        "action": "consider_merging"
+      }
+    ],
+    "archive_candidates": [
+      "docs/archive/DAILY_STATUS.md",
+      "docs/archive/DAILY_STATUS.md",
+      "docs/archive/DOCS_INDEX.md",
+      "docs/archive/LOOSE_THREADS.md",
+      "docs/archive/PORT_MANAGEMENT_ISSUE.md",
+      "docs/archive/README.md",
+      "docs/test_results/planner_step7_results.md"
+    ],
+    "outdated_files": [],
+    "sync_actions": []
+  },
+  "priority_actions": [
+    {
+      "priority": 2,
+      "action": "archive_file",
+      "file": "docs/archive/DAILY_STATUS.md",
+      "reason": "File appears outdated or redundant"
+    },
+    {
+      "priority": 2,
+      "action": "archive_file",
+      "file": "docs/archive/DAILY_STATUS.md",
+      "reason": "File appears outdated or redundant"
+    },
+    {
+      "priority": 2,
+      "action": "archive_file",
+      "file": "docs/archive/DOCS_INDEX.md",
+      "reason": "File appears outdated or redundant"
+    },
+    {
+      "priority": 2,
+      "action": "archive_file",
+      "file": "docs/archive/LOOSE_THREADS.md",
+      "reason": "File appears outdated or redundant"
+    },
+    {
+      "priority": 2,
+      "action": "archive_file",
+      "file": "docs/archive/PORT_MANAGEMENT_ISSUE.md",
+      "reason": "File appears outdated or redundant"
+    }
+  ],
+  "auto_fixes": {
+    "cursorrules_update": {
+      "action": "replace_file",
+      "target": ".cursorrules",
+      "reason": "File contains severely outdated information",
+      "new_content": "# Alice v2 Cursor Rules\n*Instructions for AI coding assistant working on Alice v2*\n\n## 🚀 MANDATORY STARTUP SEQUENCE\n\n**ALWAYS read these files FIRST when starting a new chat:**\n\n1. **`AGENTS.md`** - AI agent orientation and current project context\n2. **`README.md`** - Project overview and architecture \n3. **`ALICE_SYSTEM_BLUEPRINT.md`** - Detailed system architecture\n4. **`ROADMAP.md`** - Current development milestones\n\n## 📋 PROJECT CONTEXT\n\n- **Current Phase**: Production Optimization Phase\n- **Current Focus**: Fibonacci Mathematical Optimization (φ=1.618)\n- **Language**: Swedish language optimization for Alice AI Assistant\n- **Architecture**: Microservices with Docker orchestration\n\n## 🛠️ DEVELOPMENT PRINCIPLES\n\n- **Fibonacci Optimization**: All performance tuning uses Golden Ratio principles\n- **Real Integration**: No mocks, test against real services with make up/down\n- **Production Ready**: Everything deployment-ready from day 1\n- **Observable**: Structured logging and real-time monitoring\n- **Security First**: Guardian system provides brownout protection\n\n## 🔧 WORKFLOW\n\n1. **Start**: Read AGENTS.md for current context and priorities\n2. **Understand**: Check ALICE_SYSTEM_BLUEPRINT.md for architecture\n3. **Plan**: Use TodoWrite tool to track progress\n4. **Implement**: Follow Fibonacci optimization principles\n5. **Test**: Verify all services healthy with docker ps\n6. **Monitor**: Check training progress and cache performance\n\n## 🎯 CURRENT SYSTEM STATUS\n\n- **Services**: orchestrator (8000), guardian (8787), nlu (9002), cache (6379)\n- **Training**: Fibonacci cache optimization with φ=1.618\n- **Documentation**: Auto-synced via pre-commit hooks and GitHub Actions\n- **Cache Target**: 40%+ hit rate (from 10% baseline)\n\n## 📊 KEY METRICS\n\n- **Cache Hit Rate**: Monitor via scripts/fibonacci_simple_training.py\n- **Response Time**: Target sub-200ms with Fibonacci scaling\n- **System Health**: All services must show (healthy) in docker ps\n- **Documentation**: All .md files auto-synced and validated\n\n## 🚨 CRITICAL RULES\n\n- **Never commit** without pre-commit hooks passing\n- **Always use** TodoWrite for task tracking\n- **Follow** Fibonacci principles in optimization\n- **Keep** documentation synchronized\n- **Test** with real services, not mocks\n\n---\n\n*Updated: {datetime.now().strftime('%Y-%m-%d')} | For: Alice v2 Production System*"
+    },
+    "status_file_merge": {
+      "action": "merge_files",
+      "targets": [
+        "STATUS.md",
+        "PROJECT_STATUS.md"
+      ],
+      "reason": "Duplicate status tracking files should be consolidated",
+      "strategy": "merge_into_STATUS_md"
+    },
+    "fibonacci_docs_consolidation": {
+      "action": "consolidate_directory",
+      "target": "docs/fibonacci/",
+      "reason": "Multiple overlapping Fibonacci guides need consolidation",
+      "strategy": "keep_FIBONACCI_MASTER_GUIDE_as_primary"
+    }
+  }
+}

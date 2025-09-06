@@ -30,7 +30,7 @@ class FibonacciTrainingLoop:
     """
 
     def __init__(
-        self, orchestrator_url: str = "http://localhost:18000", fast_mode: bool = True
+        self, orchestrator_url: str = "http://localhost:8001", fast_mode: bool = True
     ):
         self.orchestrator_url = orchestrator_url
         self.training_data = []
@@ -404,7 +404,7 @@ class FibonacciTrainingLoop:
 
         for phase_name, phase_config in self.training_phases.items():
             try:
-                phase_result = await self.execute_training_phase(
+                await self.execute_training_phase(
                     phase_name, phase_config
                 )
 

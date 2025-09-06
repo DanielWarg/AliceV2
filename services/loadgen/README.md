@@ -41,8 +41,9 @@ cat data/telemetry/loadgen_*/summary.json      # Detailed data
 ## Environment Variables
 
 ```bash
-API_BASE=http://orchestrator:8000
-GUARD_HEALTH=http://orchestrator:8000/guardian/health  
+# See AGENTS.md for current service ports
+API_BASE=http://orchestrator:[ORCHESTRATOR_PORT]
+GUARD_HEALTH=http://orchestrator:[ORCHESTRATOR_PORT]/guardian/health  
 SLO_BROWNOUT_TRIGGER_MS=150    # Brownout trigger budget
 RECOVER_S=60                   # Recovery time budget
 MEMORY_BALLOON_GB=4            # RAM stress target
@@ -71,4 +72,4 @@ Streamlit dashboard shows:
 - **Stress test breakdown** for all modules
 - **Auto-refresh** every 5s during test
 
-Dashboard: `http://localhost:8501` after `./run_hud.sh`
+Dashboard: See AGENTS.md for HUD port after `./run_hud.sh`

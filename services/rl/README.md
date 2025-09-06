@@ -193,7 +193,8 @@ python deploy/promote.py --rollback --stage prod
 python monitor_rl.py
 
 # Export metrics
-curl http://localhost:8000/rl-status
+# See AGENTS.md for current API endpoint and port
+curl [API_ENDPOINT]/rl-status
 ```
 
 ## 🧪 Testing

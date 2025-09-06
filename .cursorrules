@@ -5,49 +5,60 @@
 
 **ALWAYS read these files FIRST when starting a new chat:**
 
-1. **`AGENTS.md`** - Contains current project status, next priorities, and development context
-2. **`README.md`** - Contains project overview, architecture, and quick start guide
-3. **`ROADMAP.md`** - Contains live milestone tracker and current step status
+1. **`AGENTS.md`** - AI agent orientation and current project context
+2. **`README.md`** - Project overview and architecture 
+3. **`ALICE_SYSTEM_BLUEPRINT.md`** - Detailed system architecture
+4. **`ROADMAP.md`** - Current development milestones
 
 ## 📋 PROJECT CONTEXT
 
-- **Current Phase**: Phase 3 - Advanced Reasoning
-- **Current Step**: Step 8.5 - Intent-Guard + Quality Gates Optimization 🔄 IN PROGRESS
-- **Next Step**: Step 9 - RL Loop Implementation
-- **Language**: All documentation must be in English (except code comments)
-- **Focus**: Swedish language optimization for Alice AI Assistant
+- **Current Phase**: Production Optimization Phase
+- **Current Focus**: Fibonacci Mathematical Optimization (φ=1.618)
+- **Language**: Swedish language optimization for Alice AI Assistant
+- **Architecture**: Microservices with Docker orchestration
 
 ## 🛠️ DEVELOPMENT PRINCIPLES
 
-- **Safety First**: Guardian system always takes priority
-- **Real Integration**: No mocks, test against real services
-- **Autonomous Testing**: All changes validated via `./scripts/auto_verify.sh`
+- **Fibonacci Optimization**: All performance tuning uses Golden Ratio principles
+- **Real Integration**: No mocks, test against real services with make up/down
 - **Production Ready**: Everything deployment-ready from day 1
 - **Observable**: Structured logging and real-time monitoring
-- **Local Ollama**: Ollama runs locally (not in Docker) - use `ollama serve` and configure dev-proxy to point to `host.docker.internal:11434`
+- **Security First**: Guardian system provides brownout protection
 
 ## 🔧 WORKFLOW
 
-1. **Start**: Read AGENTS.md → README.md → ROADMAP.md
-2. **Plan**: Check current step status and next priorities
-3. **Implement**: Real integration with proper error handling
-4. **Test**: Run `./scripts/auto_verify.sh` for validation
-5. **Monitor**: Use HUD at `http://localhost:18000/hud`
-6. **Document**: Update relevant .md files with progress
+1. **Start**: Read AGENTS.md for current context and priorities
+2. **Understand**: Check ALICE_SYSTEM_BLUEPRINT.md for architecture
+3. **Plan**: Use TodoWrite tool to track progress
+4. **Implement**: Follow Fibonacci optimization principles
+5. **Test**: Verify all services healthy with docker ps
+6. **Monitor**: Check training progress and cache performance
 
-## 🎯 CURRENT FOCUS
+## 🎯 CURRENT SYSTEM STATUS
 
-- **Step 8.5**: Intent-Guard + Quality Gates optimization
-- **SLO Targets**: Tool precision ≥85%, Latency P95 ≤900ms
-- **Key Files**: `services/orchestrator/src/intent_guard.py`, `services/orchestrator/src/llm/micro_client.py`
+- **Services**: orchestrator (8000), guardian (8787), nlu (9002), cache (6379)
+- **Training**: Fibonacci cache optimization with φ=1.618
+- **Documentation**: Auto-synced via pre-commit hooks and GitHub Actions
+- **Cache Target**: 40%+ hit rate (from 10% baseline)
 
-## 📊 SUCCESS METRICS
+## 📊 KEY METRICS
 
-- Auto-verify PASS 100%
-- Tool precision ≥85% (currently 54.7%)
-- Latency P95 ≤900ms (currently 6897ms)
-- Schema validation 100%
-- Guardian system health
+- **Cache Hit Rate**: Monitor via scripts/fibonacci_simple_training.py
+- **Response Time**: Target sub-200ms with Fibonacci scaling
+- **System Health**: All services must show (healthy) in docker ps
+- **Documentation**: All .md files auto-synced and validated
+
+## 🚨 CRITICAL RULES
+
+- **Never commit** without pre-commit hooks passing
+- **Always use** TodoWrite for task tracking
+- **Follow** Fibonacci principles in optimization
+- **Keep** documentation synchronized
+- **Test** with real services, not mocks
+
+---
+
+*Updated: 2025-09-06 | For: Alice v2 Production System*
 - Swedish language support
 
 ## 🚨 IMPORTANT REMINDERS

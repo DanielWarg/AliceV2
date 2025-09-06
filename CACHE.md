@@ -108,7 +108,7 @@ class RedisCacheStore(ICacheStore):
 ### Environment Variables
 ```bash
 CACHE_ENABLED=1                    # Enable/disable cache
-REDIS_URL=redis://alice-cache:6379 # Redis connection
+REDIS_URL=redis://alice-cache:[REDIS_PORT] # Redis connection - see AGENTS.md for port
 ```
 
 ### TTL by Level
@@ -146,13 +146,13 @@ PII_PATTERNS = [
 ### Monitoring
 ```bash
 # View cache metrics in HUD
-open http://localhost:3001
+# See AGENTS.md for current HUD port
 
-# Check Redis keys
-redis-cli -h localhost -p 6379 KEYS "sc:v1:*"
+# Check Redis keys - see AGENTS.md for Redis port
+redis-cli -h localhost -p [REDIS_PORT] KEYS "sc:v1:*"
 
-# Invalidate specific intent
-curl -X POST http://localhost:18000/api/cache/invalidate \
+# Invalidate specific intent - see AGENTS.md for API endpoint
+curl -X POST [API_ENDPOINT]/api/cache/invalidate \
   -H 'Content-Type: application/json' \
   -d '{"intent": "weather.lookup"}'
 ```
@@ -188,7 +188,7 @@ make test-all
 ```python
 from services.cache.src import semantic_cache, RedisCacheStore
 
-store = RedisCacheStore("redis://localhost:6379")
+store = RedisCacheStore("redis://localhost:[REDIS_PORT]")  # See AGENTS.md for port
 
 @semantic_cache(store, {})
 async def plan(*, prompt_core, context_facts, classifier, ...):
@@ -266,14 +266,14 @@ await store.invalidate(intent="old.intent")
 
 ### Debug Commands
 ```bash
-# Check Redis health
-redis-cli -h localhost -p 6379 ping
+# Check Redis health - see AGENTS.md for Redis port
+redis-cli -h localhost -p [REDIS_PORT] ping
 
-# View cache keys
-redis-cli -h localhost -p 6379 KEYS "sc:v1:*"
+# View cache keys - see AGENTS.md for Redis port
+redis-cli -h localhost -p [REDIS_PORT] KEYS "sc:v1:*"
 
-# Monitor cache operations
-redis-cli -h localhost -p 6379 MONITOR
+# Monitor cache operations - see AGENTS.md for Redis port
+redis-cli -h localhost -p [REDIS_PORT] MONITOR
 ```
 
 ## 📚 References

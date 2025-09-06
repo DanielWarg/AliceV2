@@ -1,0 +1,2 @@
+timestamp,session_id,duration_seconds,avg_response_time_ms,success_rate_percent,improvement_percent,target_progress_percent,initial_cache_hit_rate,final_cache_hit_rate,cache_improvement,golden_ratio_efficiency,fibonacci_status,optimization_achieved,performance_rating,alert_count,recommendation_count
+2025-09-06T15:26:21.756436,fibonacci_training_20250906_152621,1397.681146144867,0,0,0,0,0,0,0,0,needs_improvement,False,poor,2,2

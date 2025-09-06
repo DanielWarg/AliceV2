@@ -83,7 +83,8 @@ services:
       - PLANNER_SCHEMA_VERSION=4
       - CACHE_ENABLED=1
       - REDIS_URL=redis://alice-cache:6379
-    # ports managed by dev-proxy
+    ports:
+      - "8001:8000"  # Direct access while dev-proxy broken
     volumes:
       - ./data/telemetry:/data/telemetry
     healthcheck:
@@ -212,7 +213,7 @@ services:
       guardian:
         condition: service_healthy
     ports:
-      - "18000:80"
+      - "19000:80"
     volumes:
       - ./ops/Caddyfile:/etc/caddy/Caddyfile:ro
     restart: unless-stopped

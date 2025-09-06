@@ -50,8 +50,9 @@ pnpm dev:services        # Backend services
 pnpm dev                 # Frontend app
 
 # Verify setup
-curl http://localhost:8000/health
-curl http://localhost:8787/guardian/health
+# See AGENTS.md for current port assignments
+curl [ORCHESTRATOR_ENDPOINT]/health
+curl [GUARDIAN_ENDPOINT]/guardian/health
 ```
 
 ### Development Workflow

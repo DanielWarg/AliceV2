@@ -74,24 +74,39 @@ denne fil (AGENTS.md)               # AI-specifika regler
 - **Testing** → `TESTING_STRATEGY.md`
 - **Allt annat** → `ONBOARDING_GUIDE.md`
 
+## 🔌 ALICE v2 COMPLETE PORT MAPPING - 2025-09-06
+
+**CORE SERVICES (Always Running):**
+- **Alice API**: `8001` (Main API endpoint) ✅ WORKING
+- **Guardian**: `8787` (System monitoring) ✅ WORKING  
+- **NLU**: `9002` (Language processing) ✅ WORKING
+- **Redis Cache**: `6379` (Data cache) ✅ WORKING
+
+**WEB INTERFACES (Development):**
+- **Main WebUI**: `3000` (Primary interface) 🎯 RESERVED
+- **Test HUD**: `3001` (Training/testing interface) 🎯 RESERVED  
+- **Streamlit Dashboard**: `8501` (Analytics dashboard)
+- **N8N Workflows**: `5678` (Automation platform)
+
+**SUPPORT SERVICES (Optional):**
+- **Dev-Proxy**: `19000` (Caddy reverse proxy) 🔄 MOVED FROM 18000
+- **N8N Database**: Internal (PostgreSQL for N8N)
+
 ## 🚦 Quick Health Check
 
 Innan du börjar jobba, verifiera:
 ```bash
-# Services (inkluderar dev-proxy på port 18000)
-docker ps | grep alice
+# Start services
+make up
 
-# Health (VERIFIED WORKING PORTS - 2025-09-06)
-curl http://localhost:8787/health   # Guardian (2ms) ✅ WORKING
-curl http://localhost:9002/health   # NLU (4ms) ✅ WORKING
-redis-cli -p 6379 ping              # Redis (5ms) ✅ WORKING
-
-# ❌ BROKEN - DO NOT USE:
-# curl http://localhost:18000/health  # BROKEN (5s timeout)
-
-# Cache test
-docker exec alice-cache redis-cli ping
+# Health check för core services
+curl http://localhost:8001/api/orchestrator/chat -d '{"message":"test","session_id":"test"}' && echo "✅ Alice API"
+curl http://localhost:8787/health && echo "✅ Guardian"
+curl http://localhost:9002/health && echo "✅ NLU"  
+redis-cli -p 6379 ping && echo "✅ Redis Cache"
 ```
+
+**VIKTIGT:** Använd ALLTID port `8001` för Alice API, INTE `18000` som är trasig.
 
 ## 🎪 Common Tasks & Their Docs
 
@@ -131,7 +146,7 @@ Använd Guardian istället för port 18000 till dess att orchestrator-porten fix
 ```
 
 **DOKUMENTERAT I:**
-- `PORT_REFERENCE.md` - Fullständiga testresultat
+- Se port mapping ovan för fullständiga testresultat
 - Alla script måste uppdateras till att använda fungerande portar
 
 ---

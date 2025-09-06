@@ -19,9 +19,9 @@ jobs:
           python-version: '3.11'
       - name: Install docker compose
         uses: ndeloof/install-compose-action@v0.0.1
-      - name: Start stack (guardian orchestrator nlu dev-proxy)
+      - name: Start stack (guardian orchestrator nlu alice-cache)
         run: |
-          docker compose up -d guardian orchestrator nlu dev-proxy
+          docker compose up -d guardian orchestrator nlu alice-cache
           sleep 10
       - name: Run auto_verify
         run: |
