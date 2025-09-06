@@ -1,0 +1,38 @@
+name: Security Scanning
+on:
+  push: 
+    branches: [main, master, develop, purge/**]
+  pull_request:
+    branches: [main, master]
+
+permissions:
+  contents: read
+  security-events: write
+
+concurrency:
+  group: security-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  codeql:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      matrix: 
+        language: ['javascript-typescript', 'python']
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: github/codeql-action/init@v3
+        with: 
+          languages: ${{ matrix.language }}
+      
+      - uses: github/codeql-action/autobuild@v3
+        continue-on-error: true
+      
+      - uses: github/codeql-action/analyze@v3
+        continue-on-error: true

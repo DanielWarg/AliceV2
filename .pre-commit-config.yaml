@@ -23,3 +23,47 @@ repos:
     rev: v0.41.0
     hooks:
       - id: markdownlint
+  - repo: local
+    hooks:
+      - id: update-fibonacci-docs
+        name: Update Fibonacci Documentation
+        entry: python scripts/auto_docs/update_fibonacci_docs.py
+        language: system
+        files: ^services/orchestrator/src/config/fibonacci\.py$
+        pass_filenames: false
+        always_run: false
+      - id: update-cache-docs
+        name: Update Cache Performance Documentation
+        entry: python scripts/auto_docs/update_cache_docs.py
+        language: system
+        files: ^(services/.*cache.*\.py|CACHE\.md)$
+        pass_filenames: false
+        always_run: false
+      - id: generate-api-docs
+        name: Generate API Documentation
+        entry: python scripts/auto_docs/generate_api_docs.py
+        language: system
+        files: ^services/.*\.py$
+        pass_filenames: false
+        always_run: false
+      - id: validate-documentation
+        name: Validate Documentation Quality
+        entry: python scripts/auto_docs/documentation_validator.py
+        language: system
+        files: ^.*\.md$
+        pass_filenames: false
+        always_run: false
+      - id: update-mkdocs-config
+        name: Update MkDocs Configuration
+        entry: python scripts/auto_docs/mkdocs_config_generator.py
+        language: system
+        files: ^(docs/.*\.md|.*README\.md|mkdocs\.yml)$
+        pass_filenames: false
+        always_run: false
+      - id: auto-update-docs
+        name: Auto-Update Documentation System
+        entry: python scripts/auto_docs/auto_update_manager.py --dry-run
+        language: system
+        files: ^(services/.*\.py|docs/.*\.md|.*\.yml|.*\.yaml)$
+        pass_filenames: false
+        always_run: false

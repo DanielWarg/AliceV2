@@ -1,9 +1,10 @@
 # Alice v2 AI Assistant
-*AI assistant with Guardian safety system, real-time observability, and autonomous E2E testing*
+*AI assistant with Guardian safety system, real-time observability, and **🧮 Fibonacci Mathematical Optimization***
 
 ![E2E](https://img.shields.io/badge/E2E-Auto--verify-green)
 ![SLO](https://img.shields.io/badge/SLO-Per--route%20P95-green)
 ![Privacy](https://img.shields.io/badge/Privacy-GDPR%20by%20design-blue)
+![Fibonacci](https://img.shields.io/badge/Fibonacci-φ%20Optimized-gold)
 
 > **🚦 Status (live-gates)**: Fast P95 ✅ | Planner P95 ✅ | Auto-verify (core) ✅, (planner) ✅
 > Intent-Guard: Deterministic classification. Tool Precision: 54.7% → 85% target. Schema OK: 100%. Cache optimization ongoing.
@@ -20,13 +21,14 @@ open http://localhost:3001   # HUD
 
 Alice v2 is a robust AI assistant featuring:
 
+- **🧮 Fibonacci Mathematical Optimization** - Golden ratio (φ=1.618) performance optimization with L1-L10 cache hierarchy, spiral semantic matching, and φ-weighted load balancing
 - **🛡️ Guardian Safety System** - Real-time health monitoring with NORMAL/BROWNOUT/EMERGENCY states
 - **📊 Complete Observability** - RAM-peak per turn, energy tracking, tool error classification, structured JSONL logging
 - **🧪 Autonomous E2E Testing** - Self-contained test suite with 20 scenarios, SLO validation, and automatic failure detection
 - **🧠 NLU v1 (Swedish)** - e5-embeddings + heuristics, `/api/nlu/parse`, headers `X-Intent`/`X-Route-Hint`
 - **🎯 Intent-Guard + Quality Gates** - Swedish regex patterns for deterministic classification, tool precision optimization
 - **📋 Schema v4** - Strict Pydantic models with canonicalizer and auto-repair
-- **💾 Robust Semantic Cache** - Deterministic fingerprinting, intent-aware caching, versioned invalidation
+- **💾 Fibonacci Cache System** - L1-L10 hierarchy (1h→89h TTL), spiral semantic matching, 70%+ hit rate target
 - **📈 Real-time Monitoring** - Streamlit HUD with comprehensive metrics visualization
 - **⚡ Brownout Load Testing** - Complete stress testing suite validating ≤150ms trigger, ≤60s recovery
 - **🐳 Docker Orchestration** - Complete deployment stack with health checks and monitoring
@@ -36,6 +38,7 @@ Alice v2 is a robust AI assistant featuring:
 - Solo Quickstart – see below
 - Demo Guide – see below
 - Windows Setup Guide – see below
+- **🧮 Fibonacci Optimization – [`docs/fibonacci/FIBONACCI_MASTER_GUIDE.md`](docs/fibonacci/FIBONACCI_MASTER_GUIDE.md)**
 - Roadmap – `ROADMAP.md`
 - Architecture – `ALICE_SYSTEM_BLUEPRINT.md`
 - Rules/specs – `.cursor/rules/` (PRD, ADR, workflow, types, structured-outputs, toolselector, n8n)

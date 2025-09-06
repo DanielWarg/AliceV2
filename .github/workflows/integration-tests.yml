@@ -1,0 +1,87 @@
+name: Full-Stack Integration Tests
+on:
+  pull_request:
+    branches: [main, master]
+
+permissions: 
+  contents: read
+
+concurrency:
+  group: integration-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 3
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
+        with: 
+          node-version: 20
+          cache: 'npm'
+      
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          # Python deps
+          cd services/orchestrator
+          pip install -r requirements.txt || echo "No requirements.txt found"
+          
+          # Node deps (if present)
+          cd ../..
+          if [ -f package.json ]; then
+            npm ci
+          fi
+      
+      - name: Start Alice services
+        run: |
+          docker compose up -d guardian orchestrator alice-cache
+      
+      - name: Wait for services
+        run: |
+          echo "Waiting for services with exponential backoff..."
+          for i in {1..10}; do
+            if curl -f http://localhost:8787/health; then
+              echo "Services ready"
+              break
+            fi
+            sleep $((i * 2))
+          done
+      
+      - name: Run integration tests
+        run: |
+          echo "Running basic integration tests..."
+          curl -f http://localhost:8787/health
+          docker exec alice-cache redis-cli ping
+      
+      - name: Teardown
+        if: always()
+        run: docker compose down
+      
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with: 
+          name: e2e-artifacts
+          path: "test-results/**"
+        continue-on-error: true

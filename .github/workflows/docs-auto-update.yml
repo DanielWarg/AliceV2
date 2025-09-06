@@ -1,0 +1,338 @@
+---
+name: Automated Documentation Updates
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'services/**/*.py'
+      - 'packages/**/*.py'
+      - 'docs/**/*.md'
+      - '**/*README.md'
+      - '*.yml'
+      - '*.yaml'
+      - 'docker-compose*.yml'
+      - 'Dockerfile*'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'services/**/*.py'
+      - 'packages/**/*.py'
+      - 'docs/**/*.md'
+      - '**/*README.md'
+      - '*.yml'
+      - '*.yaml'
+  workflow_dispatch:
+    inputs:
+      force_update:
+        description: 'Force full documentation update'
+        required: false
+        default: false
+        type: boolean
+      deploy_docs:
+        description: 'Deploy documentation after update'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      api-changes: ${{ steps.changes.outputs.api }}
+      fibonacci-changes: ${{ steps.changes.outputs.fibonacci }}
+      cache-changes: ${{ steps.changes.outputs.cache }}
+      config-changes: ${{ steps.changes.outputs.config }}
+      docs-changes: ${{ steps.changes.outputs.docs }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      
+      - uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            api:
+              - 'services/**/*.py'
+              - 'packages/**/*.py'
+            fibonacci:
+              - '**/fibonacci*.py'
+              - 'services/orchestrator/src/config/fibonacci.py'
+            cache:
+              - 'services/**/cache*.py'
+              - 'CACHE.md'
+            config:
+              - '*.yml'
+              - '*.yaml'
+              - 'docker-compose*.yml'
+              - 'Dockerfile*'
+            docs:
+              - 'docs/**/*.md'
+              - '**/*README.md'
+              - 'mkdocs.yml'
+
+  update-documentation:
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: |
+      needs.detect-changes.outputs.api-changes == 'true' ||
+      needs.detect-changes.outputs.fibonacci-changes == 'true' ||
+      needs.detect-changes.outputs.cache-changes == 'true' ||
+      needs.detect-changes.outputs.config-changes == 'true' ||
+      needs.detect-changes.outputs.docs-changes == 'true' ||
+      github.event.inputs.force_update == 'true'
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml structlog requests markdown
+          pip install mkdocs mkdocs-material mkdocstrings mkdocs-awesome-pages-plugin
+          pip install mkdocs-git-revision-date-localized-plugin mkdocs-minify-plugin
+          pip install pymdown-extensions
+      
+      - name: Install project dependencies
+        run: |
+          if [ -f "requirements.txt" ]; then
+            pip install -r requirements.txt
+          fi
+          # Install service-specific dependencies for API docs generation
+          for service_dir in services/*/; do
+            if [ -f "${service_dir}requirements.txt" ]; then
+              pip install -r "${service_dir}requirements.txt" || true
+            fi
+            if [ -f "${service_dir}pyproject.toml" ]; then
+              pip install -e "${service_dir}" || true
+            fi
+          done
+      
+      - name: Make scripts executable
+        run: |
+          chmod +x scripts/auto_docs/*.py
+          find scripts/auto_docs/ -name "*.py" -exec chmod +x {} \;
+      
+      - name: Run API Documentation Updates
+        if: needs.detect-changes.outputs.api-changes == 'true' || github.event.inputs.force_update == 'true'
+        run: |
+          echo "🔍 Updating API documentation..."
+          python scripts/auto_docs/generate_api_docs.py
+          git add docs/api/ || true
+      
+      - name: Run Fibonacci Documentation Updates
+        if: needs.detect-changes.outputs.fibonacci-changes == 'true' || github.event.inputs.force_update == 'true'
+        run: |
+          echo "🧮 Updating Fibonacci documentation..."
+          python scripts/auto_docs/update_fibonacci_docs.py
+          git add docs/fibonacci/ || true
+      
+      - name: Run Cache Documentation Updates
+        if: needs.detect-changes.outputs.cache-changes == 'true' || github.event.inputs.force_update == 'true'
+        run: |
+          echo "💾 Updating cache documentation..."
+          python scripts/auto_docs/update_cache_docs.py
+          git add docs/ CACHE.md || true
+      
+      - name: Update MkDocs Configuration
+        if: |
+          needs.detect-changes.outputs.config-changes == 'true' ||
+          needs.detect-changes.outputs.docs-changes == 'true' ||
+          github.event.inputs.force_update == 'true'
+        run: |
+          echo "📚 Updating MkDocs configuration..."
+          python scripts/auto_docs/mkdocs_config_generator.py
+          git add mkdocs.yml docs/assets/ || true
+      
+      - name: Run Full Auto-Update Manager
+        run: |
+          echo "🚀 Running comprehensive documentation update..."
+          python scripts/auto_docs/auto_update_manager.py --output docs_update_report.json
+          git add . || true
+      
+      - name: Validate Documentation
+        run: |
+          echo "🔍 Validating documentation quality..."
+          python scripts/auto_docs/documentation_validator.py --output docs_validation_report.json
+          # Add reports to git for artifact collection
+          git add *_report.json || true
+      
+      - name: Check for changes
+        id: verify-changed-files
+        run: |
+          if [ -n "$(git diff --cached --name-only)" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "📝 Changes detected:"
+            git diff --cached --name-only
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "✅ No documentation changes needed"
+          fi
+      
+      - name: Commit documentation updates
+        if: steps.verify-changed-files.outputs.changed == 'true'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git commit -m "📚 Auto-update documentation
+          
+          - API documentation updated
+          - Configuration files processed
+          - Documentation validation completed
+          
+          🤖 Generated with Claude Code Documentation System
+          Co-Authored-By: Claude <noreply@anthropic.com>"
+      
+      - name: Push changes
+        if: steps.verify-changed-files.outputs.changed == 'true'
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
+      
+      - name: Upload documentation reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: documentation-reports
+          path: |
+            docs_update_report.json
+            docs_validation_report.json
+          retention-days: 30
+      
+      - name: Build documentation site
+        run: |
+          echo "🏗️ Building MkDocs site..."
+          mkdocs build --clean --verbose
+      
+      - name: Upload documentation site
+        uses: actions/upload-artifact@v3
+        with:
+          name: documentation-site
+          path: site/
+          retention-days: 30
+
+  deploy-documentation:
+    runs-on: ubuntu-latest
+    needs: [detect-changes, update-documentation]
+    if: |
+      (github.ref == 'refs/heads/main' && 
+       (needs.detect-changes.outputs.api-changes == 'true' ||
+        needs.detect-changes.outputs.fibonacci-changes == 'true' ||
+        needs.detect-changes.outputs.cache-changes == 'true' ||
+        needs.detect-changes.outputs.config-changes == 'true' ||
+        needs.detect-changes.outputs.docs-changes == 'true')) ||
+      github.event.inputs.deploy_docs == 'true'
+    
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install MkDocs and dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install mkdocs mkdocs-material mkdocstrings mkdocs-awesome-pages-plugin
+          pip install mkdocs-git-revision-date-localized-plugin mkdocs-minify-plugin
+          pip install pymdown-extensions
+      
+      - name: Download documentation site
+        uses: actions/download-artifact@v3
+        with:
+          name: documentation-site
+          path: site/
+      
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v3
+      
+      - name: Upload to GitHub Pages
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: site/
+      
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
+      
+      - name: Post deployment status
+        run: |
+          echo "🚀 Documentation deployed successfully!"
+          echo "📖 Site URL: ${{ steps.deployment.outputs.page_url }}"
+
+  notification:
+    runs-on: ubuntu-latest
+    needs: [detect-changes, update-documentation, deploy-documentation]
+    if: always()
+    
+    steps:
+      - name: Download reports
+        uses: actions/download-artifact@v3
+        with:
+          name: documentation-reports
+          path: reports/
+        continue-on-error: true
+      
+      - name: Prepare notification
+        run: |
+          echo "📊 Documentation Update Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Trigger:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Add change detection results
+          if [ "${{ needs.detect-changes.outputs.api-changes }}" = "true" ]; then
+            echo "🔧 API changes detected" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ "${{ needs.detect-changes.outputs.fibonacci-changes }}" = "true" ]; then
+            echo "🧮 Fibonacci optimization changes detected" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ "${{ needs.detect-changes.outputs.cache-changes }}" = "true" ]; then
+            echo "💾 Cache system changes detected" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ "${{ needs.detect-changes.outputs.config-changes }}" = "true" ]; then
+            echo "⚙️ Configuration changes detected" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ "${{ needs.detect-changes.outputs.docs-changes }}" = "true" ]; then
+            echo "📚 Documentation changes detected" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Add status
+          if [ "${{ needs.update-documentation.result }}" = "success" ]; then
+            echo "✅ Documentation update: SUCCESS" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Documentation update: FAILED" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.deploy-documentation.result }}" = "success" ]; then
+            echo "🚀 Documentation deployment: SUCCESS" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.deploy-documentation.result }}" = "skipped" ]; then
+            echo "⏭️ Documentation deployment: SKIPPED" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Documentation deployment: FAILED" >> $GITHUB_STEP_SUMMARY
+          fi

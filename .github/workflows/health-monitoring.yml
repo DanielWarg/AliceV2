@@ -1,0 +1,73 @@
+name: Health Check & Performance Monitoring
+on:
+  push:
+    branches: [main, master]
+  schedule: [{ cron: "0 * * * *" }]
+
+permissions: 
+  contents: read
+
+concurrency:
+  group: health-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
+        with: 
+          node-version: 20
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: |
+          if [ -f package.json ]; then
+            npm ci
+          else
+            echo "Skipping npm install - no package.json"
+          fi
+      
+      - name: Setup Docker services
+        run: |
+          docker compose up -d guardian alice-cache
+          echo "Waiting for services..."
+          sleep 15
+      
+      - name: Wait for readiness (Fibonacci backoff)
+        run: |
+          for d in 1 2 3 5 8; do
+            if curl -fsS http://localhost:8787/health; then
+              echo "Guardian ready"
+              exit 0
+            fi
+            sleep $d
+          done
+          echo "Services not ready" && exit 1
+      
+      - name: Basic health checks
+        run: |
+          echo "Checking Guardian..."
+          curl -f http://localhost:8787/health || echo "Guardian unhealthy"
+          
+          echo "Checking Cache..."
+          docker exec alice-cache redis-cli ping || echo "Cache unhealthy"
+      
+      - name: Stop services
+        if: always()
+        run: docker compose down
+      
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with: 
+          name: health-reports
+          path: reports/**
+        continue-on-error: true
