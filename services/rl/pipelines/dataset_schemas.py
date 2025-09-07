@@ -1,8 +1,11 @@
 # services/rl/pipelines/dataset_schemas.py
 from __future__ import annotations
-from pydantic import BaseModel, Field, validator
-from typing import Optional, Dict, Any, Literal
+
 from datetime import datetime
+from typing import Any, Dict, Optional
+
+from pydantic import BaseModel, Field, validator
+
 
 class RawEvent(BaseModel):
     timestamp: str
@@ -26,25 +29,30 @@ class RawEvent(BaseModel):
             raise ValueError("timestamp must be ISO 8601")
         return v
 
+
 class State(BaseModel):
     intent: Optional[str]
     text: str
     features: Dict[str, Any] = Field(default_factory=dict)
 
+
 class Action(BaseModel):
     tool: Optional[str]  # "calendar.create", "email.send", None
+
 
 class Outcome(BaseModel):
     success: Optional[bool]
     latency_ms: Optional[int]
     energy_wh: Optional[float]
 
+
 class RewardComponents(BaseModel):
-    precision: Optional[int] = None      # 1/0
-    latency: Optional[int] = None        # +1/0/-1
-    energy: Optional[int] = None         # +1/0/-1
-    safety: Optional[int] = None         # +1/-1
+    precision: Optional[int] = None  # 1/0
+    latency: Optional[int] = None  # +1/0/-1
+    energy: Optional[int] = None  # +1/0/-1
+    safety: Optional[int] = None  # +1/-1
     total: Optional[float] = None
+
 
 class Episode(BaseModel):
     state: State

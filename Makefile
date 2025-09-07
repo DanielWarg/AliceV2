@@ -1,4 +1,4 @@
-.PHONY: help down up status health test-unit test-all security-scan format lint clean stabilize fix-system rl-bootstrap rl-train rl-shadow
+.PHONY: help down up status health test-unit test-all security-scan format lint clean stabilize fix-system rl-build rl-test rl-bootstrap rl-train rl-shadow
 
 # Default target
 help: ## Show this help message
@@ -27,6 +27,8 @@ help: ## Show this help message
 	@echo "  make fix-system    - Auto-fix system health issues"
 	@echo ""
 	@echo "🤖 RL Pipeline:"
+	@echo "  make rl-build      - Build episodes from telemetry (T2)"
+	@echo "  make rl-test       - Test RL pipeline (T2)"
 	@echo "  make rl-bootstrap  - Generate bootstrap data"
 	@echo "  make rl-train      - Train RL policies"
 	@echo "  make rl-shadow     - Start shadow mode"
@@ -309,6 +311,22 @@ fix-system: ## Auto-fix system health issues
 	@python fix_system_health.py --action fix
 
 # RL Pipeline
+rl-build: ## Build episodes from telemetry (T2)
+	@echo "🏗️  Building episodes from telemetry..."
+	@PYTHONPATH=. python3 services/rl/pipelines/build_episodes.py --src data/telemetry --out data/rl/v1
+
+rl-build-with-rewards: ## Build episodes with Fibonacci φ-rewards (T3)
+	@echo "🧮 Building episodes with Fibonacci φ-rewards..."
+	@PYTHONPATH=. python3 services/rl/pipelines/build_episodes.py --src data/telemetry --out data/rl/v1
+
+rl-test: ## Test RL pipeline (T2)
+	@echo "🧪 Testing RL pipeline..."
+	@PYTHONPATH=. python3 -m pytest services/rl/tests/test_build_episodes.py -q
+
+rl-rewards-test: ## Test Fibonacci reward shaping (T3)
+	@echo "🧮 Testing Fibonacci reward shaping..."
+	@PYTHONPATH=. python3 -m pytest services/rl/tests/test_reward_shaping.py -q
+
 rl-bootstrap: ## Generate bootstrap data
 	@echo "🌱 Generating bootstrap data..."
 	@python services/rl/generate_bootstrap_data.py --episodes 1000 --out data/bootstrap.json
