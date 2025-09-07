@@ -1,4 +1,4 @@
-.PHONY: help down up status health test-unit test-all security-scan format lint clean stabilize fix-system rl-build rl-test rl-bootstrap rl-train rl-shadow
+.PHONY: help down up status health test-unit test-all security-scan format lint clean stabilize fix-system rl-build rl-test rl-bootstrap rl-train rl-shadow rl-replay rl-online-test rl-phi-test rl-snapshot
 
 # Default target
 help: ## Show this help message
@@ -29,6 +29,10 @@ help: ## Show this help message
 	@echo "🤖 RL Pipeline:"
 	@echo "  make rl-build      - Build episodes from telemetry (T2)"
 	@echo "  make rl-test       - Test RL pipeline (T2)"
+	@echo "  make rl-replay     - Offline bandit training (T4)"
+	@echo "  make rl-online-test - Test online bandit components (T4)"
+	@echo "  make rl-phi-test   - Test φ-reward calculation (T4)"
+	@echo "  make rl-snapshot   - Snapshot current bandit weights"
 	@echo "  make rl-bootstrap  - Generate bootstrap data"
 	@echo "  make rl-train      - Train RL policies"
 	@echo "  make rl-shadow     - Start shadow mode"
@@ -326,6 +330,30 @@ rl-test: ## Test RL pipeline (T2)
 rl-rewards-test: ## Test Fibonacci reward shaping (T3)
 	@echo "🧮 Testing Fibonacci reward shaping..."
 	@PYTHONPATH=. python3 -m pytest services/rl/tests/test_reward_shaping.py -q
+
+rl-replay: ## Offline bandit training (T4)
+	@echo "🎯 Training bandits offline..."
+	@PYTHONPATH=. RL_REPLAY_EPOCHS=$${RL_REPLAY_EPOCHS:-2} python3 services/rl/replay/replay_from_episodes.py --split train --epochs $${RL_REPLAY_EPOCHS:-2}
+
+rl-online-test: ## Test online bandit components (T4)
+	@echo "🧪 Testing online bandit components..."
+	@PYTHONPATH=. python3 -m pytest tests/rl/test_t4_core.py -v
+
+rl-phi-test: ## Test φ-reward calculation (T4)
+	@echo "🧮 Testing φ-reward calculation..."
+	@PYTHONPATH=. python3 -m pytest tests/rl/test_phi_reward.py -v
+
+rl-benchmark: ## Run reproducible RL benchmark with artefacts  
+	@echo "🔬 Running RL benchmark suite..."
+	@PYTHONPATH=. python3 services/rl/benchmark/rl_benchmark.py --mode all
+
+rl-benchmark-ci: ## Run RL benchmark with SLO gates for CI
+	@echo "🚦 Running RL benchmark with SLO gates..."
+	@PYTHONPATH=. python3 services/rl/benchmark/rl_benchmark.py --mode CI
+
+rl-snapshot: ## Snapshot current bandit weights
+	@echo "📸 Snapshotting bandit weights..."
+	@PYTHONPATH=. python3 -c "from services.rl.persistence.bandit_store import get_paths; from services.rl.online.linucb_router import LinUCBRouter; from services.rl.online.thompson_tools import ThompsonTools; r=LinUCBRouter(); r.save(); t=ThompsonTools(); t.save(); print('Snapshot OK')"
 
 rl-bootstrap: ## Generate bootstrap data
 	@echo "🌱 Generating bootstrap data..."

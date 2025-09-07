@@ -1,0 +1,16 @@
+{
+  "benchmark_info": {
+    "mode": "CI",
+    "timestamp": 1757260416.962919,
+    "env": {
+      "platform": "macOS-15.6.1-arm64-arm-64bit-Mach-O",
+      "processor": "arm",
+      "python_version": "3.13.7",
+      "git_commit": "66d849196165f0619637adcf29280e470c3502b7",
+      "git_branch": "purge/phase-2-test-cleanup",
+      "git_dirty": true,
+      "timestamp": 1757260416.962677
+    }
+  },
+  "results": {}
+}

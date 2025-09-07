@@ -47,10 +47,10 @@ class Outcome(BaseModel):
 
 
 class RewardComponents(BaseModel):
-    precision: Optional[int] = None  # 1/0
-    latency: Optional[int] = None  # +1/0/-1
-    energy: Optional[int] = None  # +1/0/-1
-    safety: Optional[int] = None  # +1/-1
+    precision: Optional[float] = None  # φ^2 weighted
+    latency: Optional[float] = None  # φ^1 weighted  
+    energy: Optional[float] = None  # φ^0 weighted
+    safety: Optional[float] = None  # φ^-1 weighted
     total: Optional[float] = None
 
 

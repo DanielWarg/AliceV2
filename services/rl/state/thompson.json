@@ -1,0 +1,172 @@
+{
+  "policies": {
+    "test.intent": {
+      "test_tool": {
+        "alpha": 2.7,
+        "beta": 1.2999999999999998,
+        "pulls": 2,
+        "reward_sum": 1.7000000000000002
+      }
+    },
+    "intent.category_0": {
+      "fallback_tool": {
+        "alpha": 22.466252583997992,
+        "beta": 20.37832988800269,
+        "pulls": 48,
+        "reward_sum": 28.6216701119973
+      }
+    },
+    "intent.category_1": {
+      "fallback_tool": {
+        "alpha": 49.0,
+        "beta": 1.0,
+        "pulls": 48,
+        "reward_sum": 48.0
+      }
+    },
+    "intent.category_2": {
+      "fallback_tool": {
+        "alpha": 49.0,
+        "beta": 1.0,
+        "pulls": 48,
+        "reward_sum": 48.0
+      }
+    },
+    "intent.category_3": {
+      "fallback_tool": {
+        "alpha": 49.0,
+        "beta": 1.0,
+        "pulls": 48,
+        "reward_sum": 48.0
+      }
+    },
+    "intent.category_4": {
+      "fallback_tool": {
+        "alpha": 25.844582472000663,
+        "beta": 15.310835055998663,
+        "pulls": 48,
+        "reward_sum": 33.689164944001355
+      }
+    },
+    "intent.category_5": {
+      "fallback_tool": {
+        "alpha": 49.0,
+        "beta": 1.0,
+        "pulls": 48,
+        "reward_sum": 48.0
+      }
+    },
+    "intent.category_6": {
+      "fallback_tool": {
+        "alpha": 49.0,
+        "beta": 1.0,
+        "pulls": 48,
+        "reward_sum": 48.0
+      }
+    },
+    "intent.category_7": {
+      "fallback_tool": {
+        "alpha": 49.0,
+        "beta": 1.0,
+        "pulls": 48,
+        "reward_sum": 48.0
+      }
+    },
+    "intent.category_8": {
+      "fallback_tool": {
+        "alpha": 25.844582472000663,
+        "beta": 15.310835055998663,
+        "pulls": 48,
+        "reward_sum": 33.68916494400136
+      }
+    },
+    "intent.category_9": {
+      "fallback_tool": {
+        "alpha": 49.0,
+        "beta": 1.0,
+        "pulls": 48,
+        "reward_sum": 48.0
+      }
+    },
+    "intent.category_10": {
+      "fallback_tool": {
+        "alpha": 43.93250516799594,
+        "beta": 6.067494832004044,
+        "pulls": 48,
+        "reward_sum": 42.93250516799595
+      }
+    },
+    "intent.category_11": {
+      "fallback_tool": {
+        "alpha": 48.0,
+        "beta": 1.0,
+        "pulls": 47,
+        "reward_sum": 47.0
+      }
+    },
+    "intent.category_12": {
+      "fallback_tool": {
+        "alpha": 25.568189269750647,
+        "beta": 14.863621460498704,
+        "pulls": 47,
+        "reward_sum": 33.13637853950132
+      }
+    },
+    "intent.category_13": {
+      "fallback_tool": {
+        "alpha": 48.0,
+        "beta": 1.0,
+        "pulls": 47,
+        "reward_sum": 47.0
+      }
+    },
+    "intent.category_14": {
+      "fallback_tool": {
+        "alpha": 48.0,
+        "beta": 1.0,
+        "pulls": 47,
+        "reward_sum": 47.0
+      }
+    },
+    "intent.category_15": {
+      "fallback_tool": {
+        "alpha": 48.0,
+        "beta": 1.0,
+        "pulls": 47,
+        "reward_sum": 47.0
+      }
+    },
+    "intent.category_16": {
+      "fallback_tool": {
+        "alpha": 24.844582472000667,
+        "beta": 15.310835055998663,
+        "pulls": 47,
+        "reward_sum": 32.68916494400136
+      }
+    },
+    "intent.category_17": {
+      "fallback_tool": {
+        "alpha": 48.0,
+        "beta": 1.0,
+        "pulls": 47,
+        "reward_sum": 47.0
+      }
+    },
+    "intent.category_18": {
+      "fallback_tool": {
+        "alpha": 48.0,
+        "beta": 1.0,
+        "pulls": 47,
+        "reward_sum": 47.0
+      }
+    },
+    "intent.category_19": {
+      "fallback_tool": {
+        "alpha": 48.0,
+        "beta": 1.0,
+        "pulls": 47,
+        "reward_sum": 47.0
+      }
+    }
+  }
+}

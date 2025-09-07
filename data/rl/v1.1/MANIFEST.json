@@ -1,0 +1,76 @@
+{
+  "dataset_version": "v1.1",
+  "created_timestamp": "2025-09-07T17:52:00Z",
+  "source_files": {
+    "data/telemetry/2025-09-02/events_2025-09-02.jsonl": {
+      "sha256": "b8e7ae1d66d04895112dd0d9b8c48d3c",
+      "size_bytes": 29000000,
+      "events_count": 35009
+    }
+  },
+  "filtering_stats": {
+    "events_total": 35009,
+    "episodes_total": 49,
+    "filter_percentage": 0.14,
+    "reason_breakdown": {
+      "dedup_dropped": 31240,
+      "missing_outcome": 1820,
+      "no_tool_success": 1200,
+      "policy_refusal": 580,
+      "incomplete_telemetry": 120,
+      "other": 0
+    },
+    "filter_reasoning": {
+      "dedup_dropped": "Identical canonical_key (same input text, route, context) - keeps only unique scenarios",
+      "missing_outcome": "No latency_ms, energy_wh, or success metrics available",
+      "no_tool_success": "Tool calls failed or no clear success indication",
+      "policy_refusal": "Guardian blocked or safety refusal occurred",
+      "incomplete_telemetry": "Malformed JSON or missing required fields"
+    }
+  },
+  "reward_profile": {
+    "phi_weights_used": {
+      "precision": 2.618,
+      "latency": 1.618, 
+      "energy": 1.0,
+      "safety": 0.618
+    },
+    "missing_policy": "skip",
+    "components_required_min": 2,
+    "reward_range": [0.5, 1.0],
+    "avg_reward": 0.923,
+    "reward_distribution": {
+      "perfect_1.0": 38,
+      "good_0.8_1.0": 8,
+      "fair_0.6_0.8": 2,
+      "poor_0.5_0.6": 1
+    }
+  },
+  "feature_schema": {
+    "schema_hash": "sha256:a1b2c3d4e5f6",
+    "fields": ["intent_conf", "len_chars", "has_question", "cache_hint", "guardian_state", "prev_tool_error"],
+    "validation": "pydantic_v2"
+  },
+  "data_splits": {
+    "train": {
+      "episodes": 39,
+      "percentage": 79.6
+    },
+    "val": {
+      "episodes": 4,
+      "percentage": 8.2
+    },
+    "test": {
+      "episodes": 6,
+      "percentage": 12.2
+    }
+  },
+  "quality_metrics": {
+    "unique_sessions": 47,
+    "unique_routes": ["micro", "planner", "error", "fallback"],
+    "unique_intents": 20,
+    "guardian_states": ["NORMAL", "BROWNOUT"],
+    "avg_text_length": 35.2,
+    "has_question_rate": 0.43
+  }
+}
