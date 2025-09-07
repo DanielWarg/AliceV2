@@ -1,0 +1,56 @@
+{
+  "length_chars": [
+    57,
+    41,
+    49,
+    71,
+    43,
+    101,
+    80,
+    43
+  ],
+  "baseline_length_chars": [
+    57,
+    49,
+    43,
+    80
+  ],
+  "intent_hist_baseline": [
+    0,
+    1,
+    1,
+    0,
+    0,
+    1,
+    1
+  ],
+  "intent_hist_actual": [
+    1,
+    1,
+    1,
+    1,
+    2,
+    1,
+    1
+  ],
+  "verifier_ok": [
+    true,
+    false,
+    false,
+    true,
+    true,
+    true,
+    true,
+    false
+  ],
+  "latency_ms": [
+    420,
+    180,
+    340,
+    290,
+    150,
+    380,
+    200,
+    120
+  ]
+}

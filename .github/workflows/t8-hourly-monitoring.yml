@@ -1,0 +1,106 @@
+name: T8 Hourly Drift Monitoring
+
+on:
+  schedule:
+    - cron: "0 * * * *"  # Every hour
+  workflow_dispatch:
+
+jobs:
+  prod-drift-monitor:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml
+      
+      - name: Run prod telemetry ingestion
+        run: |
+          python ops/scripts/ingest_prod_telemetry.py || echo "WARN: telemetry ingestion failed"
+          
+      - name: Drift watch on prod data
+        id: drift_check
+        run: |
+          if python services/rl/drift/drift_watch.py; then
+            echo "drift_status=OK" >> $GITHUB_OUTPUT
+          else
+            echo "drift_status=BREACH" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Open incident on drift breach
+        if: steps.drift_check.outputs.drift_status == 'BREACH'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `🚨 T8 Drift Alert - ${new Date().toISOString().split('T')[0]}`;
+            const body = `
+            ## Drift Detection Breach Detected
+            
+            **Time**: ${new Date().toISOString()}
+            **Workflow**: ${{ github.workflow }} / ${{ github.run_id }}
+            
+            ### Possible Causes:
+            - PSI_intents > 0.20 (distribution shift in user intents)
+            - verifier_fail > 1.0% (schema compliance degradation)  
+            - KS_length > 0.20 (response length distribution shift)
+            
+            ### Immediate Actions:
+            1. Review recent model deployments/adapters
+            2. Check \`data/ops/telemetry_window.json\` for metrics
+            3. Consider canary rollback: \`make canary-rollback\`
+            4. Disable T8 online adaptation: \`T8_ONLINE_ADAPTATION=false\`
+            
+            ### Investigation Commands:
+            \`\`\`bash
+            make t8-drift-prod  # Re-run drift analysis
+            cat data/ops/telemetry_window.json | jq '.intent_hist_actual'
+            \`\`\`
+            
+            /cc @ops-team
+            `;
+            
+            // Check if incident already exists today
+            const today = new Date().toISOString().split('T')[0];
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 't8-drift-alert'
+            });
+            
+            const existingIncident = issues.find(issue => 
+              issue.title.includes(today)
+            );
+            
+            if (!existingIncident) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['t8-drift-alert', 'ops-urgent', 'production']
+              });
+              console.log('Created new drift incident');
+            } else {
+              // Update existing incident with new breach time
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIncident.number,
+                body: `🔄 **Additional breach detected at ${new Date().toISOString()}**\n\nWorkflow: ${{ github.workflow }} / ${{ github.run_id }}`
+              });
+              console.log('Updated existing drift incident');
+            }
+            
+      - name: Report success
+        if: steps.drift_check.outputs.drift_status == 'OK'
+        run: |
+          echo "✅ T8 drift monitoring: All gates GREEN"
+          echo "PSI, KS, and verifier metrics within acceptable thresholds"

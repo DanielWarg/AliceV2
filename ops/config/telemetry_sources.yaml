@@ -1,0 +1,45 @@
+# Prod-telemetrikällor (du kan ha flera; första som finns används)
+# Stöd: lokala filer (NDJSON/JSONL). Valfri S3/GCS-adapter nedan (inaktiverad by default).
+window:
+  lookback_hours: 24           # hur stort fönster som ska summeras
+  max_events: 20000            # skydd mot gigantiska loggar
+  min_events: 500              # annars fyller vi med senaste tills denna gräns
+  persist_raw: false           # spara INTE råtext (PII-säker design)
+
+sources:
+  - type: "file"
+    path: "data/logs/prod_responses.ndjson"     # 1 rad / event (JSON)
+  - type: "file"
+    path: "/var/log/alice/prod_responses.jsonl"
+
+# Valfria molnkopplingar (kräver lib + creds i miljön). Lämna disabled om ej i bruk.
+s3:
+  enabled: false
+  bucket: "my-alice-prod"
+  key: "logs/prod_responses.ndjson"
+
+gcs:
+  enabled: false
+  bucket: "my-alice-prod"
+  blob: "logs/prod_responses.ndjson"
+
+# Fältmappning (anpassa om din logg heter annorlunda)
+fields:
+  prompt: "prompt"
+  answer: "answer"
+  intent: "intent"
+  verifier_ok: "verifier_ok"
+  policy_breach: "policy_breach"
+  latency_ms: "latency_ms"
+  route: "route"
+  model_version: "model_version"
+
+# Intent-detektion fallback (om 'intent' saknas)
+intent_regex:
+  time: ["\\bklockan\\b","\\btid(en)?\\b"]
+  weather: ["\\bv(ä|a)der\\b","\\bgrader\\b"]
+  email: ["\\bmejl\\b","\\bemail\\b"]
+  summary: ["\\bsammanfatt(a|ning)\\b"]
+  qa: ["\\b(hur|varf[öo]r|vad)\\b"]
+  chitchat: ["\\bhej\\b","\\btack\\b"]
+  hard: ["\\bcanary\\b","\\bLoRA\\b","\\bGBNF\\b"]

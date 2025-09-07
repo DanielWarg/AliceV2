@@ -35,3 +35,30 @@ canary-rollback:
 
 help:
 	@echo "Targets: prefs-build | prefs-train | prefs-eval | prefs-ci | verifier-test | canary-on | canary-off | canary-promote | canary-rollback"
+
+# ––– Human eval helpers –––
+
+human-ab:
+	python tools/ab_runner.py
+
+human-aggregate:
+	python eval/human/aggregate.py
+
+# ––– Utilities –––
+
+eval-help:
+	@echo "Kör: make human-ab && fyll i eval/human/judgments.jsonl, sedan make human-aggregate"
+
+# --- T8 ops ---
+t8-drift:
+	python services/rl/drift/drift_watch.py || true
+
+t8-help:
+	@echo "T8: t8-drift (PSI/KS), nightly via .github/workflows/t8-nightly.yml"
+
+# --- T8 prod telemetry ---
+t8-telemetry-prod:
+	python ops/scripts/ingest_prod_telemetry.py
+
+t8-drift-prod: t8-telemetry-prod
+	python services/rl/drift/drift_watch.py || true

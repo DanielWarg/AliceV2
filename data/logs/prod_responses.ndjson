@@ -1,0 +1,8 @@
+{"prompt":"Hur aktiverar jag canary deployment?","answer":"Kör make canary-on för att sätta PREFS_CANARY_SHARE=0.05.","verifier_ok":true,"latency_ms":420,"route":"baseline","intent":"hard","ts":"2025-09-07T19:30:00Z"}
+{"prompt":"Vad är klockan just nu?","answer":"Jag kan inte se aktuell tid utan verktyg.","verifier_ok":false,"latency_ms":180,"route":"canary","intent":"time","ts":"2025-09-07T19:31:00Z"}
+{"prompt":"Vädret idag?","answer":"Det är 22 grader och soligt enligt min bedömning.","verifier_ok":false,"latency_ms":340,"route":"baseline","intent":"weather","ts":"2025-09-07T19:32:00Z"}
+{"prompt":"Sammanfatta LoRA-träningen","answer":"LoRA r=13, alpha=16, dropout=0.05 med TRL+PEFT på svenska preferenspar.","verifier_ok":true,"latency_ms":290,"route":"canary","intent":"summary","ts":"2025-09-07T19:33:00Z"}
+{"prompt":"Hej, hur mår du?","answer":"Hej! Bra tack, hur kan jag hjälpa dig idag?","verifier_ok":true,"latency_ms":150,"route":"baseline","intent":"chitchat","ts":"2025-09-07T19:34:00Z"}
+{"prompt":"Varför används PSI för driftdetektion?","answer":"PSI mäter förskjutning i distributioner genom KL-divergens mellan förväntade och faktiska bin-counts.","verifier_ok":true,"latency_ms":380,"route":"canary","intent":"qa","ts":"2025-09-07T19:35:00Z"}
+{"prompt":"Skicka mejl till teamet","answer":"Jag kan inte skicka email utan verktygsåtkomst. Använd din emailklient istället.","verifier_ok":true,"latency_ms":200,"route":"baseline","intent":"email","ts":"2025-09-07T19:36:00Z"}
+{"prompt":"Beräkna 2+2*3","answer":"Svaret är 8 enligt grundläggande matematik.","verifier_ok":false,"latency_ms":120,"route":"canary","intent":"qa","ts":"2025-09-07T19:37:00Z"}

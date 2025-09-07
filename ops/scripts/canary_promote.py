@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-import os, json, sys, time, pathlib
+import json
+import os
+import sys
+
 """
 Promote canary från 5% → 20% om kriterier uppfylls.
 I produktion ska detta läsa real telemetri. Här används en enkel gate via report.json.
@@ -7,9 +10,11 @@ I produktion ska detta läsa real telemetri. Här används en enkel gate via rep
 REPORT = "data/rl/prefs/v1/report.json"
 ENV_FILE = ".env.canary"
 
+
 def main():
     if not os.path.exists(REPORT):
-        print("[promote] report saknas:", REPORT); sys.exit(1)
+        print("[promote] report saknas:", REPORT)
+        sys.exit(1)
     rep = json.load(open(REPORT, "r", encoding="utf-8"))
     win = rep.get("win_rate", 0.0)
     hall = rep.get("hallucination_rate", 1.0)
@@ -20,7 +25,9 @@ def main():
             f.write(f"PREFS_CANARY_SHARE={share}\n")
         print(f"[promote] Canary share uppdaterad till {share}")
         sys.exit(0)
-    print(f"[promote] Kriterier ej uppfyllda (win={win}, hall={hall}, p95={p95})"); sys.exit(2)
+    print(f"[promote] Kriterier ej uppfyllda (win={win}, hall={hall}, p95={p95})")
+    sys.exit(2)
+
 
 if __name__ == "__main__":
     main()
