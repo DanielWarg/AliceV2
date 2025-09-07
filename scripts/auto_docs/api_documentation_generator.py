@@ -17,7 +17,6 @@ Features:
 """
 
 import ast
-import importlib
 import json
 import sys
 from dataclasses import dataclass

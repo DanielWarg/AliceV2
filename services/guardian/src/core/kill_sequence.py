@@ -44,10 +44,10 @@ class KillSequenceConfig:
 
     # Health gating - configurable via environment
     health_check_url: str = (
-        "http://localhost:11434/api/health"  # Default, override with OLLAMA_BASE_URL
+        f"{os.getenv('OLLAMA_BASE_URL', 'http://host.docker.internal:11434')}/api/health"
     )
     llm_test_url: str = (
-        "http://localhost:11434/api/generate"  # Default, override with OLLAMA_BASE_URL
+        f"{os.getenv('OLLAMA_BASE_URL', 'http://host.docker.internal:11434')}/api/generate"
     )
     llm_test_model: str = "llama3.2:3b"  # Use lighter model for test
     health_timeout_s: float = 10.0

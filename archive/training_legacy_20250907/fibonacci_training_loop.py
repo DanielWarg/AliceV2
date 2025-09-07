@@ -404,9 +404,7 @@ class FibonacciTrainingLoop:
 
         for phase_name, phase_config in self.training_phases.items():
             try:
-                await self.execute_training_phase(
-                    phase_name, phase_config
-                )
+                await self.execute_training_phase(phase_name, phase_config)
 
                 # Save intermediate results
                 self._save_training_progress()

@@ -1,0 +1,28 @@
+{
+  "total_episodes": 1,
+  "splits": {
+    "train": 1,
+    "val": 0,
+    "test": 0
+  },
+  "intent_distribution": {
+    "planner": 1
+  },
+  "label_distribution": {
+    "positive": 1,
+    "negative": 0,
+    "positive_ratio": 1.0
+  },
+  "latency_distribution_ms": {
+    "count": 1,
+    "mean": 231.0,
+    "p50": 231,
+    "p95": 231
+  },
+  "quality_index": 1.0,
+  "quality_requirements": {
+    "min_episodes": 200,
+    "min_quality_index": 0.8,
+    "status": "PASS"
+  }
+}

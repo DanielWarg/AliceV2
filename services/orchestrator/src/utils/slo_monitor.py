@@ -201,10 +201,10 @@ class SLOMonitor:
                 response = await client.get(f"{self.guardian_url}/health")
                 if response.status_code == 200:
                     data = response.json()
-                    guardian_metrics = data.get("metrics", {})
-                    metrics.ram_pct = guardian_metrics.get("ram_pct", 0.0) / 100.0
-                    metrics.cpu_pct = guardian_metrics.get("cpu_pct", 0.0) / 100.0
-                    metrics.guardian_state = data.get("status", "normal")
+                    # Guardian health endpoint returns data directly, not nested in "metrics"
+                    metrics.ram_pct = data.get("ram_pct", 0.0) / 100.0
+                    metrics.cpu_pct = data.get("cpu_pct", 0.0) / 100.0
+                    metrics.guardian_state = data.get("state", "normal")  # Note: "state" not "status"
                     metrics.guardian_available = True
                 else:
                     self.logger.warning(

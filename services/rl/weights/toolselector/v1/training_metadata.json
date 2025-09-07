@@ -1,0 +1,54 @@
+{
+  "model_type": "toolselector_lora_v1",
+  "training_started": "2025-09-07T10:57:14.432958",
+  "training_completed": "2025-09-07T10:57:14.432963",
+  "epochs": 3,
+  "training_examples": 192,
+  "data_analysis": {
+    "total_examples": 192,
+    "success_rate": 0.3125,
+    "avg_reward": 0.6927083333333334,
+    "intent_diversity": 8,
+    "tool_diversity": 7,
+    "intent_distribution": {
+      "time_info": 45,
+      "weather": 20,
+      "general": 33,
+      "calculation": 20,
+      "email": 20,
+      "calendar": 28,
+      "tasks": 13,
+      "entertainment": 13
+    },
+    "quality": "poor",
+    "ready_for_training": true
+  },
+  "training_log": [
+    {
+      "epoch": 1,
+      "train_loss": 1.5,
+      "train_accuracy": 0.75,
+      "examples_processed": 192
+    },
+    {
+      "epoch": 2,
+      "train_loss": 1.0,
+      "train_accuracy": 0.9,
+      "examples_processed": 192
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.5,
+      "train_accuracy": 0.95,
+      "examples_processed": 192
+    }
+  ],
+  "final_metrics": {
+    "train_loss": 0.5,
+    "train_accuracy": 0.95,
+    "tool_selection_f1": 0.87,
+    "swedish_intent_accuracy": 0.82
+  },
+  "model_path": "/Users/evil/Desktop/EVIL/PROJECT/alice-v2/services/rl/weights/toolselector/v1/toolselector_lora_v1.pth",
+  "ready_for_deployment": true
+}

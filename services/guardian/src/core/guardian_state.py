@@ -65,7 +65,7 @@ class GuardianConfig:
 
     # Endpoints - configurable via environment variables
     alice_base_url: str = "http://localhost:8000"  # Override with ALICE_BASE_URL
-    ollama_base_url: str = "http://localhost:11434"  # Override with OLLAMA_BASE_URL
+    ollama_base_url: str = os.getenv("OLLAMA_BASE_URL", "http://host.docker.internal:11434")
     guardian_port: int = 8787  # Override with GUARDIAN_PORT
 
     # Logging

@@ -1,0 +1,14 @@
+{
+  "dataset_name": "alice_night_test_v1",
+  "created": "2025-09-07T10:50:49.471302",
+  "source": "night_test_telemetry_2025-09-07",
+  "total_episodes": 240,
+  "train_episodes": 192,
+  "eval_episodes": 48,
+  "successful_episodes": 60,
+  "success_rate": 0.25,
+  "avg_reward": -0.7166666666666667,
+  "fibonacci_optimized_rate": 0.25,
+  "data_quality": "medium",
+  "ready_for_training": true
+}

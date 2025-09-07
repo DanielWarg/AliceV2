@@ -1,0 +1,74 @@
+name: "IQ Gate (Data)"
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'services/rl/**'
+      - 'data/telemetry/**'
+      - 'scripts/run_build_dataset.sh'
+  push:
+    branches: [ main ]
+    paths:
+      - 'services/rl/**'
+      - 'data/telemetry/**'
+
+jobs:
+  data-quality-gate:
+    name: "Dataset Quality Validation"
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pydantic click pytest
+      
+      - name: Create telemetry data if missing
+        run: |
+          mkdir -p data/telemetry
+          if [ ! -f "data/telemetry/events_2025-09-01.jsonl" ]; then
+            echo "📝 Creating sample telemetry data for CI"
+            cat > data/telemetry/events_2025-09-01.jsonl << 'EOF'
+          {"v": "1", "ts": "2025-09-01T12:30:23.784859Z", "trace_id": "ci-test-1", "session_id": "ci-test", "route": "planner", "e2e_first_ms": 231, "e2e_full_ms": 231, "ram_peak_mb": {"proc_mb": 64.1, "sys_mb": 1641.4}, "tool_calls": [], "rag": {"top_k": 0, "hits": 0}, "energy_wh": 0.0004, "guardian_state": "NORMAL", "pii_masked": true, "consent_scopes": ["basic_logging"], "input_text": "Test query for CI", "output_text": "Test response from Alice v2", "lang": "en"}
+          {"v": "1", "ts": "2025-09-01T12:31:45.123456Z", "trace_id": "ci-test-2", "session_id": "ci-test-2", "route": "chat", "e2e_first_ms": 156, "e2e_full_ms": 156, "ram_peak_mb": {"proc_mb": 58.2, "sys_mb": 1640.1}, "tool_calls": [], "rag": {"top_k": 0, "hits": 0}, "energy_wh": 0.0003, "guardian_state": "NORMAL", "pii_masked": true, "consent_scopes": ["basic_logging"], "input_text": "Another test query", "output_text": "Another test response", "lang": "en"}
+          EOF
+          fi
+      
+      - name: Build dataset
+        run: |
+          echo "🏗️  Building Alice vNext dataset..."
+          bash scripts/run_build_dataset.sh
+      
+      - name: Run data quality check
+        run: |
+          echo "🛡️  Running IQ Gate (Data Quality Check)..."
+          PYTHONPATH=. python3 services/rl/checks/data_quality_check.py
+      
+      - name: Upload dataset artifacts
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: alice-vNext-dataset-v1
+          path: |
+            data/rl/v1/
+            !data/rl/v1/test.jsonl
+          retention-days: 7
+      
+      - name: Display results
+        if: always()
+        run: |
+          echo "📊 Final Dataset Summary:"
+          if [ -f "data/rl/v1/report.json" ]; then
+            cat data/rl/v1/report.json | python3 -m json.tool
+          else
+            echo "❌ No report.json generated"
+          fi

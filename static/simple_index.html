@@ -19,7 +19,7 @@
         .stats { display: flex; justify-content: center; gap: 30px; margin-top: 15px; }
         .stat-item { text-align: center; }
         .stat-number { font-size: 2em; font-weight: bold; color: #00ff88; }
-        .main-content { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .main-content { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 20px; }
         .progress-section { grid-column: 1 / -1; margin-bottom: 20px; }
         @media (max-width: 768px) { .main-content { grid-template-columns: 1fr; } }
         .panel {
@@ -38,21 +38,31 @@
         .session-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .session-name { font-weight: bold; font-size: 1.1em; }
         .session-status { padding: 4px 12px; border-radius: 20px; font-size: 0.8em; font-weight: bold; }
-        .status-running { background: #00ff88; color: black; }
+        .status-running { background: #00ff88; color: black; animation: pulse 2s infinite; }
         .status-starting { background: #ffaa00; color: black; }
         .status-completed { background: #0088ff; color: white; }
         .status-failed { background: #ff4444; color: white; }
-        .chat-panel { height: 400px; overflow-y: auto; font-family: Monaco, monospace; font-size: 0.85em; }
+        .chat-panel { height: 300px; overflow-y: auto; font-family: Monaco, monospace; font-size: 0.85em; }
+        .log-panel { height: 300px; overflow-y: auto; font-family: Monaco, monospace; font-size: 0.8em; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px; }
         .chat-message { padding: 8px 12px; border-radius: 8px; margin-bottom: 5px; line-height: 1.4; }
+        .log-line { margin-bottom: 3px; line-height: 1.3; }
+        .log-line.success { color: #00ff88; }
+        .log-line.error { color: #ff6b6b; }
+        .log-line.warning { color: #ffd93d; }
+        .log-line.info { color: #ffffff; opacity: 0.8; }
         .chat-message.info { background: rgba(255,255,255,0.1); }
         .chat-message.success { background: rgba(0,255,136,0.2); }
         .chat-message.warning { background: rgba(255,170,0,0.2); }
         .chat-message.error { background: rgba(255,68,68,0.2); }
         .controls { background: rgba(255,255,255,0.1); border-radius: 15px; padding: 20px; }
-        .btn { padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin: 5px; }
+        .btn { padding: 12px 24px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin: 5px; transition: all 0.3s; }
+        .btn:hover { transform: translateY(-2px); }
         .btn-primary { background: #00ff88; color: black; }
+        .btn-primary:hover { background: #00cc6a; }
         .btn-danger { background: #ff4444; color: white; }
+        .btn-danger:hover { background: #cc3333; }
         .btn-secondary { background: #0088ff; color: white; }
+        .btn-secondary:hover { background: #0066cc; }
         .auto-refresh { position: fixed; top: 20px; right: 20px; background: #00ff88; color: black; padding: 10px; border-radius: 8px; }
         .progress-chart { background: rgba(255,255,255,0.1); border-radius: 15px; padding: 20px; }
         .chart-container { position: relative; height: 200px; margin-top: 15px; }
@@ -70,6 +80,18 @@
         .metric-up { color: #00ff88; }
         .metric-down { color: #ff6b6b; }
         .metric-neutral { color: #ffd93d; }
+        .training-status {
+            background: rgba(0,0,0,0.4); padding: 15px; border-radius: 10px; margin-bottom: 15px;
+            border-left: 4px solid #00ff88;
+        }
+        .training-status.idle { border-left-color: #666; }
+        .training-status.running { border-left-color: #00ff88; }
+        .training-status.error { border-left-color: #ff4444; }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
     </style>
 </head>
 <body>
@@ -129,11 +151,19 @@
     
     <div class="main-content">
         <div class="panel">
-            <h2>📊 Aktiva Träningar</h2>
-            <div id="sessionsContainer">
-                <div style="text-align: center; opacity: 0.5; padding: 40px;">
-                    Inga träningar igång. Starta en nedan! 👇
-                </div>
+            <h2>🎮 Träningsstatus</h2>
+            <div class="training-status idle" id="trainingStatus">
+                <div style="font-size: 1.2em; font-weight: bold; margin-bottom: 10px;">⚪ Ingen träning aktiv</div>
+                <div style="opacity: 0.8;">Klicka på en av knapparna nedan för att starta ett test.</div>
+            </div>
+            <div class="controls">
+                <h3 style="margin-bottom: 15px;">🎯 Test Kontroller</h3>
+                <button class="btn btn-primary" onclick="startTraining('fibonacci')">🧮 Starta Fibonacci</button>
+                <button class="btn btn-primary" onclick="startTraining('fibonacci_loop')">🔄 Starta Loop</button>
+                <br>
+                <button class="btn btn-danger" onclick="stopAllTraining()">⏹️ Stoppa Test</button>
+                <button class="btn btn-secondary" onclick="clearChat()">🧹 Rensa Chat</button>
+                <button class="btn btn-secondary" onclick="runSystemCheck()">🔍 Systemkontroll</button>
             </div>
         </div>
         
@@ -145,17 +175,29 @@
                 </div>
             </div>
         </div>
+        
+        <div class="panel">
+            <h2>📜 Script Logg</h2>
+            <div id="logContainer" class="log-panel">
+                <div class="log-line info">💡 Scriptlogg visas här när test körs...</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="panel">
+        <h2>📊 Aktiva Sessioner</h2>
+        <div id="sessionsContainer">
+            <div style="text-align: center; opacity: 0.5; padding: 20px;">
+                Inga aktiva sessioner.
+            </div>
+        </div>
     </div>
     
     <div class="controls">
-        <h2>🎮 Kontroller</h2>
-        <button class="btn btn-primary" onclick="startTraining('fibonacci')">🧮 Starta Fibonacci</button>
-        <button class="btn btn-primary" onclick="startTraining('fibonacci_loop')">🔄 Starta Loop</button>
-        <button class="btn btn-secondary" onclick="runSystemCheck()">🔍 Systemkontroll</button>
-        <button class="btn btn-danger" onclick="stopAllTraining()">⏹️ Stoppa Alla</button>
-        <button class="btn btn-secondary" onclick="clearChat()">🧹 Rensa Chat</button>
+        <h2>🎛️ Avancerade Kontroller</h2>
         <button class="btn btn-secondary" onclick="cleanupFailedSessions()">🗑️ Rensa Failed</button>
         <button class="btn btn-secondary" onclick="toggleAutoRefresh()">⏸️ Pausa Refresh</button>
+        <button class="btn btn-secondary" onclick="testMultipleTraining()">🔬 Test Flera Samtidigt</button>
     </div>
 
     <script>
@@ -196,6 +238,42 @@
                     <strong>SYSTEM:</strong> Chat rensad.
                 </div>
             `;
+            document.getElementById('logContainer').innerHTML = `
+                <div class="log-line info">💡 Scriptlogg rensad...</div>
+            `;
+        }
+        
+        async function testMultipleTraining() {
+            if (!confirm('Detta kommer starta flera test samtidigt. Är du säker?')) return;
+            
+            try {
+                // Start both training types simultaneously
+                const response1 = fetch('/api/start-training', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ training_type: 'fibonacci' })
+                });
+                
+                const response2 = fetch('/api/start-training', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ training_type: 'fibonacci_loop' })
+                });
+                
+                const [result1, result2] = await Promise.all([response1, response2]);
+                
+                const data1 = await result1.json();
+                const data2 = await result2.json();
+                
+                if (data1.success && data2.success) {
+                    alert('🚀 Båda testen startade framgångsrikt!');
+                } else {
+                    alert('⚠️ Ett eller båda testen kunde inte startas. Kolla loggen.');
+                }
+                
+            } catch (error) {
+                alert('❌ Fel vid simultant test: ' + error.message);
+            }
         }
         
         async function cleanupFailedSessions() {
@@ -380,18 +458,30 @@
         }
         
         function renderMessages(messagesData) {
-            const container = document.getElementById('chatContainer');
+            const chatContainer = document.getElementById('chatContainer');
+            const logContainer = document.getElementById('logContainer');
             
             if (messagesData.length === 0) return;
             
-            const messagesHtml = messagesData.slice(-20).map(msg => `
+            // Chat messages (formatted)
+            const chatHtml = messagesData.slice(-20).map(msg => `
                 <div class="chat-message ${msg.level}">
                     <strong>${msg.time} [${msg.session}]:</strong> ${msg.message}
                 </div>
             `).join('');
             
-            container.innerHTML = messagesHtml;
-            container.scrollTop = container.scrollHeight;
+            chatContainer.innerHTML = chatHtml;
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            
+            // Script log (raw output)
+            const logHtml = messagesData.slice(-50).map(msg => `
+                <div class="log-line ${msg.level}">
+                    ${msg.time} ${msg.session}: ${msg.message}
+                </div>
+            `).join('');
+            
+            logContainer.innerHTML = logHtml;
+            logContainer.scrollTop = logContainer.scrollHeight;
         }
         
         function updateStats(sessionsData, messagesData) {
@@ -403,8 +493,32 @@
             document.getElementById('totalSessions').textContent = sessionsData.length;
             document.getElementById('totalMessages').textContent = messagesData.length;
             
+            // Update training status indicator
+            updateTrainingStatus(sessionsData);
+            
             // Uppdatera progress metrics
             updateProgressMetrics(sessionsData);
+        }
+        
+        function updateTrainingStatus(sessionsData) {
+            const statusContainer = document.getElementById('trainingStatus');
+            const activeSessions = sessionsData.filter(s => s.status === 'running' || s.status === 'starting');
+            
+            if (activeSessions.length === 0) {
+                statusContainer.className = 'training-status idle';
+                statusContainer.innerHTML = `
+                    <div style="font-size: 1.2em; font-weight: bold; margin-bottom: 10px;">⚪ Ingen träning aktiv</div>
+                    <div style="opacity: 0.8;">Klicka på en av knapparna nedan för att starta ett test.</div>
+                `;
+            } else {
+                const session = activeSessions[0];
+                statusContainer.className = 'training-status running';
+                statusContainer.innerHTML = `
+                    <div style="font-size: 1.2em; font-weight: bold; margin-bottom: 10px;">🟢 ${session.name} KÖRS</div>
+                    <div style="opacity: 0.8;">⏱️ Tid: ${session.uptime_display} | 💬 Meddelanden: ${session.message_count}</div>
+                    <div style="margin-top: 10px; opacity: 0.9;">Cache: ${session.performance_stats.cache_hit_rate_percent.toFixed(1)}% | Success: ${session.performance_stats.success_rate_percent.toFixed(1)}%</div>
+                `;
+            }
         }
         
         let progressHistory = [];
