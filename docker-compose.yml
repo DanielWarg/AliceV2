@@ -152,26 +152,26 @@ services:
     profiles:
       - eval
 
-  # voice: # DISABLED for stabilization - large ML dependencies
-  #   build:
-  #     context: ./services/voice
-  #     dockerfile: Dockerfile
-  #   container_name: alice-voice
-  #   restart: unless-stopped
-  #   environment:
-  #     - WHISPER_MODEL=base
-  #     - TTS_MODEL_PATH=/models/piper
-  #   volumes:
-  #     - ./data/voice_cache:/data/voice_cache
-  #     - ./models:/models
-  #   ports:
-  #     - "8001:8001"
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 20
-  #     start_period: 60s
+  voice: # Re-enabled with port fix - moved from 8001 to 8002 to avoid orchestrator conflict
+    build:
+      context: ./services/voice
+      dockerfile: Dockerfile
+    container_name: alice-voice
+    restart: unless-stopped
+    environment:
+      - WHISPER_MODEL=base
+      - TTS_MODEL_PATH=/models/piper
+    volumes:
+      - ./data/voice_cache:/data/voice_cache
+      - ./models:/models
+    ports:
+      - "8002:8001"  # Changed: External 8002 -> Internal 8001 (avoid orchestrator conflict)
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s  # Whisper needs time to load
 
   redis:
     image: redis:7-alpine
