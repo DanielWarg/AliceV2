@@ -76,6 +76,16 @@ class SLOThresholds:
     recovery_hysteresis_s: int = 60  # 60s recovery before NORMAL
     violation_consecutive: int = 3  # 3 consecutive violations for alert
 
+    # Generic thresholds for status API backward compatibility
+    response_time_yellow_ms: int = 1000  # General yellow threshold
+    response_time_red_ms: int = 2000  # General red threshold
+    success_rate_yellow: float = 0.95  # 95% success rate yellow
+    success_rate_red: float = 0.90  # 90% success rate red
+    cpu_yellow: float = 0.70  # 70% CPU yellow
+    cpu_red: float = 0.85  # 85% CPU red
+    ram_yellow: float = 0.80  # 80% RAM yellow
+    ram_red: float = 0.92  # 92% RAM red
+
 
 @dataclass
 class SystemMetrics:
