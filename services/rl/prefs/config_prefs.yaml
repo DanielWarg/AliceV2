@@ -1,0 +1,63 @@
+# T7 Preference Optimization Config (φ-vikter, trösklar, LoRA)
+
+version: 1
+phi_weights:
+  correctness: 0.45
+  brevity: 0.20
+  energy: 0.15
+  latency: 0.10
+  style_swedish: 0.10
+
+labeling:
+  brevity_target_chars: 450
+  max_chars: 1200
+  banned_patterns:
+    - "(hallucination|hittepå|gissa)"
+    - "I cannot access the internet"
+    - "as an AI"
+  pii_patterns:
+    - "\\d{6}-\\d{4}"
+    - "\\b\\d{3}-\\d{2}-\\d{4}\\b"
+    - "\\b\\+?\\d{7,14}\\b"
+
+verifier:
+  lang_hint: "sv"
+  require_markdown: false
+  max_len: 1400
+  claim_checks:
+    datetime: true
+    math: true
+    weather: true
+  tools_required: ["datetime","calculator","weather"]
+  policy_forbidden:
+    - "illegala instruktioner"
+    - "självskada"
+    - "hatpropaganda"
+
+self_correction:
+  enabled: true
+  max_retries: 1
+  tighten_rules_on_retry: true
+  shorten_ratio: 0.85
+
+lora:
+  target: "response-generator"
+  r_candidates: [8, 13, 21]
+  r_default: 13
+  alpha: 16
+  dropout: 0.05
+  learning_rate: 2.0e-4
+  warmup_steps: 50
+  max_steps: 500
+  seed: 42
+
+iq_gates:
+  min_win_rate: 0.65
+  max_hallucination_rate: 0.005
+  max_p95_latency_delta: 0.10
+  policy_breaches: 0
+
+canary:
+  share: 0.05
+  promote_after_hours: 24
+  min_uplift_pp: 5

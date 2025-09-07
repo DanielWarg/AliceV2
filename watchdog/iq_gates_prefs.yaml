@@ -1,0 +1,6 @@
+# IQ-gates för T7
+
+min_win_rate: 0.65
+max_hallucination_rate: 0.005
+policy_breaches: 0
+max_p95_latency_delta: 0.10

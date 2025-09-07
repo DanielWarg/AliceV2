@@ -1,0 +1,15 @@
+{
+  "fields": {
+    "ts_unix": "number",
+    "route": "string",
+    "model_version": "string",
+    "adapter_hash": "string",
+    "verifier_ok": "boolean",
+    "retry_used": "boolean",
+    "human_like_score": "number",
+    "latency_ms": "number",
+    "energy_wh": "number",
+    "policy_breach": "boolean"
+  },
+  "notes": "Minsta fält för canary-analys. Använd route={baseline|canary}."
+}

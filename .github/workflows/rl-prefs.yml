@@ -1,0 +1,64 @@
+name: T7 RL-Preferences
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'services/rl/prefs/**'
+      - 'services/rl/verifier/**'
+      - 'watchdog/iq_gates_prefs.yaml'
+      - '.github/workflows/rl-prefs.yml'
+
+jobs:
+  rl-prefs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pyyaml
+
+      - name: Build pairs
+        run: |
+          python services/rl/prefs/prepare_pairs.py --in data/rl/v1/train.jsonl --out data/rl/prefs/v1/pairs.jsonl
+          python services/rl/prefs/filters.py --in data/rl/prefs/v1/pairs.jsonl --out data/rl/prefs/v1/pairs_clean.jsonl
+
+      - name: Train (stub DPO/ORPO)
+        run: |
+          python services/rl/prefs/train_dpo.py --data data/rl/prefs/v1/pairs_clean.jsonl --out services/rl/weights/dpo/v1/
+
+      - name: Eval
+        run: |
+          python services/rl/prefs/eval_prefs.py --pairs data/rl/prefs/v1/pairs_clean.jsonl --model services/rl/weights/dpo/v1/ --out data/rl/prefs/v1/report.json
+
+      - name: IQ Gates
+        run: |
+          python - << 'PY'
+          import json, sys, yaml
+          cfg = yaml.safe_load(open('services/rl/prefs/config_prefs.yaml','r',encoding='utf-8'))
+          gates = cfg['iq_gates']
+          rep = json.load(open('data/rl/prefs/v1/report.json','r',encoding='utf-8'))
+          ok = True
+          if rep['win_rate'] < gates['min_win_rate']: ok = False; print('Gate fail: win_rate')
+          if rep['hallucination_rate'] > gates['max_hallucination_rate']: ok = False; print('Gate fail: hallucination')
+          if rep['policy_breaches'] != gates['policy_breaches']: ok = False; print('Gate fail: policy')
+          if not ok: sys.exit(1)
+          print('IQ gates passed.')
+          PY
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: rl-prefs-artifacts
+          path: |
+            services/rl/weights/dpo/v1/
+            data/rl/prefs/v1/report.json
+            data/rl/prefs/v1/ab_samples.jsonl

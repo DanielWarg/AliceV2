@@ -1,0 +1,11 @@
+{
+  "created": 1757268502,
+  "pairs": 3,
+  "val_win_rate": 1.0,
+  "hash": "a90e5b28e48419d6448edf54b49acabc2551c523e188e37b31a742d303f184f8",
+  "lora": {
+    "r": 13,
+    "alpha": 16,
+    "dropout": 0.05
+  }
+}
