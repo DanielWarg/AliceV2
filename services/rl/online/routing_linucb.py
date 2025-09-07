@@ -1,14 +1,13 @@
 # services/rl/online/routing_linucb.py
 # LinUCB-router som lär online av φ-belöningen och kan persistera state.
 from __future__ import annotations
+
 import json
-import math
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
-
 
 DEFAULT_ARMS = ["micro", "planner", "deep"]  # justera om du har andra routes
 DEFAULT_ALPHA = 0.8  # utforskningsvikt; kan tunas via env
@@ -43,7 +42,11 @@ def features_from_episode(ep: Dict) -> np.ndarray:
 
     # Guardian- & cache-signal (om finns)
     guardian_state = (meta.get("guardian_state") or "NORMAL").upper()
-    g_norm = 1.0 if guardian_state == "NORMAL" else 0.5 if guardian_state == "BROWNOUT" else 0.0
+    g_norm = (
+        1.0
+        if guardian_state == "NORMAL"
+        else 0.5 if guardian_state == "BROWNOUT" else 0.0
+    )
 
     cache_hit = _bool01(meta.get("cache_hit", f.get("cache_hit", False)))
     rag_hit = _bool01(meta.get("rag_hit", f.get("rag_hit", False)))
@@ -53,7 +56,7 @@ def features_from_episode(ep: Dict) -> np.ndarray:
 
     x = np.array(
         [
-            1.0,        # bias
+            1.0,  # bias
             len_scaled,
             has_q,
             g_norm,
@@ -68,14 +71,20 @@ def features_from_episode(ep: Dict) -> np.ndarray:
 @dataclass
 class ArmState:
     name: str
-    A: List[List[float]]      # dxd (design-matris)
-    b: List[float]            # dx1
+    A: List[List[float]]  # dxd (design-matris)
+    b: List[float]  # dx1
     pulls: int = 0
     reward_sum: float = 0.0
 
     @staticmethod
     def init(name: str, d: int) -> "ArmState":
-        return ArmState(name=name, A=np.eye(d).tolist(), b=np.zeros(d).tolist(), pulls=0, reward_sum=0.0)
+        return ArmState(
+            name=name,
+            A=np.eye(d).tolist(),
+            b=np.zeros(d).tolist(),
+            pulls=0,
+            reward_sum=0.0,
+        )
 
     def np_mats(self) -> Tuple[np.ndarray, np.ndarray]:
         return np.array(self.A, dtype=np.float64), np.array(self.b, dtype=np.float64)
@@ -113,7 +122,12 @@ class LinUCBState:
 
 
 class LinUCBRouter:
-    def __init__(self, arm_names: Optional[List[str]] = None, alpha: float = DEFAULT_ALPHA, dim: int = 6):
+    def __init__(
+        self,
+        arm_names: Optional[List[str]] = None,
+        alpha: float = DEFAULT_ALPHA,
+        dim: int = 6,
+    ):
         arm_names = arm_names or DEFAULT_ARMS
         self.state = LinUCBState.new(arm_names, dim=dim, alpha=alpha)
 
@@ -131,7 +145,9 @@ class LinUCBRouter:
             return LinUCBRouter()
         with p.open("r", encoding="utf-8") as f:
             data = json.load(f)
-        obj = LinUCBRouter(dim=data["dim"], alpha=data["alpha"], arm_names=list(data["arms"].keys()))
+        obj = LinUCBRouter(
+            dim=data["dim"], alpha=data["alpha"], arm_names=list(data["arms"].keys())
+        )
         obj.state = LinUCBState.from_json(data)
         return obj
 

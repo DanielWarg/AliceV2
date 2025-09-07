@@ -1,12 +1,13 @@
 # services/rl/offline/replay_bandits.py
 # Kör offline replay på datasetet och tränar LinUCB + Thompson, med persistens.
 from __future__ import annotations
+
 import argparse
 import json
 from pathlib import Path
 from typing import Dict, Iterable
 
-from services.rl.online.routing_linucb import LinUCBRouter, features_from_episode
+from services.rl.online.routing_linucb import LinUCBRouter
 from services.rl.online.tool_thompson import ThompsonToolSelector
 
 
@@ -27,7 +28,9 @@ def main():
     ap.add_argument("--train", default="data/rl/v1/train.jsonl")
     ap.add_argument("--val", default="data/rl/v1/val.jsonl")
     ap.add_argument("--linucb_out", default="services/rl/weights/bandits/linucb.json")
-    ap.add_argument("--thompson_out", default="services/rl/weights/bandits/thompson.json")
+    ap.add_argument(
+        "--thompson_out", default="services/rl/weights/bandits/thompson.json"
+    )
     args = ap.parse_args()
 
     train_path = Path(args.train)

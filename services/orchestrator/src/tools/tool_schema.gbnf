@@ -1,0 +1,38 @@
+# GBNF Grammar för ToolSelector v2
+# Ensures 100% JSON schema compliance, no hallucinations
+
+root ::= tool_selection
+
+tool_selection ::= "{" ws "\"tool\":" ws tool_name ws "," ws "\"confidence\":" ws confidence ws "," ws "\"method\":" ws method ws "}"
+
+tool_name ::= "\"" valid_tool "\""
+
+valid_tool ::= 
+    "time_tool" |
+    "weather_tool" |
+    "calculator_tool" |
+    "chat_tool" |
+    "memory_search_tool" |
+    "calendar_tool" |
+    "email_tool" |
+    "web_search_tool" |
+    "file_tool" |
+    "task_manager_tool" |
+    "translation_tool" |
+    "code_tool" |
+    "analysis_tool" |
+    "creative_tool" |
+    "fallback_tool"
+
+confidence ::= number
+
+method ::= "\"" method_type "\""
+method_type ::= "rule" | "lora" | "fallback"
+
+# Number handling
+number ::= ("-"?) int ("." frac)?
+int ::= "0" | ([1-9] [0-9]*)
+frac ::= [0-9]+
+
+# Whitespace
+ws ::= [ \t\n]*

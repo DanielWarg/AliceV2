@@ -1,0 +1,255 @@
+name: RL Live Wire (T5)
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'services/rl/online/**'
+      - 'services/orchestrator/src/router/**'
+      - '.github/workflows/rl-live-wire.yml'
+  push:
+    branches: [ feature/t5**, rl/live-** ]
+
+jobs:
+  rl-live-wire:
+    name: T5 Live Bandit Routing Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-t5-${{ hashFiles('services/rl/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-t5-
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq curl
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r services/rl/requirements.txt
+          pip install uvicorn
+
+      - name: Start bandit server
+        run: |
+          # Start bandit server in background
+          BANDIT_PORT=8850 CANARY_SHARE=1.0 python -m services.rl.online.server &
+          BANDIT_PID=$!
+          echo "BANDIT_PID=$BANDIT_PID" >> $GITHUB_ENV
+          
+          # Wait for server to start
+          for i in {1..30}; do
+            if curl -s http://localhost:8850/health >/dev/null; then
+              echo "✅ Bandit server started"
+              break
+            fi
+            echo "Waiting for bandit server... ($i/30)"
+            sleep 2
+          done
+
+      - name: Test bandit server health
+        run: |
+          curl -f http://localhost:8850/health
+          echo "✅ Bandit server health check passed"
+
+      - name: Test route selection API
+        run: |
+          # Test route selection
+          response=$(curl -s -X POST http://localhost:8850/bandit/route \
+            -H "Content-Type: application/json" \
+            -d '{
+              "context": {
+                "intent_conf": 0.8,
+                "len_chars": 25, 
+                "has_question": true,
+                "cache_hint": false,
+                "guardian_state": "NORMAL",
+                "prev_tool_error": false
+              }
+            }')
+          
+          echo "Route selection response: $response"
+          
+          # Validate response structure
+          arm=$(echo $response | jq -r '.arm')
+          method=$(echo $response | jq -r '.method')
+          confidence=$(echo $response | jq -r '.confidence')
+          
+          if [[ "$arm" == "null" || "$method" == "null" ]]; then
+            echo "❌ Invalid route selection response"
+            exit 1
+          fi
+          
+          echo "✅ Route selection test passed (arm=$arm, method=$method)"
+
+      - name: Test tool selection API
+        run: |
+          # Test tool selection
+          response=$(curl -s -X POST http://localhost:8850/bandit/tool \
+            -H "Content-Type: application/json" \
+            -d '{
+              "intent": "greeting",
+              "available_tools": ["chat_tool", "fallback_tool"]
+            }')
+          
+          echo "Tool selection response: $response"
+          
+          # Validate response
+          arm=$(echo $response | jq -r '.arm')
+          if [[ "$arm" == "null" ]]; then
+            echo "❌ Invalid tool selection response"
+            exit 1
+          fi
+          
+          echo "✅ Tool selection test passed (tool=$arm)"
+
+      - name: Test guardian override
+        run: |
+          # Test emergency guardian override
+          response=$(curl -s -X POST http://localhost:8850/bandit/route \
+            -H "Content-Type: application/json" \
+            -d '{
+              "context": {
+                "intent_conf": 0.8,
+                "len_chars": 25,
+                "has_question": true,
+                "cache_hint": false,
+                "guardian_state": "EMERGENCY",
+                "prev_tool_error": false
+              }
+            }')
+          
+          arm=$(echo $response | jq -r '.arm')
+          method=$(echo $response | jq -r '.method')
+          
+          if [[ "$arm" != "micro" || "$method" != "guardian_override" ]]; then
+            echo "❌ Guardian override failed: arm=$arm, method=$method"
+            exit 1
+          fi
+          
+          echo "✅ Guardian override test passed"
+
+      - name: Test reward updates
+        run: |
+          # Test reward update
+          curl -s -X POST http://localhost:8850/bandit/update \
+            -H "Content-Type: application/json" \
+            -d '{
+              "decision_type": "route",
+              "context": {
+                "intent_conf": 0.8,
+                "len_chars": 25,
+                "has_question": true,
+                "cache_hint": false,
+                "guardian_state": "NORMAL", 
+                "prev_tool_error": false
+              },
+              "arm": "micro",
+              "reward": 0.85
+            }' || (echo "❌ Reward update failed" && exit 1)
+          
+          echo "✅ Reward update test passed"
+
+      - name: Test latency SLO gate (P95 ≤ 40ms)
+        run: |
+          python -c "
+import asyncio
+import time
+import json
+import statistics
+import httpx
+
+async def test_latency_gate():
+    async with httpx.AsyncClient() as client:
+        print('Testing P95 latency gate...')
+        latencies = []
+        
+        for i in range(50):  # Reduced for CI speed
+            start = time.time()
+            
+            response = await client.post('http://localhost:8850/bandit/route', 
+                json={
+                    'context': {
+                        'intent_conf': 0.8,
+                        'len_chars': 25,
+                        'has_question': True,
+                        'cache_hint': False,
+                        'guardian_state': 'NORMAL',
+                        'prev_tool_error': False
+                    }
+                })
+            
+            latency_ms = (time.time() - start) * 1000
+            latencies.append(latency_ms)
+        
+        # Calculate P95
+        latencies.sort()
+        p95_idx = int(0.95 * len(latencies))
+        p95 = latencies[p95_idx] if p95_idx < len(latencies) else latencies[-1]
+        
+        print(f'P95 latency: {p95:.1f}ms')
+        print(f'Mean latency: {statistics.mean(latencies):.1f}ms')
+        
+        # SLO Gate: P95 ≤ 40ms
+        if p95 > 40:
+            print(f'❌ SLO FAIL: P95 latency {p95:.1f}ms > 40ms')
+            exit(1)
+        else:
+            print('✅ Latency SLO gate passed')
+
+asyncio.run(test_latency_gate())
+          "
+
+      - name: Get bandit statistics
+        run: |
+          echo "📊 Bandit Statistics:"
+          curl -s http://localhost:8850/bandit/stats | jq .
+
+      - name: Test snapshot rotation
+        run: |
+          # Test snapshot creation
+          python services/rl/persistence/rotate.py --action rotate --force
+          echo "✅ Snapshot rotation test passed"
+
+      - name: Cleanup
+        if: always()
+        run: |
+          # Kill bandit server
+          if [[ -n "$BANDIT_PID" ]]; then
+            kill $BANDIT_PID || true
+          fi
+          pkill -f "services.rl.online.server" || true
+
+      - name: Upload test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: t5-live-wire-artifacts
+          path: |
+            data/rl/snapshots/**
+            data/rl/v1/state/**

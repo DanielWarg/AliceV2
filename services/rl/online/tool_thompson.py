@@ -1,11 +1,12 @@
 # services/rl/online/tool_thompson.py
 # Thompson Sampling per intent→tool, med kontinuerlig reward ∈ [0,1].
 from __future__ import annotations
+
 import json
-from dataclasses import dataclass, asdict
+import random
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Dict, Optional
-import random
 
 
 def clamp01(x: float) -> float:
@@ -27,7 +28,7 @@ class BetaState:
         r = clamp01(r)
         # "continuous Bernoulli" approx: lägg reward i a, (1-reward) i b
         self.a += r
-        self.b += (1.0 - r)
+        self.b += 1.0 - r
         self.pulls += 1
         self.reward_sum += r
 
@@ -35,8 +36,10 @@ class BetaState:
 @dataclass
 class ToolPolicy:
     tools: Dict[str, BetaState]  # tool_name -> beta
+
     def to_json(self) -> Dict:
         return {"tools": {k: asdict(v) for k, v in self.tools.items()}}
+
     @staticmethod
     def from_json(d: Dict) -> "ToolPolicy":
         return ToolPolicy(tools={k: BetaState(**v) for k, v in d["tools"].items()})
@@ -61,7 +64,9 @@ class ThompsonToolSelector:
         if not p.exists():
             return obj
         data = json.loads(p.read_text(encoding="utf-8"))
-        obj.policies = {intent: ToolPolicy.from_json(pol) for intent, pol in data.items()}
+        obj.policies = {
+            intent: ToolPolicy.from_json(pol) for intent, pol in data.items()
+        }
         return obj
 
     # ---------- Core ----------

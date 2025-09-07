@@ -1,0 +1,63 @@
+name: RL Bench (T1–T4)
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+  push:
+    branches: [ feature/**, stabilize/**, rl/** ]
+
+jobs:
+  rl-bench:
+    name: RL Bench – dataset→φ-rewards→bandits→replay
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # Cache pip beroenden om du har requirements i services/rl/
+      - name: Cache pip
+        if: hashFiles('services/rl/requirements.txt') != ''
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('services/rl/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install system deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+
+      - name: RL CI (T1–T4)
+        run: |
+          make rl-ci
+
+      - name: Upload RL artefacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rl-bench-artifacts
+          path: |
+            artefacts/rl_bench/**
+            data/rl/v1/MANIFEST.json
+            data/rl/v1/SUMMARY.md
+
+      # Optional: Sätt en tydlig sammanfattning i jobbloggen
+      - name: Print Summary
+        if: success()
+        run: |
+          echo "✅ RL Bench passed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```json' >> $GITHUB_STEP_SUMMARY
+          cat artefacts/rl_bench/summary.json >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY

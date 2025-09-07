@@ -1,15 +1,22 @@
 # services/orchestrator/src/rl_policy.py
 from __future__ import annotations
-import os, time, threading
+
+import os
+import threading
+import time
 from pathlib import Path
+
 from services.rl.online.routing_linucb import LinUCBRouter, features_from_episode
 from services.rl.online.tool_thompson import ThompsonToolSelector
 
 LINUCB_PATH = os.getenv("RL_LINUCB_PATH", "services/rl/weights/bandits/linucb.json")
-THOMPSON_PATH = os.getenv("RL_THOMPSON_PATH", "services/rl/weights/bandits/thompson.json")
+THOMPSON_PATH = os.getenv(
+    "RL_THOMPSON_PATH", "services/rl/weights/bandits/thompson.json"
+)
 CANARY_SHARE = float(os.getenv("CANARY_SHARE", "0.05"))  # 5% default
 SNAPSHOT_INTERVAL_S = int(os.getenv("RL_SNAPSHOT_INTERVAL_S", "60"))
 SNAPSHOT_MIN_UPDATES = int(os.getenv("RL_SNAPSHOT_MIN_UPDATES", "100"))
+
 
 class RLPolicy:
     def __init__(self):
@@ -25,6 +32,7 @@ class RLPolicy:
         Övriga kör baseline (din befintliga router/intent-guard).
         """
         import random
+
         if random.random() >= CANARY_SHARE:
             return baseline_hint  # 95% baseline (justera via env)
         x = features_from_episode(episode_stub)
@@ -35,6 +43,7 @@ class RLPolicy:
 
     def choose_tool(self, intent: str, baseline_tool: str | None) -> str:
         import random
+
         if random.random() >= CANARY_SHARE:
             return baseline_tool or "none"
         t = self.thomp.choose(intent)

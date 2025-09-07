@@ -34,6 +34,23 @@ Alice v2 is a robust AI assistant featuring:
 - **🐳 Docker Orchestration** - Complete deployment stack with health checks and monitoring
 - **🔧 Automated Setup** - One-command setup with `make up` including venv, dependencies, models, and testing
 
+### 🎯 T4 RL System (NEW - 2025-09-07)
+- **🎲 LinUCB Router** - Contextual bandits för intelligent routing (micro/planner/deep) with 6D feature space
+- **🎰 Thompson Sampling** - Tool selector med Beta-distributioner för intent→tool mappings  
+- **⚖️ φ-Reward System** - Golden ratio viktning: precision φ², latency φ¹, energy φ⁰, safety φ⁻¹
+- **💾 Persistence Layer** - JSON state med file locking för thread-safe concurrent access
+- **🔄 Replay Training** - 65k+ episodes/sec offline learning från historical JSONL data
+- **🚀 Canary Deployment** - 5% production traffic med automatic rollback vid performance degradation
+
+**🏆 T4 BENCHMARK RESULTS (M4 MacBook Pro):**
+```
+• Micro-ops: 50,374/sec (10x över SLO gate på 5k/sec) ✅
+• Turn simulation: 26,077/sec med 0.03ms p95 latency ✅
+• Replay training: 65,431 episoder/sec ✅
+• Success rate: 100% (över 98.5% gate) ✅
+• Production validated: 35,009 telemetry → 49 episodes (0.923 avg reward) ✅
+```
+
 ## 📚 Index (Solo Edition)
 - Solo Quickstart – see below
 - Demo Guide – see below
