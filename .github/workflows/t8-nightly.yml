@@ -38,6 +38,11 @@ jobs:
             data/ops/drift_rollup.json
             data/ops/rca_failures_nightly.json
             data/ops/drift_history.jsonl
+            ops/dashboards/dashboard.md
+            ops/suggestions/*.json
           retention-days: 7
+      - name: Render dashboard
+        run: |
+          python3 ops/dashboards/render_dashboard.py
       - name: Report
-        run: echo "T8 nightly complete with stabilization checks."
+        run: echo "T8 nightly complete with stabilization checks and dashboard."

@@ -183,3 +183,12 @@ config-apply:
 	@echo "🚨 WARNING: This will modify production config!"
 	@read -p "Type 'YES' to continue: " confirm && [ "$$confirm" = "YES" ] || { echo "Aborted."; exit 1; }
 	python3 ops/scripts/apply_suggestions.py --apply
+
+# --- Dashboards ---
+dash:
+	python3 ops/dashboards/render_dashboard.py
+
+dash-fake:
+	python3 ops/dashboards/make_fake_history.py
+	python3 ops/dashboards/render_dashboard.py
+	@echo "Öppna ops/dashboards/dashboard.md"

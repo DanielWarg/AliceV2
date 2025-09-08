@@ -16,7 +16,7 @@ import collections
 import json
 import re
 import time
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from pathlib import Path
 
 ROOT = Path(".")
@@ -151,42 +151,50 @@ def run():
     it = 0
     print(f"[overnight] STARTING 8-hour optimization @ {datetime.now(UTC).isoformat()}")
     print(f"[overnight] Will run until: {datetime.fromtimestamp(end, UTC).isoformat()}")
-    
+
     # loopa 8h
     while time.time() < end:
         it += 1
         try:
-            print(f"[overnight] === ITERATION {it} @ {datetime.now(UTC).isoformat()} ===")
-            
+            print(
+                f"[overnight] === ITERATION {it} @ {datetime.now(UTC).isoformat()} ==="
+            )
+
             # Ingest telemetry
             result = _sh("python ops/scripts/ingest_prod_telemetry.py")
             if result.returncode != 0:
                 print(f"[overnight] WARN: telemetry failed: {result.stderr}")
             else:
                 print(f"[overnight] Telemetry OK: {result.stdout.strip()}")
-            
+
             # Drift snapshot
             snap = _read_drift_snapshot()
-            print(f"[overnight] Drift OK={snap.get('ok')}, VF={snap.get('snapshot',{}).get('verifier_fail')}")
-            
+            print(
+                f"[overnight] Drift OK={snap.get('ok')}, VF={snap.get('snapshot',{}).get('verifier_fail')}"
+            )
+
             # Hourly RCA
             if it % 6 == 0:  # varje timme
-                print(f"[overnight] Running hourly RCA sampling...")
-                rca_result = _sh("python ops/scripts/rca_sample_failures.py --sample_size 100")
+                print("[overnight] Running hourly RCA sampling...")
+                rca_result = _sh(
+                    "python ops/scripts/rca_sample_failures.py --sample_size 100"
+                )
                 print(f"[overnight] RCA result: {rca_result.stdout.strip()}")
-            
+
             # History rollup
             rollup_result = _sh("python ops/scripts/drift_history_rollup.py")
-            print(f"[overnight] Rollup OK")
-            
+            print("[overnight] Rollup OK")
+
             remaining_hours = (end - time.time()) / 3600
-            print(f"[overnight] Iteration {it} complete, {remaining_hours:.1f}h remaining")
-            print(f"[overnight] Sleeping 10min...")
-            
+            print(
+                f"[overnight] Iteration {it} complete, {remaining_hours:.1f}h remaining"
+            )
+            print("[overnight] Sleeping 10min...")
+
         except Exception as e:
             print(f"[overnight] ERROR in iteration {it}: {e}")
-            print(f"[overnight] Continuing despite error...")
-            
+            print("[overnight] Continuing despite error...")
+
         time.sleep(600)  # 10 minutes
 
     # efter 8h: producera förslag
