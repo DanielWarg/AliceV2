@@ -1,7 +1,7 @@
 # Alice v2 - Projekt Status & Plan
 *Komplett status med checkboxes för vad som är färdigt och nästa steg*
 
-## 🎯 CURRENT STATUS: Step 10.0 - T9 COMPLETE
+## 🎯 CURRENT STATUS: T8/T9 COMPLETE - Alice v2 80%+ Ready
 
 ### **✅ FÄRDIGA SYSTEM (Step 1-10)**
 
@@ -60,87 +60,73 @@
 
 ---
 
-## 🎯 NÄSTA STEG - Step 10 Planning
+## 🚀 POST-T8/T9 DEVELOPMENT ROADMAP
 
-### **Immediate Priorities (Denna vecka) - T8/T9 Integration**
-- [x] **T8 Stabilization Complete** - FormatGuard + Intent tuning system ✅
-  - PII-safe RCA sampling from prod logs ✅
-  - Overnight optimizer with 8h autonomous operation ✅
-  - Intent regex tuning with PSI simulation ✅
-  - Complete testing pipeline (smoke/halfday/soak) ✅
+### **Alice v2 Status Assessment**
+Alice v2 is now **80%+ complete** as a functional AI assistant. The core infrastructure (NLU, Guardian, Orchestrator, RL optimization, multi-agent preferences) is production-ready. Remaining development focuses on user experience and advanced features.
 
-- [x] **T9 Multi-Agent Complete** - Preference optimization system ✅
-  - Multi-agent framework (Borda + Bradley-Terry) ✅
-  - PII-safe real data adapter ✅  
-  - Synthetic data generation with 1000 triples ✅
-  - Nightly CI/CD evaluation pipeline ✅
+### **PHASE 1: Core Experience (Critical for adoption)**
+*Target: 2-3 weeks for full user readiness*
 
-- [ ] **T8 Overnight Execution** - Samla 8h real telemetry data
-  - `make overnight-8h` körs automatiskt ikväll
-  - PSI/VF stabilization via intent regex tuning
-  - Morning report generation för analys
+- [ ] **Voice Pipeline Reactivation** 🎙️ **HIGHEST PRIORITY**
+  - Fix STT/TTS service restart loop (currently Port 8001 issues)
+  - Validate Swedish voice models and audio quality
+  - Test full voice conversation flow
+  - *Critical for natural user interaction*
 
-- [ ] **T9 Nightly Validation** - Real vs synthetic agent comparison  
-  - Nightly CI kör T9 evaluation på T8's prod logs
-  - Win-rate comparison mellan Borda+BT vs Borda-only
-  - Artifact upload för morning analysis
+- [ ] **Modern Web Frontend** 🌐 **HIGHEST PRIORITY**
+  - Replace current basic interface with React/Next.js
+  - Real-time streaming responses via WebSocket
+  - Mobile-responsive design with PWA support
+  - Chat history, settings, preference management
+  - *Essential for user adoption*
 
-- [ ] **Integration Planning** - Koppla T9 vinnande agent till T8 routing
-  - Identifiera bästa agent från nightly reports
-  - Staging deployment med bandit integration
-  - Production rollout strategy
+- [ ] **Ollama Service Debugging** 🔧
+  - Fix model health check failures (qwen2.5:3b loaded but unresponsive)
+  - Validate local LLM routing and fallback logic
+  - Test full orchestrator → ollama → response pipeline
 
-### **Week 2-3: Performance Optimization**
-- [ ] **Cache Hit Rate Improvement** - From current ~10% to 40%+
-  - Analyze cache miss patterns
-  - Implement semantic similarity caching
-  - Add cache performance metrics
+### **PHASE 2: Rich Ecosystem (Enhanced capabilities)**
+*Target: 4-6 weeks for full feature set*
 
-- [ ] **Response Time Optimization** - Target P95 < 900ms
-  - Profile slow endpoints
-  - Optimize NLU embedding generation (currently 70ms)
-  - Streamline routing logic
+- [ ] **Advanced Tool Integration**
+  - Calendar, email, file management APIs
+  - Smart home control (HomeAssistant integration)
+  - Swedish services (SL, SMHI, banks, government)
+  - Web browsing with content extraction
 
-- [ ] **Memory Management** - FAISS integration tuning
-  - Test conversation memory persistence
-  - Optimize vector similarity searches
-  - Implement memory cleanup policies
+- [ ] **Vision System** 👁️
+  - Document analysis and OCR
+  - Image understanding and generation
+  - Screenshot analysis and UI interaction
+  - Swedish text recognition
 
-### **Week 4-6: Feature Enhancement**
-Choose ONE development direction:
+- [ ] **Advanced Memory System**
+  - Long-term conversation history
+  - Personal knowledge base
+  - Context-aware information retrieval
+  - Privacy-preserving memory management
 
-#### **Option A: Swedish AI Excellence** 🇸🇪
-- [ ] **Enhanced Swedish NLU**
-  - Improve cultural context understanding
-  - Add Swedish-specific intent patterns
-  - Better handling of Swedish grammar/idioms
+### **PHASE 3: Intelligence (Advanced AI features)**
+*Target: 6-12 weeks for complete system*
 
-- [ ] **Swedish Voice Optimization**
-  - Native Swedish TTS/STT models
-  - Accent and dialect recognition
-  - Swedish pronunciation accuracy
+- [ ] **Proactivity Engine**
+  - Automated task suggestions
+  - Schedule optimization
+  - Predictive information delivery
+  - Learning user patterns
 
-#### **Option B: Production Readiness** 🏭
-- [ ] **Kubernetes Deployment**
-  - Convert docker-compose to K8s manifests
-  - Implement auto-scaling policies
-  - Add service mesh (Istio)
+- [ ] **Enterprise Features**
+  - Multi-user support with role-based access
+  - Team collaboration features
+  - Integration with business systems
+  - Advanced security and compliance
 
-- [ ] **Advanced Monitoring**
-  - Grafana/Prometheus setup
-  - Real-time alerting system
-  - Performance regression detection
-
-#### **Option C: Multimodal Capabilities** 📷
-- [ ] **Vision System Enhancement**
-  - Image analysis integration
-  - Document processing pipeline
-  - Visual context understanding
-
-- [ ] **Rich Media Responses**
-  - Image generation capabilities
-  - Chart/graph creation
-  - Multimedia presentation
+- [ ] **Multi-Agent Orchestration**
+  - Specialized agent swarms
+  - Task decomposition and delegation
+  - Cross-agent knowledge sharing
+  - Collaborative problem solving
 
 ---
 
@@ -167,15 +153,22 @@ Choose ONE development direction:
 - **Canary Traffic**: 5% production deployment ✅
 - **All Acceptance Criteria**: MET ✅
 
-### **Target Metrics (Step 11 - Post Integration)**
-- **Services Running**: 11/11 healthy (100% uptime)  
-- **T8 PSI Stabilization**: PSI ≤0.2, VF ≤1.0%, KS ≤0.2
-- **T9 Agent Performance**: >70% win-rate på real production data
-- **Multi-Agent Routing**: Best agent integrated i T8 bandit system
-- **Cache Hit Rate**: >40% improvement (T8 optimization target)
-- **Swedish NLU**: Maintain 88%+ accuracy
-- **Production Integration**: T9 agent deployed på 5% trafik
-- **Ensemble Intelligence**: Multi-agent consensus för complex preferences
+### **Target Metrics (Post-T8/T9 Development)**
+
+#### **Phase 1 Targets (User Readiness)**
+- **Voice Pipeline**: 100% uptime, <2s TTS latency, Swedish speech >90% accuracy
+- **Web Frontend**: Real-time streaming, mobile responsive, <100ms UI response
+- **Ollama Service**: 100% health checks, <1s response time, 95% availability
+
+#### **Phase 2 Targets (Feature Completeness)** 
+- **Tool Integration**: >20 Swedish services, 95% API success rate
+- **Vision Accuracy**: >85% OCR accuracy on Swedish text, image understanding
+- **Memory System**: 7-day conversation retention, <200ms retrieval
+
+#### **Phase 3 Targets (Advanced Intelligence)**
+- **Proactivity**: 70% user acceptance of suggestions, 80% prediction accuracy  
+- **Multi-User**: Support 100+ concurrent users, role-based permissions
+- **Agent Orchestration**: 3+ specialized agents, task completion >90%
 
 ---
 
@@ -195,6 +188,6 @@ Choose ONE development direction:
 
 ---
 
-**Senast uppdaterad**: 2025-09-07 (T4 Complete)
-**Nästa review**: 2025-09-14  
-**Current Phase**: Step 9.0 Complete → Step 10 Planning
+**Senast uppdaterad**: 2025-09-08 (T8/T9 Complete - Alice v2 80%+ Ready)
+**Nästa review**: 2025-09-15  
+**Current Phase**: Post-T8/T9 Development - Phase 1 (Core Experience)

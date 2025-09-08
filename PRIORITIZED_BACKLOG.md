@@ -1,104 +1,125 @@
 # 📋 ALICE V2 PRIORITIZED BACKLOG
 *Complete priority-ordered list of unfinished work excluding Alice AI training*
 
-**Updated**: 2025-09-07  
-**Status**: Alice first training completed ✅ (95% accuracy), system stable, ready for sprint work
+**Updated**: 2025-09-08  
+**Status**: T8/T9 systems complete ✅, Alice v2 is 80%+ ready, focus shifts to user experience
 
 ---
 
 ## 🎯 **CURRENT STATUS:**
-- **T8 Stabilization**: ✅ Complete infrastructure for production stabilization
-- **T9 Multi-Agent**: ✅ Preference optimization system with PII-safe real data adapter
-- **System Health**: ✅ Both T8 overnight and T9 nightly evaluation ready
-- **Next Phase**: T8/T9 integration and production deployment of best-performing agent
+- **T8 Stabilization**: ✅ Complete - FormatGuard, Intent tuning, Overnight optimizer
+- **T9 Multi-Agent**: ✅ Complete - Borda+BradleyTerry preference optimization deployed
+- **Core AI Infrastructure**: ✅ 80%+ Complete - All critical systems operational
+- **Next Phase**: **User Experience Focus** - Voice reactivation and modern web frontend
 
 ---
 
-## 🎯 **T8/T9 INTEGRATION PRIORITIES**
+## 🚀 **POST-T8/T9 DEVELOPMENT PHASES**
 
-### **1. T8 Overnight Execution** 🔄 **PRIO 1 - AUTONOMOUS**
-**Status**: Ready to execute tonight  
-**Process**: 8-hour autonomous data collection and optimization  
-**Expected Output**: PSI/VF stabilization via intent regex tuning  
+### **PHASE 1: User Experience (CRITICAL - Weeks 1-3)** 🎯 **HIGHEST PRIORITY**
+**Goal**: Enable actual user adoption of Alice v2  
+**Why Critical**: Core AI is ready, but no practical user interface exists  
+**Success Criteria**: Users can naturally interact with Alice via voice and web
+
+#### **1.1 Voice Pipeline Reactivation** 🎙️ **PRIO 1**
+**Status**: Currently broken (restart loop on Port 8001)  
+**Critical Path**: Fix STT/TTS service for natural interaction  
 **Tasks**:
-- [x] FormatGuard system implemented and tested ✅
-- [x] Intent tuning infrastructure ready ✅
-- [x] Overnight optimizer pipeline complete ✅
-- [ ] Execute `make overnight-8h` tonight (automatic)
-- [ ] Morning analysis of intent tuning suggestions
+- [ ] Debug voice service restart loop issues
+- [ ] Validate Swedish TTS/STT model performance
+- [ ] Test full voice conversation flow
+- [ ] Optimize audio quality and latency
+- [ ] **Target**: <2s TTS latency, >90% Swedish accuracy
 
-### **2. T9 Nightly Evaluation** 🔄 **PRIO 2 - AUTOMATED**  
-**Status**: Complete CI/CD pipeline deployed  
-**Process**: Multi-agent evaluation on both synthetic and real data  
-**Expected Output**: Win-rate comparison between agent strategies  
+#### **1.2 Modern Web Frontend** 🌐 **PRIO 2**  
+**Status**: Currently only basic Streamlit monitoring  
+**Critical Path**: Production-ready web interface  
 **Tasks**:
-- [x] Multi-agent framework (Borda+BradleyTerry) ✅
-- [x] PII-safe real data adapter implemented ✅
-- [x] Nightly CI/CD workflow configured ✅
-- [ ] Collect T9 evaluation results (runs at 03:05)
-- [ ] Analyze agent performance on real production data
+- [ ] Implement React/Next.js frontend with TypeScript
+- [ ] Add WebSocket real-time streaming responses
+- [ ] Create mobile-responsive PWA design
+- [ ] Implement chat history and user preferences
+- [ ] **Target**: <100ms UI response, mobile-ready
 
-### **3. T8/T9 Production Integration** 📋 **PRIO 3 - STRATEGIC**
-**Status**: Ready for implementation post-validation  
-**Process**: Integrate winning T9 agent into T8 bandit routing  
-**Expected Outcome**: Improved preference optimization in production  
+#### **1.3 Ollama Service Debugging** 🔧 **PRIO 3**
+**Status**: Model loaded but health checks failing  
+**Critical Path**: Local LLM fallback reliability  
 **Tasks**:
-- [ ] Identify best-performing agent from T9 nightly reports
-- [ ] Design integration between T9 agents and T8 bandit system
-- [ ] Implement staging deployment with 5% traffic split
-- [ ] Monitor multi-agent performance vs baseline
-- [ ] Plan production rollout strategy
+- [ ] Fix qwen2.5:3b health check failures
+- [ ] Validate orchestrator → ollama → response pipeline
+- [ ] Test full offline functionality
+- [ ] **Target**: 100% health checks, <1s response
 
----
+### **PHASE 2: Rich Ecosystem (Enhancement - Weeks 4-10)** 🎨 **HIGH PRIORITY**
+**Goal**: Advanced capabilities and tool integration  
+**Why Important**: Differentiate Alice from basic chatbots  
+**Success Criteria**: 20+ Swedish services, advanced AI features
 
-## ⚡ **DEVELOPMENT ROADMAP (From README.md)**
-
-### **4. NLU + XNLI Enhancement** 🔄 **PRIO 4**
-**Goal**: Improve Swedish intent classification accuracy and performance  
-**Current**: 88%+ accuracy, needs XNLI integration  
+#### **2.1 Advanced Tool Integration** 🔧 **PRIO 4**
+**Status**: Basic MCP registry needs Swedish expansion  
+**Critical Path**: Make Alice useful for daily Swedish tasks  
 **Tasks**:
-- [ ] Export XNLI to ONNX (int8) → `models/xnli/`
-- [ ] Connect entailment for low confidence margins in NLU
-- [ ] Add 4–6 challenging test scenarios to eval harness  
-- [ ] **Target**: Intent accuracy ≥92%, P95 ≤80ms
+- [ ] Calendar integration (Google, Outlook, CalDAV)
+- [ ] Email integration (IMAP/SMTP, Gmail API)  
+- [ ] Swedish services (SL, SMHI, banks, government APIs)
+- [ ] Smart home (HomeAssistant integration)
+- [ ] File management and document processing
+- [ ] **Target**: >20 integrated services, 95% API success rate
 
-### **5. Micro-LLM Integration** 🔄 **PRIO 5**
-**Goal**: Fast response path for simple queries  
-**Current**: Framework ready, needs activation  
+#### **2.2 Vision System** 👁️ **PRIO 5**
+**Status**: Not implemented - major capability gap  
+**Critical Path**: Multimodal AI assistant  
 **Tasks**:
-- [ ] Enable micro-driver in `/api/chat` endpoint
-- [ ] Implement `X-Route=micro` header handling for simple intents
-- [ ] Configure Phi-3.5-mini model routing
-- [ ] **Target**: P95 <250ms (first token)
+- [ ] Document analysis and OCR (Swedish text priority)
+- [ ] Image understanding and description
+- [ ] Screenshot analysis and UI interaction
+- [ ] Image generation capabilities
+- [ ] **Target**: >85% OCR accuracy on Swedish text
 
-### **6. Memory System Enhancement** 🔄 **PRIO 6**
-**Goal**: Persistent conversation context and user memory  
-**Current**: FAISS + Redis basic integration working  
+#### **2.3 Advanced Memory System** 🧠 **PRIO 6**  
+**Status**: Basic FAISS+Redis, needs enhancement  
+**Critical Path**: Persistent conversation intelligence  
 **Tasks**:
-- [ ] Implement session memory TTL=7 days
-- [ ] Configure FAISS hot/cold index (HNSW+ondisk)
-- [ ] Add "Forget me" functionality with <1s response time
-- [ ] Test memory persistence across service restarts
+- [ ] Long-term conversation history (7+ days)
+- [ ] Personal knowledge base creation
+- [ ] Context-aware information retrieval
+- [ ] Privacy-preserving memory management
+- [ ] **Target**: 7-day retention, <200ms retrieval
 
-### **7. Planner Production Hardening** 🔄 **PRIO 7**
-**Goal**: Robust, secure, deterministic tool execution  
-**Current**: Basic planner working, needs production features  
-**Tasks**:
-- [ ] Implement enum-only tool schema with deterministic arg-builders
-- [ ] Add OpenAI rate limiting + circuit breaker + budget guard
-- [ ] Implement `cloud_ok` per-session opt-in with audit logging
-- [ ] Secure n8n webhooks with HMAC-SHA256 + replay-guard
-- [ ] Add comprehensive tool error taxonomy
-- [ ] **Target**: Tool success rate ≥95%
+### **PHASE 3: Advanced Intelligence (Future - Weeks 10-24)** 🚀 **MEDIUM PRIORITY**
+**Goal**: Next-generation AI assistant capabilities  
+**Why Strategic**: Competitive differentiation and enterprise readiness  
+**Success Criteria**: Proactive assistance, enterprise features
 
-### **8. Performance SLO Validation** 🔄 **PRIO 8**
-**Goal**: Meet production performance requirements  
-**Current**: Variable performance across endpoints  
+#### **3.1 Proactivity Engine** 🧠 **PRIO 7**
+**Status**: Not implemented - major capability gap  
+**Critical Path**: Transform from reactive to proactive assistant  
 **Tasks**:
-- [ ] Validate fast route: P95 ≤250ms
-- [ ] Validate planner route: P95 ≤900ms (first) / ≤1.5s (full)
-- [ ] Implement automated SLO monitoring in CI/CD
-- [ ] Add performance regression detection
+- [ ] Automated task suggestions and scheduling
+- [ ] Predictive information delivery
+- [ ] User pattern learning and adaptation
+- [ ] Goal-oriented conversation management
+- [ ] **Target**: 70% suggestion acceptance, 80% prediction accuracy
+
+#### **3.2 Enterprise Features** 🏢 **PRIO 8**
+**Status**: Single-user system needs scaling  
+**Critical Path**: Business and team adoption  
+**Tasks**:
+- [ ] Multi-user support with role-based access
+- [ ] Team collaboration features
+- [ ] Integration with business systems
+- [ ] Advanced security and compliance
+- [ ] **Target**: 100+ concurrent users, enterprise security
+
+#### **3.3 Multi-Agent Orchestration** 🤖 **PRIO 9**
+**Status**: Single-agent system, room for specialization  
+**Critical Path**: Specialized expertise areas  
+**Tasks**:
+- [ ] Specialized agent swarms (coding, analysis, creativity)
+- [ ] Task decomposition and delegation
+- [ ] Cross-agent knowledge sharing
+- [ ] Collaborative problem solving
+- [ ] **Target**: 3+ specialized agents, >90% task completion
 
 ---
 
