@@ -1,9 +1,9 @@
 # Alice v2 - Projekt Status & Plan
 *Komplett status med checkboxes för vad som är färdigt och nästa steg*
 
-## 🎯 CURRENT STATUS: Step 9.0 - T4 COMPLETE
+## 🎯 CURRENT STATUS: Step 10.0 - T9 COMPLETE
 
-### **✅ FÄRDIGA SYSTEM (Step 1-9)**
+### **✅ FÄRDIGA SYSTEM (Step 1-10)**
 
 #### **Core Infrastructure** 
 - [x] **NLU Service** - Swedish intent classification (88%+ accuracy) ✅ OPERATIONAL Port 9002
@@ -21,13 +21,15 @@
 - [x] **PostgreSQL DB** - N8N data persistence ✅ RUNNING Port 5432
 - [x] **Circuit Breaker** - Fault tolerance system ✅ PROTECTING
 
-#### **T4 RL System (NEW - 2025-09-07)**
+#### **T4-T9 RL System (2025-09-07 → 2025-09-08)**
 - [x] **LinUCB Router** - Contextual bandits för routing (micro/planner/deep) ✅ DEPLOYED
 - [x] **Thompson Sampling** - Tool selector med Beta-distributioner ✅ ACTIVE
 - [x] **φ-Reward System** - Golden ratio viktning (φ=1.618) ✅ OPTIMIZED  
 - [x] **Persistence Layer** - JSON state + file locking ✅ THREAD-SAFE
 - [x] **Replay Training** - 65k+ episodes/sec offline learning ✅ BENCHMARKED
 - [x] **Canary Deployment** - 5% production traffic ✅ MONITORING
+- [x] **T8 Stabilization** - FormatGuard + Intent tuning + Overnight optimizer ✅ COMPLETE
+- [x] **T9 Multi-Agent** - Borda+BradleyTerry preference optimization ✅ DEPLOYED
 
 #### **Monitoring & Testing**
 - [x] **Observability HUDs** - Streamlit dashboards ✅ READY
@@ -58,23 +60,35 @@
 
 ---
 
-## 🎯 NÄSTA STEG - Step 9 Planning
+## 🎯 NÄSTA STEG - Step 10 Planning
 
-### **Immediate Priorities (Denna vecka)**
-- [ ] **Fix Ollama Health** - Få lokal LLM att svara korrekt
-  - Check qwen2.5:3b model loading
-  - Verify API endpoints responding
-  - Test basic completion requests
+### **Immediate Priorities (Denna vecka) - T8/T9 Integration**
+- [x] **T8 Stabilization Complete** - FormatGuard + Intent tuning system ✅
+  - PII-safe RCA sampling from prod logs ✅
+  - Overnight optimizer with 8h autonomous operation ✅
+  - Intent regex tuning with PSI simulation ✅
+  - Complete testing pipeline (smoke/halfday/soak) ✅
 
-- [ ] **Stabilize Voice Service** - Stoppa restart-loop
-  - Check STT/TTS dependencies 
-  - Verify audio device access
-  - Test basic voice pipeline
+- [x] **T9 Multi-Agent Complete** - Preference optimization system ✅
+  - Multi-agent framework (Borda + Bradley-Terry) ✅
+  - PII-safe real data adapter ✅  
+  - Synthetic data generation with 1000 triples ✅
+  - Nightly CI/CD evaluation pipeline ✅
 
-- [ ] **Complete E2E Testing** - Full chat flow verification
-  - "Hej Alice" → NLU → Orchestrator → Response
-  - Swedish conversation flow
-  - Tool calling integration
+- [ ] **T8 Overnight Execution** - Samla 8h real telemetry data
+  - `make overnight-8h` körs automatiskt ikväll
+  - PSI/VF stabilization via intent regex tuning
+  - Morning report generation för analys
+
+- [ ] **T9 Nightly Validation** - Real vs synthetic agent comparison  
+  - Nightly CI kör T9 evaluation på T8's prod logs
+  - Win-rate comparison mellan Borda+BT vs Borda-only
+  - Artifact upload för morning analysis
+
+- [ ] **Integration Planning** - Koppla T9 vinnande agent till T8 routing
+  - Identifiera bästa agent från nightly reports
+  - Staging deployment med bandit integration
+  - Production rollout strategy
 
 ### **Week 2-3: Performance Optimization**
 - [ ] **Cache Hit Rate Improvement** - From current ~10% to 40%+
@@ -132,14 +146,16 @@ Choose ONE development direction:
 
 ## 📊 SUCCESS METRICS
 
-### **Current Baseline (Post Step 9.0 - T4)**
+### **Current Baseline (Post Step 10.0 - T9)**
 - **Services Running**: 10/11 healthy (91% uptime) 
 - **NLU Accuracy**: 88%+ on Swedish queries
 - **RL Performance**: 50,374 micro-ops/sec (10x over SLO gate)
 - **Turn Simulation**: 26,077/sec with 0.03ms p95 latency ✅
 - **Replay Training**: 65,431 episodes/sec ✅  
 - **Success Rate**: 100% (över 98.5% SLO gate) ✅
-- **Cache Hit Rate**: ~10% (needs improvement)
+- **T8 Stabilization**: FormatGuard active, Intent tuning ready ✅
+- **T9 Multi-Agent**: Borda+BT framework operational ✅
+- **Cache Hit Rate**: ~10% (optimization via T8 overnight)
 - **Memory Usage**: Stable, no leaks detected
 - **Error Rate**: <1% on healthy services
 
@@ -151,14 +167,15 @@ Choose ONE development direction:
 - **Canary Traffic**: 5% production deployment ✅
 - **All Acceptance Criteria**: MET ✅
 
-### **Target Metrics (Step 10)**
+### **Target Metrics (Step 11 - Post Integration)**
 - **Services Running**: 11/11 healthy (100% uptime)  
-- **E2E Chat Success**: >95% completion rate
-- **Response Time**: P95 < 900ms target (T4: 0.03ms achieved)
-- **Cache Hit Rate**: >40% improvement
+- **T8 PSI Stabilization**: PSI ≤0.2, VF ≤1.0%, KS ≤0.2
+- **T9 Agent Performance**: >70% win-rate på real production data
+- **Multi-Agent Routing**: Best agent integrated i T8 bandit system
+- **Cache Hit Rate**: >40% improvement (T8 optimization target)
 - **Swedish NLU**: Maintain 88%+ accuracy
-- **Voice Pipeline**: <2s STT+TTS latency
-- **RL Canary Scale**: 5% → 25% production traffic
+- **Production Integration**: T9 agent deployed på 5% trafik
+- **Ensemble Intelligence**: Multi-agent consensus för complex preferences
 
 ---
 

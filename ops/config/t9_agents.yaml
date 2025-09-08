@@ -1,0 +1,13 @@
+# T9 agentkombinationer (offline). Håll T9_ENABLED=false i prod.
+seed: 9
+samples: 1000         # antal syntetiska triples för eval
+noise_sigma: 0.8      # brus i preferenser (ju högre desto svårare)
+agents:
+  - name: "borda+bt"
+    ranker: "borda"           # services/rl/prefs/agents/ranker.py
+    aggregator: "bradley-terry"  # services/rl/prefs/agents/aggregator.py
+  - name: "borda-only"
+    ranker: "borda"
+    aggregator: "none"        # tar topp från ranker
+output:
+  report_path: "data/rl/prefs/t9/multi_agent_report.json"

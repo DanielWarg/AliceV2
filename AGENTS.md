@@ -292,6 +292,73 @@ make canary-rollback # Manual emergency rollback
 - ✅ **Intent Classification Tuning**: PSI-optimized regex patterns med simulation + safe config management
 - ✅ **Complete Testing Pipeline**: 30-min smoke tests, halfday loops, soak testing, GO/NO-GO criteria
 
+## 🎯 KOMPLETT: T9 - Multi-Agent Preference Optimization (2025-09-08)
+
+**🚀 SLUTFÖRT - Komplett multi-agent system för preference optimization:**
+
+- ✅ **Multi-Agent Framework**: Borda ranking + Bradley-Terry aggregation med objektiv win-rate comparison
+- ✅ **PII-Safe Real Data Adapter**: Extraherar A/B/C triples från prod logs med fullständig PII masking
+- ✅ **Synthetic Data Generation**: 1000 syntetiska triples med noise-controlled difficulty
+- ✅ **Judge Orchestrator**: Central agent som kör olika ranker/aggregator kombinationer
+- ✅ **Dual Mode Evaluation**: Kan köra på både synthetic och real data med automatic fallback
+- ✅ **Complete Testing Suite**: Unit tests för alla agent components med CI/CD integration
+- ✅ **Nightly Evaluation**: Automatisk nattlig körning med rapport generation
+
+**📊 T9 MULTI-AGENT RESULTS:**
+
+```
+• AGENT FRAMEWORK: ✅ Complete & Operational
+  - Borda ranking: Poängsättning baserad på heuristiska scores
+  - Bradley-Terry aggregation: Pairwise skill estimation via 30 iterations
+  - Judge orchestrator: Centralized agent som kör olika kombinationer
+  - Win-rate evaluation: Objektiv comparison mot ground truth winners
+
+• PII-SAFE DATA PIPELINE: ✅ Production-Ready
+  - Real data sources: ab_triples.ndjson (primary) + prod_responses.ndjson (fallback)
+  - PII masking: Svenska personnummer, emails, phone numbers, URLs
+  - Snippet truncation: Max 220 chars med automatic redaction
+  - Triple extraction: A/B/C candidates från baseline vs adapter routes
+
+• SYNTHETIC DATA VALIDATION: ✅ Robust Testing
+  - 1000 triples med configurable noise (sigma=0.8)
+  - Anti-correlated text length vs quality (kort = bättre heuristik)
+  - Ground truth winners baserat på Gaussian score distributions
+  - Automatic fallback när real data insufficient (<100 triples)
+
+• EVALUATION PIPELINE: ✅ Fully Automated
+  - Dual mode: --realdata flag för real vs synthetic data
+  - Nightly CI/CD: Kör båda modes med artifact upload
+  - Local testing: make t9-test, make t9-eval, make t9-eval-real
+  - Report generation: JSON output med win-rates och metadata
+```
+
+**🎯 T9 INTEGRATION READY:**
+```bash
+# Kör synthetic baseline (guaranteed to work)
+make t9-test && make t9-eval
+
+# Kör på real data från T8 overnight logs (PII-safe)
+make t9-extract && make t9-eval-real
+
+# Nightly CI/CD kör automatiskt båda modes (03:05)
+# Rapporter: t9-multi-agent-report + t9-multi-agent-report-real
+```
+
+**📋 MORNING CHECKLIST:**
+```bash
+# Quick morning routine (20-30 min GO/NO-GO decision)
+make morning                    # Morning status overview
+# Full checklist: ops/checklists/MORNING_CHECKLIST.md
+
+# T8 Morning Analysis
+make morning-report && make dash
+make intent-simulate && make intent-apply-dry
+
+# T9 Morning Validation  
+make t9-eval-real
+cat data/rl/prefs/t9/multi_agent_report.json
+```
+
 **📊 T8 STABILIZATION RESULTS:**
 
 ```

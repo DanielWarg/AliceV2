@@ -8,7 +8,7 @@ on:
       - 'services/orchestrator/src/router/**'
       - '.github/workflows/rl-live-wire.yml'
   push:
-    branches: [ feature/t5**, rl/live-** ]
+    branches: [ feature/t5**, rl/live-**, purge/** ]
 
 jobs:
   rl-live-wire:

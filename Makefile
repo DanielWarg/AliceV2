@@ -192,3 +192,36 @@ dash-fake:
 	python3 ops/dashboards/make_fake_history.py
 	python3 ops/dashboards/render_dashboard.py
 	@echo "Öppna ops/dashboards/dashboard.md"
+
+# --- T9 multi-agent (offline) ---
+t9-eval:
+	python services/rl/prefs/eval_multi_agent.py
+
+t9-test:
+	pytest -q tests/test_agents.py
+
+t9-nightly-local: t9-test t9-eval
+	@echo "Report -> data/rl/prefs/t9/multi_agent_report.json"
+
+# --- T9 real data ---
+t9-extract:
+	python services/rl/prefs/realdata_adapter.py --cfg ops/config/t9_realdata.yaml
+
+t9-eval-real:
+	python services/rl/prefs/eval_multi_agent.py --realdata --cfg ops/config/t9_agents.yaml --real_cfg ops/config/t9_realdata.yaml
+	@echo "Report -> data/rl/prefs/t9/multi_agent_report.json"
+
+# --- Morning routine ---
+morning:
+	@echo "=== Alice v2 Morning Checklist ==="
+	@echo "📋 Full checklist: ops/checklists/MORNING_CHECKLIST.md"
+	@echo ""
+	@echo "🌅 Quick Status:"
+	@echo "  - T8 overnight data: $(shell ls -la data/logs/prod_*.ndjson 2>/dev/null | wc -l) files"
+	@echo "  - T9 reports available: $(shell ls -la data/rl/prefs/t9/*.json 2>/dev/null | wc -l) files"
+	@echo ""
+	@echo "📊 Key Commands:"
+	@echo "  make morning-report     # T8 overnight results"
+	@echo "  make intent-simulate    # T8 PSI optimization"
+	@echo "  make t9-eval-real       # T9 agent performance"
+	@echo "  make dash               # Update dashboard"

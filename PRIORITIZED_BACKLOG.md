@@ -7,48 +7,47 @@
 ---
 
 ## 🎯 **CURRENT STATUS:**
-- **Alice AI Training**: ✅ First LoRA training complete (95% accuracy on Swedish tool selection)
-- **Night Test**: ✅ 240 episodes, 168ms average response time, system stable 
-- **System Health**: ✅ 8-hour continuous operation validated
-- **Next Phase**: Fix critical infrastructure issues while Alice continues self-training
+- **T8 Stabilization**: ✅ Complete infrastructure for production stabilization
+- **T9 Multi-Agent**: ✅ Preference optimization system with PII-safe real data adapter
+- **System Health**: ✅ Both T8 overnight and T9 nightly evaluation ready
+- **Next Phase**: T8/T9 integration and production deployment of best-performing agent
 
 ---
 
-## 🔥 **CRITICAL ISSUES (Must Fix Immediately)**
+## 🎯 **T8/T9 INTEGRATION PRIORITIES**
 
-### **1. Ollama Service Health** ❌ **PRIO 1 - BLOCKING**
-**Problem**: Port 11434 unhealthy, model loaded but not responding  
-**Impact**: Local LLM non-functional → forced cloud fallback  
-**Root Cause**: qwen2.5:3b model (1.9GB) loaded but API endpoints failing  
+### **1. T8 Overnight Execution** 🔄 **PRIO 1 - AUTONOMOUS**
+**Status**: Ready to execute tonight  
+**Process**: 8-hour autonomous data collection and optimization  
+**Expected Output**: PSI/VF stabilization via intent regex tuning  
 **Tasks**:
-- [ ] Debug Ollama health check endpoint `/health`
-- [ ] Test model completion: `curl -X POST http://localhost:11434/api/generate`  
-- [ ] Verify qwen2.5:3b model responds to basic prompts
-- [ ] Check Ollama service logs for errors
-- [ ] Restart Ollama service if needed: `ollama serve`
+- [x] FormatGuard system implemented and tested ✅
+- [x] Intent tuning infrastructure ready ✅
+- [x] Overnight optimizer pipeline complete ✅
+- [ ] Execute `make overnight-8h` tonight (automatic)
+- [ ] Morning analysis of intent tuning suggestions
 
-### **2. Voice Service Restart Loop** ❌ **PRIO 2 - BLOCKING**  
-**Problem**: STT/TTS pipeline continuously crashing (Port 8001)  
-**Impact**: Voice interaction completely broken  
-**Root Cause**: Dependency issues or resource conflicts in audio pipeline  
+### **2. T9 Nightly Evaluation** 🔄 **PRIO 2 - AUTOMATED**  
+**Status**: Complete CI/CD pipeline deployed  
+**Process**: Multi-agent evaluation on both synthetic and real data  
+**Expected Output**: Win-rate comparison between agent strategies  
 **Tasks**:
-- [ ] Check voice service logs: `docker logs alice-voice`
-- [ ] Verify audio device access permissions
-- [ ] Test Whisper STT dependency loading
-- [ ] Validate TTS pipeline initialization
-- [ ] Implement service restart with exponential backoff
-- [ ] Add voice service health endpoint
+- [x] Multi-agent framework (Borda+BradleyTerry) ✅
+- [x] PII-safe real data adapter implemented ✅
+- [x] Nightly CI/CD workflow configured ✅
+- [ ] Collect T9 evaluation results (runs at 03:05)
+- [ ] Analyze agent performance on real production data
 
-### **3. E2E Chat Flow Verification** ❌ **PRIO 3 - VALIDATION**
-**Problem**: No verified end-to-end conversation flow  
-**Impact**: Uncertain if complete system works as intended  
-**Root Cause**: Missing comprehensive integration test  
+### **3. T8/T9 Production Integration** 📋 **PRIO 3 - STRATEGIC**
+**Status**: Ready for implementation post-validation  
+**Process**: Integrate winning T9 agent into T8 bandit routing  
+**Expected Outcome**: Improved preference optimization in production  
 **Tasks**:
-- [ ] Test basic flow: "Hej Alice" → NLU → Orchestrator → Response
-- [ ] Verify Swedish conversation handling
-- [ ] Test tool calling integration end-to-end  
-- [ ] Validate error handling in conversation chain
-- [ ] Create automated E2E test suite for chat flow
+- [ ] Identify best-performing agent from T9 nightly reports
+- [ ] Design integration between T9 agents and T8 bandit system
+- [ ] Implement staging deployment with 5% traffic split
+- [ ] Monitor multi-agent performance vs baseline
+- [ ] Plan production rollout strategy
 
 ---
 
