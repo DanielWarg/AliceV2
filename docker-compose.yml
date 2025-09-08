@@ -53,7 +53,7 @@ services:
       - MICRO_MODEL=qwen2.5:3b
       - MICRO_DRIVER_VERSION=2
       - FEATURE_MICRO_MOCK=0
-      - MICRO_MAX_SHARE=0.2
+      - MICRO_MAX_SHARE=0.8
       - LLM_PLANNER=qwen2.5:3b-instruct-q4_K_M
       - PLANNER_TIMEOUT_MS=3000
       - PLANNER_REPAIR_TIMEOUT_MS=1000
