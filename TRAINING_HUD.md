@@ -128,7 +128,7 @@ training-hud> quit                    # Avsluta HUD
 - **Respekterar** virtual environment och dependencies
 
 ### Future Enhancements
-- **Web interface** för remote monitoring
+- **CLI interface** för remote monitoring
 - **Database integration** för persistent session history
 - **Alert webhooks** för kritiska events
 - **ML model integration** för predictive monitoring

@@ -4,9 +4,9 @@ Goal: Tight, scalable codebase.
 
 ## Approved Top-Level Directories
 - `services/` – backend services
-- `apps/` – frontend/desktop
+- `apps/` – application packages
 - `packages/` – shared packages (api/ui/types)
-- `monitoring/` – HUD/observability
+- `monitoring/` – system observability
 - `scripts/` – automation scripts
 - `data/` – artifacts/telemetry (non-versioned data)
 - `config/` – policies/configuration

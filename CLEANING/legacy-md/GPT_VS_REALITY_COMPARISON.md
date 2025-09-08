@@ -14,7 +14,7 @@
 ### ❌ GPT GOT WRONG / INCOMPLETE
 | GPT Says | Reality |
 |----------|---------|
-| "Next.js-appen" | ❌ NO ACTIVE WEB UI - Only monitoring HUDs |
+| "system-appen" | ❌ NO ACTIVE WEB UI - Only monitoring monitorings |
 | "Widget för väder/tid" | ❌ NO WIDGETS - Basic tools exist but not widget-based |
 | "Calendar-modul → borttagen" | ✅ EXISTS - Calendar tools in MCP registry |
 | "Kameramodul under utveckling" | ❌ NO CAMERA MODULE - Vision tools exist |
@@ -48,7 +48,7 @@
 | **Services** | "A few modules" | **11 Docker containers** |
 | **Status** | "Some active, some under development" | **10/11 services healthy and operational** |
 | **Testing** | "Test plans started" | **Complete E2E testing with 20 scenarios** |
-| **Frontend** | "Next.js app with widgets" | **Streamlit HUDs, no web UI widgets** |
+| **interface** | "system app with widgets" | **Streamlit monitorings, no web UI widgets** |
 | **AI Models** | "Orchestrator + embeddings" | **Multiple LLMs: Micro/Planner/Deep + NLU** |
 | **Language** | Not mentioned | **Swedish-first with 88%+ intent accuracy** |
 | **Security** | Not mentioned | **Comprehensive security engine + middleware** |
@@ -60,7 +60,7 @@
 
 GPT fundamentally underestimated the system:
 - Missed the **NLU service** (the foundation of Alice)
-- Thought we have a "Next.js app" (we don't, just monitoring)
+- Thought we have a "system app" (we don't, just monitoring)
 - Completely missed **RL/ML, Security, N8N, Memory, Voice** systems
 - Underestimated scale (11 services vs "a few modules")
 - Wrong status on many components

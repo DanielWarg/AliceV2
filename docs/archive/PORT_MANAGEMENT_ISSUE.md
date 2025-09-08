@@ -23,7 +23,7 @@ Under utveckling av LLM Integration v1 stötte vi på ett **port management-prob
 # Processer som troligen blockerade:
 - uvicorn main:app --reload --port 8000 (orchestrator)
 - uvicorn main:app --reload --port 8787 (guardian)  
-- streamlit run mini_hud.py --port 8501 (dashboard)
+- streamlit run mini_monitoring.py --port 8501 (dashboard)
 - Docker containers som exponerar samma portar
 ```
 

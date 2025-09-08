@@ -1,29 +1,26 @@
 {
-  "name": "@alice/hud",
+  "name": "alice-v2",
   "version": "1.0.0",
+  "description": "Alice v2 - Advanced Swedish AI Assistant with Security, Observability and Golden Ratio Optimization",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3001",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
-  },
-  "dependencies": {
-    "lucide-react": "^0.400.0",
-    "next": "15.0.0",
-    "react": "18.3.1",
-    "react-dom": "18.3.1"
+    "build": "pnpm run --recursive build",
+    "dev": "pnpm run --recursive --parallel dev",
+    "test": "pnpm run --recursive test",
+    "typecheck": "pnpm run --recursive typecheck",
+    "lint": "pnpm run --recursive lint",
+    "clean": "pnpm run --recursive clean",
+    "install:all": "pnpm install",
+    "up": "docker compose up -d",
+    "down": "docker compose down"
   },
   "devDependencies": {
-    "@types/node": "20.19.11",
-    "@types/react": "18.3.24",
-    "@types/react-dom": "18.3.7",
-    "autoprefixer": "^10.4.21",
-    "eslint": "8.57.1",
-    "eslint-config-next": "15.0.0",
-    "postcss": "^8.5.6",
-    "tailwindcss": "^3.4.0",
-    "typescript": "5.9.2"
+    "@types/node": "^20.10.5",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
   },
   "packageManager": "pnpm@9.15.9+sha512.68046141893c66fad01c079231128e9afb89ef87e2691d69e4d40eee228988295fd4682181bae55b58418c3a253bde65a505ec7c5f9403ece5cc3cd37dcf2531"
 }

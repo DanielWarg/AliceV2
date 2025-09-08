@@ -47,7 +47,7 @@ pnpm install:all
 # Start development environment  
 docker compose up -d      # Infrastructure
 pnpm dev:services        # Backend services
-pnpm dev                 # Frontend app
+pnpm dev                 # Development mode
 
 # Verify setup
 # See AGENTS.md for current port assignments
@@ -141,7 +141,7 @@ pnpm test:performance # Performance tests
 - `auto_verify.sh --count 50` per route (planner_openai & planner_local)
 - Arg-building success ≥95% with error taxonomy metrics
 - n8n door-to-door P95 ≤10s with valid HMAC
-- Cost tracking included in `summary.json` and HUD
+- Cost tracking included in `summary.json` and monitoring
 
 ## 🔒 Security Guidelines
 

@@ -4,7 +4,8 @@ Environment validation and configuration using Pydantic Settings
 """
 
 import os
-from typing import List
+import json
+from typing import List, Union
 
 from pydantic import BaseSettings, Field, validator
 
@@ -87,6 +88,17 @@ class OrchestratorSettings(BaseSettings):
     def validate_port(cls, v):
         if not 1 <= v <= 65535:
             raise ValueError("Port must be between 1 and 65535")
+        return v
+
+    @validator("cors_origins", pre=True)
+    def parse_cors_origins(cls, v):
+        if isinstance(v, str):
+            try:
+                # Try to parse as JSON first
+                return json.loads(v)
+            except json.JSONDecodeError:
+                # Fall back to comma-separated parsing
+                return [origin.strip() for origin in v.split(",")]
         return v
 
     class Config:

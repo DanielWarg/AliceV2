@@ -19,7 +19,7 @@
 ## 🔧 Component Documentation
 
 ### **Monitoring & Observability**
-- **[../monitoring/README.md](../monitoring/README.md)** - Streamlit HUD setup, usage, and features
+- **[../monitoring/README.md](../monitoring/README.md)** - Streamlit monitoring setup, usage, and features
 
 ### **Services Documentation**
 - **[../services/loadgen/README.md](../services/loadgen/README.md)** - Load testing suite and brownout validation
@@ -30,7 +30,7 @@
 
 **For Developers**: Read `AGENTS.md` for development context, `TESTING_STRATEGY.md` for testing approach, and `CONTRIBUTING.md` for guidelines.
 
-**For Operations**: Focus on `README.md` production sections, `monitoring/README.md` for HUD setup, and `SECURITY.md` for operational security.
+**For Operations**: Focus on `README.md` production sections, `monitoring/README.md` for monitoring setup, and `SECURITY.md` for operational security.
 
 ## 📋 Documentation Status
 

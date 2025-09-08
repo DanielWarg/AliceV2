@@ -4,7 +4,7 @@
 ## 🎯 **DAGENS SLUTSTATUS**
 
 ### ✅ **VAD VI HAR GJORT IDAG**
-Kort: Docker-only dev-proxy, Observability+HUD klart, `/metrics` exponerad, NLU-service scaffoldad, curator/scheduler pipeline på plats (scheduler optional), Orchestrator↔Guardian URL fix, NLU-proxy routing, auto_verify uppdaterad.
+Kort: Docker-only dev-proxy, Observability+monitoring klart, `/metrics` exponerad, NLU-service scaffoldad, curator/scheduler pipeline på plats (scheduler optional), Orchestrator↔Guardian URL fix, NLU-proxy routing, auto_verify uppdaterad.
 
 1. **🤖 LLM Drivers Implementerade:**
    - `services/orchestrator/src/llm/ollama_client.py` - Ollama client med timeouts
@@ -26,7 +26,7 @@ Kort: Docker-only dev-proxy, Observability+HUD klart, `/metrics` exponerad, NLU-
    - Micro always available
 
 5. **🐳 Docker-only + Dev-proxy (18000):**
-   - `ops/Caddyfile` - Proxy till orchestrator/guardian/HUD/NLU
+   - `ops/Caddyfile` - Proxy till orchestrator/guardian/monitoring/NLU
    - `scripts/dev_up.sh`/`dev_down.sh` - Deterministisk start/stop
    - Compose: inga host-portar utom proxy; healthchecks på alla services
 
@@ -83,7 +83,7 @@ curl -s -X POST http://localhost:18000/api/orchestrator/chat -H 'Content-Type: a
 ```bash
 ./scripts/auto_verify.sh
 cat data/tests/summary.json | jq .
-open http://localhost:18000/hud
+open http://localhost:18000/monitoring
 ```
 
 ### **Steg 4: Nästa Prioritet**

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Alert, AlertDescription } from './ui/alert'
-import { cn } from '../lib/utils'
+import { cn } from "../utils"
 import type { GuardianStatus, GuardianState } from '@alice/types'
 
 interface GuardianStatusBannerProps {

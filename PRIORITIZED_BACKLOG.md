@@ -10,7 +10,7 @@
 - **T8 Stabilization**: ✅ Complete - FormatGuard, Intent tuning, Overnight optimizer
 - **T9 Multi-Agent**: ✅ Complete - Borda+BradleyTerry preference optimization deployed
 - **Core AI Infrastructure**: ✅ 80%+ Complete - All critical systems operational
-- **Next Phase**: **User Experience Focus** - Voice reactivation and modern web frontend
+- **Next Phase**: **Voice Interaction Focus** - Voice reactivation and monitoring optimization
 
 ---
 
@@ -19,7 +19,7 @@
 ### **PHASE 1: User Experience (CRITICAL - Weeks 1-3)** 🎯 **HIGHEST PRIORITY**
 **Goal**: Enable actual user adoption of Alice v2  
 **Why Critical**: Core AI is ready, but no practical user interface exists  
-**Success Criteria**: Users can naturally interact with Alice via voice and web
+**Success Criteria**: Users can naturally interact with Alice via voice
 
 #### **1.1 Voice Pipeline Reactivation** 🎙️ **PRIO 1**
 **Status**: Currently broken (restart loop on Port 8001)  
@@ -31,15 +31,6 @@
 - [ ] Optimize audio quality and latency
 - [ ] **Target**: <2s TTS latency, >90% Swedish accuracy
 
-#### **1.2 Modern Web Frontend** 🌐 **PRIO 2**  
-**Status**: Currently only basic Streamlit monitoring  
-**Critical Path**: Production-ready web interface  
-**Tasks**:
-- [ ] Implement React/Next.js frontend with TypeScript
-- [ ] Add WebSocket real-time streaming responses
-- [ ] Create mobile-responsive PWA design
-- [ ] Implement chat history and user preferences
-- [ ] **Target**: <100ms UI response, mobile-ready
 
 #### **1.3 Ollama Service Debugging** 🔧 **PRIO 3**
 **Status**: Model loaded but health checks failing  
@@ -149,19 +140,8 @@
 
 ---
 
-## 🎨 **FRONTEND & USER EXPERIENCE**
+## 🎙️ **VOICE & USER EXPERIENCE**
 
-### **11. Modern Web Frontend** 📋 **PRIO 11**
-**Goal**: Production-ready web interface  
-**Current**: Basic Streamlit HUD for monitoring  
-**Target**: Modern React/Next.js application  
-**Tasks**:
-- [ ] Implement Next.js frontend with TypeScript
-- [ ] Add mobile-responsive design
-- [ ] Implement WebSocket real-time communication
-- [ ] Create voice interface with audio visualizer
-- [ ] Add interactive tool management interface
-- [ ] Implement user authentication and sessions
 
 ### **12. Voice Pipeline Enhancement** 🔄 **PRIO 12**
 **Goal**: High-quality Swedish voice interaction  
@@ -253,10 +233,9 @@
 
 ### **Sprint 3 (3-4 weeks): PRODUCTION READINESS**
 **Goal**: Prepare for production deployment  
-**Success Criteria**: Production SLOs met, modern UI, stable voice  
+**Success Criteria**: Production SLOs met, stable voice  
 9. ✅ Planner production hardening (PRIO 7)
 10. ✅ Performance SLO validation (PRIO 8)
-11. ✅ Modern web frontend (PRIO 11)
 12. ✅ Voice pipeline enhancement (PRIO 12)
 
 ### **Sprint 4+ (1-2 months): ADVANCED FEATURES**
@@ -290,7 +269,7 @@
 - **Response Time**: P95 < 900ms across all routes
 - **Cache Hit Rate**: >50% (5x improvement)
 - **Tool Success**: >95% reliable execution
-- **Frontend**: Modern web interface deployed
+- **Interface**: Voice-based interaction operational
 - **Voice**: High-quality Swedish voice interaction
 - **Deployment**: Production-ready infrastructure
 

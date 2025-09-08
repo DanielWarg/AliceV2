@@ -52,7 +52,7 @@
 - **Tool Error Classification** ✅ - Timeout/5xx/429/schema/other categorization
 - **Circuit Breaker** ✅ - Automatic failover for unreliable services
 - **Load Testing Suite** ✅ - Multi-vector stress tests (CPU/Memory/Tool/Vision)
-- **Real-time Dashboard** ✅ - HUD with comprehensive system metrics
+- **Real-time Dashboard** ✅ - monitoring with comprehensive system metrics
 
 ### **6. Data Pipeline & Curation** ✅ **COMPLETE**
 - **Dataset Curation** ✅ - Intelligent filtering and preparation of training data
@@ -104,16 +104,16 @@
 - 🔄 Knowledge base integration
 - 🔄 Memory consolidation algorithms
 
-### **10. Frontend & HUD** 🔄 **COMPONENTS READY**
-**Status**: HUD framework exists, needs production enhancement
+### **10. interface & monitoring** 🔄 **COMPONENTS READY**
+**Status**: monitoring framework exists, needs production enhancement
 
 **Ready Components:**
-- ✅ Monitoring HUD - Basic Streamlit dashboards in `monitoring/`
+- ✅ Monitoring monitoring - Basic Streamlit dashboards in `monitoring/`
 - ✅ Real-time Metrics - System health visualization
 - ✅ Guardian State Display - Brownout status visualization
 
 **Enhancement Needed:**
-- 🔄 Modern web frontend (Next.js)
+- 🔄 Modern voice interface (system)
 - 🔄 Voice interface with audio visualizer
 - 🔄 Mobile-responsive design
 - 🔄 WebSocket real-time communication
@@ -167,7 +167,7 @@
 **🔄 ENHANCEMENT READY:**
 6. Voice Pipeline 🔄 (Framework complete)
 7. Advanced Memory & RAG 🔄 (Core working)
-8. Frontend & HUD 🔄 (Components exist)
+8. interface & monitoring 🔄 (Components exist)
 
 **📋 EXPANSION PLANNED:**
 9. Proactivity & Intelligence 📋
@@ -180,7 +180,7 @@
 
 ### **Phase 1: Production Polish (2 weeks)**
 1. **Voice Pipeline Enhancement** - Swedish optimization, better audio quality
-2. **Frontend Modernization** - Next.js web interface, mobile support
+2. **interface Modernization** - system voice interface, mobile support
 3. **Performance Optimization** - Cache hit rates, response latency
 4. **Advanced Memory** - Better RAG retrieval, context management
 

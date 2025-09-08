@@ -54,7 +54,7 @@ export class OrchestratorClient extends BaseClient {
     const validatedRequest = ChatRequestSchema.parse(fullRequest);
 
     return this.post(
-      '/api/chat',
+      '/api/orchestrator/chat',
       validatedRequest,
       ChatResponseSchema,
       options
@@ -127,6 +127,30 @@ export class OrchestratorClient extends BaseClient {
     );
 
     return response.response;
+  }
+
+  /**
+   * Send chat message and get full response object
+   */
+  async sendChatMessage(
+    request: { message: string; session_id?: string; model?: ModelType },
+    options?: RequestOptions
+  ): Promise<ChatResponse> {
+    return this.chat(
+      {
+        message: request.message,
+        session_id: request.session_id || this.defaultSessionId || 'default',
+        model: request.model,
+      },
+      options
+    );
+  }
+
+  /**
+   * Get orchestrator health status
+   */
+  async getHealth(options?: RequestOptions): Promise<HealthResponse> {
+    return this.health(options);
   }
 
   /**

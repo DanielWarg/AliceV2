@@ -55,7 +55,6 @@
     ],
     "test_docs": [
       "TESTING_STRATEGY.md",
-      "apps/hud/test-integration.md",
       "docs/test_results/planner_step7_results.md",
       "services/guardian/.pytest_cache/README.md",
       "services/nlu/.pytest_cache/README.md",

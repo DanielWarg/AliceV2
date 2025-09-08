@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Button } from './Button'
-import { cn } from '../lib/utils'
+import { cn } from "../utils"
 import type { VoiceSession, ASREvent } from '@alice/types'
 
 interface VoiceInterfaceProps {

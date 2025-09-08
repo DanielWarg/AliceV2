@@ -63,8 +63,6 @@ alice-v2/
 │   ├── guardian/                ✅ Safety system
 │   └── memory/                  ✅ Memory and RAG system
 ├── apps/
-│   ├── web/                     ✅ Next.js frontend
-│   └── hud/                     ✅ Monitoring dashboard
 ├── monitoring/                  ✅ Observability tools
 ├── scripts/                     ✅ Development automation
 └── docs/                        ✅ Documentation

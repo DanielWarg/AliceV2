@@ -15,7 +15,7 @@ NC='\033[0m'
 ORCHESTRATOR_URL="http://localhost:8000"
 GUARDIAN_URL="http://localhost:8787"  
 VOICE_URL="http://localhost:8001"
-FRONTEND_URL="http://localhost:3000"
+# FRONTEND_URL removed - no frontend currently deployed
 DASHBOARD_URL="http://localhost:8501"
 
 # SLO targets
@@ -235,7 +235,7 @@ check_docker_services() {
 test_e2e_connectivity() {
     echo -e "${BLUE}🔗 End-to-End Connectivity Test:${NC}"
     
-    # Test full request flow: Frontend -> Orchestrator -> Guardian
+    # Test full request flow: Orchestrator -> Guardian
     echo -n "  Testing request flow... "
     
     # Simulate a request that would go through the full stack
@@ -268,7 +268,7 @@ main() {
     check_endpoint "$ORCHESTRATOR_URL/health" "Orchestrator" || overall_status=1
     check_endpoint "$GUARDIAN_URL/guardian/health" "Guardian" || overall_status=1
     check_endpoint "$VOICE_URL/health" "Voice Service" || overall_status=1
-    check_endpoint "$FRONTEND_URL" "Frontend" || overall_status=1
+    # Frontend health check removed - no frontend deployed
     
     echo ""
     

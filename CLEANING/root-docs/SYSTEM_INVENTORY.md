@@ -44,8 +44,8 @@
 - ✅ **ingest/** - Data ingestion (✅ DOCUMENTED)
 
 ### Monitoring & Utilities
-- ✅ **monitoring/** - HUD dashboards (DOCUMENTED)
-  - alice_hud.py, alice_observability_hud.py, mini_hud.py
+- ✅ **monitoring/** - monitoring dashboards (DOCUMENTED)
+  - alice_monitoring.py, alice_observability_monitoring.py, mini_monitoring.py
 - ✅ **scripts/** - Automation scripts (✅ DOCUMENTED IN TESTING_STRATEGY)
 
 ## 🔧 ORCHESTRATOR INTERNAL MODULES

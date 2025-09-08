@@ -17,7 +17,7 @@ Alice v2 follows a **clean microservices architecture** with deterministic secur
 ```mermaid
 graph TB
     %% User Interface Layer
-    User[🧑‍💻 User<br/>Swedish speech] --> WebUI[Web UI<br/>Next.js frontend<br/>Voice interface]
+    User[🧑‍💻 User<br/>Swedish speech] --> Voice[Voice Interface<br/>STT/TTS<br/>Swedish optimized]
     WebUI --> DevProxy[dev-proxy<br/>Caddy reverse proxy<br/>[See AGENTS.md]]
     
     %% Voice Processing Pipeline
@@ -254,7 +254,7 @@ services/orchestrator/src/planner/
 
 ### 2. **Frontend Layer (Web/Mobile)** ✅ IMPLEMENTED
 ```typescript
-apps/web/                    # Next.js frontend app
+apps/                        # Application packages
 ├── src/components/
 │   ├── AliceHUD.tsx        # Main interface
 │   ├── VoiceInterface.tsx  # Voice interaction
@@ -718,7 +718,6 @@ Metrics Collection:
 ```
 v2/
 ├── apps/
-│   └── web/                 # Next.js frontend
 ├── services/  
 │   ├── guardian/           # Guardian daemon (Python) ✅
 │   ├── voice/             # ASR/TTS pipeline 🔄
@@ -763,7 +762,7 @@ N8N_REPLAY_WINDOW_S=300                # Replay protection window
 ### Development
 ```bash
 # Frontend - see AGENTS.md for port assignments
-pnpm run dev                 # Next.js
+pnpm run dev                 # Development mode
 
 # Backend Services - see AGENTS.md for port assignments
 pnpm run guardian:start      # Guardian

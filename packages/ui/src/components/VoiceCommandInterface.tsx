@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Button } from './Button'
-import { cn } from '../lib/utils'
+import { cn } from "../utils"
 import type { VoiceSession } from '@alice/types'
 
 interface VoiceCommandInterfaceProps {

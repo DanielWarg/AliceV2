@@ -24,6 +24,7 @@ from src.security.router import router as security_router
 from src.services.guardian_client import GuardianClient
 from src.shutdown import request_context, setup_signal_handlers, shutdown_app
 from src.status_router import router as fix_status_router
+from src.config import settings
 
 # Setup structured logging
 setup_logging()
@@ -91,6 +92,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         raise
 
 
+# Debug CORS settings before app creation
+logger.info("CORS configuration before app setup", origins=settings.cors_origins, credentials=settings.cors_credentials)
+
 # Create FastAPI application
 app = FastAPI(
     title="Alice v2 Orchestrator",
@@ -102,13 +106,14 @@ app = FastAPI(
 )
 
 # Add CORS middleware
+logger.info("Adding CORS middleware", origins=settings.cors_origins, credentials=settings.cors_credentials)
+# Test with wildcard CORS
+cors_origins = ["*"]
+logger.info("Using wildcard CORS origins for testing", origins=cors_origins)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://localhost:3001",
-    ],  # Web frontend + HUD
-    allow_credentials=True,
+    allow_origins=cors_origins,
+    allow_credentials=False,  # Can't use credentials with wildcard
     allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["*"],
 )

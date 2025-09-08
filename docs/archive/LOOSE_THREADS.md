@@ -12,7 +12,7 @@
 - [x] **Energy per turn (Wh)**: Energikonsumtion med konfigurerbar baseline
 - [x] **Tool error classification**: Timeout/5xx/429/schema/other kategorisering med Prometheus metrics
 - [x] **Structured turn events**: Komplett JSONL logging med alla metrics och metadata
-- [x] **Real-time dashboard**: Streamlit HUD visar RAM, energi, latens, tool-fel och Guardian status
+- [x] **Real-time dashboard**: Streamlit monitoring visar RAM, energi, latens, tool-fel och Guardian status
 
 **🧪 Autonomous E2E Testing:**
 - [x] **Self-contained validation**: `scripts/auto_verify.sh` kör komplett systemvalidering
@@ -24,7 +24,7 @@
 **🔧 New Services & Components:**
 - [x] `services/eval/` - Komplett eval harness med 20 scenarier
 - [x] `scripts/auto_verify.sh` - Autonomt E2E test automation
-- [x] `monitoring/mini_hud.py` - Streamlit dashboard för eval results
+- [x] `monitoring/mini_monitoring.py` - Streamlit dashboard för eval results
 - [x] `services/orchestrator/src/utils/` - RAM, energi, tool-fel utilities
 - [x] `data/telemetry/` - Strukturerad logging med turn events
 - [x] `data/tests/` - E2E test artifacts och SLO validation
@@ -161,7 +161,7 @@ After fixes, verify:
 - [x] No obsolete directories remain in `services/`
 - [x] `./scripts/auto_verify.sh` runs complete E2E validation
 - [x] `services/eval/eval.py` executes 20 scenarios successfully
-- [x] Streamlit HUD displays comprehensive metrics
+- [x] Streamlit monitoring displays comprehensive metrics
 - [x] Turn events logged with RAM-peak, energy, tool errors
 
 ---
@@ -199,11 +199,11 @@ After alla fixes är klara:
    - **Swedish Focus**: Whisper ASR, svenska språkmodeller
    - **Testing**: Utöka `services/eval/scenarios.json` med voice scenarios
 
-3. **🌐 Web Frontend Integration**
-   - **Current**: Next.js app structure i `apps/web/`
-   - **Next**: Koppla frontend till Orchestrator API
+3. **🌐 Web interface Integration**
+   - **Current**: system app structure i `apps/web/`
+   - **Next**: Koppla interface till Orchestrator API
    - **Features**: Chat UI, Guardian status display, voice controls
-   - **Validation**: Integrera frontend i `auto_verify.sh` E2E test
+   - **Validation**: Integrera interface i `auto_verify.sh` E2E test
 
 ---
 

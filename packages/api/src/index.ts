@@ -19,6 +19,11 @@ export { OrchestratorClient, OrchestratorClientOptions } from './clients/orchest
 export { GuardianClient, GuardianClientOptions } from './clients/guardian-client';
 export { AliceAPIClient, type AliceAPIConfig } from './clients/alice-api-client';
 
+// Import client classes for convenience exports
+import { OrchestratorClient } from './clients/orchestrator-client';
+import { GuardianClient } from './clients/guardian-client';
+import { AliceAPIClient } from './clients/alice-api-client';
+
 // Export utilities
 export {
   withRetry,
@@ -34,9 +39,9 @@ export {
 
 // Convenience exports for common use cases
 export const AliceSDK = {
-  OrchestratorClient: OrchestratorClient,
-  GuardianClient: GuardianClient,
-  AliceAPIClient: AliceAPIClient,
+  OrchestratorClient,
+  GuardianClient,
+  AliceAPIClient,
 };
 
 // Package metadata

@@ -12,9 +12,10 @@
 
 2. **Verifiera system health:**
    ```bash
-   curl http://localhost:18000/health
-   curl http://localhost:8787/health  # Guardian
-   curl http://localhost:18000/api/status/simple
+   curl http://localhost:8001/health      # Orchestrator
+   curl http://localhost:8787/health      # Guardian
+   curl http://localhost:9002/health      # NLU
+   redis-cli -p 6379 ping                # Redis
    ```
 
 3. **Kontrollera Fibonacci-konfiguration är laddad:**
@@ -38,7 +39,7 @@ redis-cli -h alice-cache -p 6379 INFO stats | grep keyspace_misses
 
 # Kör 100 faktiska queries mot Alice
 for i in {1..100}; do
-  curl -s -X POST http://localhost:18000/api/chat \
+  curl -s -X POST http://localhost:8001/api/chat \
     -H 'Content-Type: application/json' \
     -H 'Authorization: Bearer test-key' \
     -d "{\"message\":\"Test query $i: Vad är klockan?\"}" \

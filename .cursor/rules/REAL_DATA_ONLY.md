@@ -28,12 +28,14 @@
 
 2. **Vänta på system-ready:**
    ```bash
-   curl http://localhost:18000/health  # Alla tjänster GREEN
+   curl http://localhost:8787/health    # Guardian healthy  
+   curl http://localhost:8001/health    # Orchestrator healthy
+   curl http://localhost:9002/health    # NLU healthy
    ```
 
 3. **Kör faktiska queries:**
    ```bash
-   curl -X POST http://localhost:18000/api/chat \
+   curl -X POST http://localhost:8001/api/chat \
      -H 'Content-Type: application/json' \
      -d '{"message":"Vad är klockan?"}'
    ```
@@ -65,7 +67,7 @@ def test_live_cache_performance():
     
     # Kör queries mot live system
     for query in real_user_queries:
-        response = requests.post("http://localhost:18000/api/chat", 
+        response = requests.post("http://localhost:8001/api/chat", 
                                json={"message": query})
         measure_actual_response_time(response)
     

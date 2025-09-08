@@ -12,8 +12,6 @@ export { AudioVisualizer } from './components/AudioVisualizer'
 // Guardian Components
 export { GuardianStatusBanner } from './components/GuardianStatusBanner'
 
-// Performance Components
-export { PerformanceHUD } from './components/PerformanceHUD'
 
 // UI Primitives
 export { Alert, AlertTitle, AlertDescription } from './components/ui/alert'
