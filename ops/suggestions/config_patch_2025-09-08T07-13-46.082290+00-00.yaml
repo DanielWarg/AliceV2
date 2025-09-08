@@ -1,0 +1,80 @@
+# Configuration Patch - 2025-09-08T07-13-46.082290+00-00
+# Generated from suggestions in ops/suggestions/
+# 
+# TO APPLY: copy relevant sections to ops/config/telemetry_sources.yaml
+# 
+# CURRENT CONFIG: ops/config/telemetry_sources.yaml
+# SUGGESTED CHANGES:
+
+fields:
+  answer: answer
+  intent: intent
+  latency_ms: latency_ms
+  model_version: model_version
+  policy_breach: policy_breach
+  prompt: prompt
+  route: route
+  verifier_ok: verifier_ok
+gcs:
+  blob: logs/prod_responses.ndjson
+  bucket: my-alice-prod
+  enabled: false
+intent_regex:
+  chitchat:
+  - \bhej\b
+  - \btack\b
+  email:
+  - \bmejl\b
+  - \bemail\b
+  hard:
+  - \bcanary\b
+  - \bLoRA\b
+  - \bGBNF\b
+  qa:
+  - \b(hur|varf[öo]r|vad)\b
+  summary:
+  - \bsammanfatt(a|ning)\b
+  time:
+  - \bklockan\b
+  - \btid(en)?\b
+  weather:
+  - \bv(ä|a)der\b
+  - \bgrader\b
+intent_regexes:
+  code:
+  - \b(python|javascript|java|react|node\.?js|typescript|css|html|sql|git|github|docker|kubernetes|api|json|xml)\b
+  - \b(function|class|import|export|const|let|var|def|if|else|for|while|return)\b
+  - \b(error|exception|debug|log|console|print|stdout|stderr)\b
+  - \b(build|compile|deploy|test|lint|format|webpack|babel|npm|yarn|pip)\b
+  finance:
+  - \b(bank|account|payment|invoice|receipt|transaction|balance|credit|debit)\b
+  - \b(sek|usd|eur|krona|dollar|euro|currency|exchange|rate)\b
+  - \b(investering|aktie|fond|pension|lån|ränta|skatt|moms)\b
+  - \b(swish|bankgiro|plusgiro|iban|bic|clearing)\b
+  time:
+  - \b(tid|time|klocka|datum|date|calendar|schedul|möte|meeting)\b
+  - \b(imorgon|idag|igår|tomorrow|today|yesterday|next week|förra|kommande)\b
+  - \b(måndag|tisdag|onsdag|torsdag|fredag|lördag|söndag|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b
+  travel:
+  - \b(flight|airplane|airport|hotel|booking|reservation|ticket)\b
+  - \b(arlanda|bromma|landvetter|kastrup|train|tåg|sj)\b
+  - \b(passport|visa|currency|exchange|luggage|baggage)\b
+  - \b(destination|vacation|trip|journey|travel|holiday)\b
+  weather:
+  - \b(väder|weather|temperatur|temperature|regn|rain|sol|sun|snö|snow)\b
+  - \b(prognos|forecast|smhi|yr\.no|celsius|fahrenheit|grader)\b
+  - \b(storm|vind|wind|moln|cloud|dimma|fog|blåst|sunshine)\b
+s3:
+  bucket: my-alice-prod
+  enabled: false
+  key: logs/prod_responses.ndjson
+sources:
+- path: data/logs/prod_responses.ndjson
+  type: file
+- path: /var/log/alice/prod_responses.jsonl
+  type: file
+window:
+  lookback_hours: 24
+  max_events: 20000
+  min_events: 500
+  persist_raw: false

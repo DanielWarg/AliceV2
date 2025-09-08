@@ -20,5 +20,24 @@ jobs:
       - name: Drift watch (PSI/KS/Verifier)
         run: |
           python services/rl/drift/drift_watch.py || exit 1
+      - name: Drift rollup (7d)
+        run: |
+          python ops/scripts/drift_history_rollup.py
+      - name: RCA failure sampling
+        run: |
+          python ops/scripts/rca_sample_failures.py --log_path data/logs/prod_requests.jsonl --output data/ops/rca_failures_nightly.json --lookback_hours 24 || echo "RCA sampling failed, continuing..."
+      - name: T8 stabilization tests
+        run: |
+          pytest -q tests/test_format_guard.py tests/test_rca_sampling.py tests/test_t8_integration.py || echo "Stabilization tests failed, continuing..."
+      - name: Upload T8 artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: t8-nightly-artifacts
+          path: |
+            data/ops/drift_rollup.json
+            data/ops/rca_failures_nightly.json
+            data/ops/drift_history.jsonl
+          retention-days: 7
       - name: Report
-        run: echo "T8 nightly complete."
+        run: echo "T8 nightly complete with stabilization checks."

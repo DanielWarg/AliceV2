@@ -20,3 +20,11 @@
 2) Kör `make t8-telemetry-prod` → bygger `data/ops/telemetry_window.json` från verkliga händelser (PII-säkert)
 3) Kör `make t8-drift-prod` → PSI/KS/verifier_fail beräknas via drift_watch
 4) Håll grindarna gröna i 3–7 dagar → överväg T8_ONLINE_ADAPTATION=true bakom `safety_gate`
+
+## Online adaptation (säker)
+
+- Flagga: `T8_ENABLED=true` (slår på controller)  
+- Canary-only: `T8_ONLINE_ADAPTATION=false` + `PREFS_CANARY_SHARE=0.05`  
+- Bandit-läge: `T8_ONLINE_ADAPTATION=true` (säkerhetsgrinden måste vara grön)
+- State: `data/ops/bandit_state.json` (a/b + last_sample).  
+- Reward: verifier_ok (1/0) — kan utökas med human_like eller win-rate signal.

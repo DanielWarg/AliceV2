@@ -1,0 +1,171 @@
+{
+  "test_type": "formatguard_followup",
+  "formatguard_enabled": true,
+  "test_duration_min": 30,
+  "iterations_completed": 15,
+  "baseline_comparison": {
+    "before_formatguard": {
+      "verifier_fail": 0.375,
+      "psi_intents": 13.296,
+      "ks_length": 0.25
+    },
+    "after_formatguard": {
+      "iteration": 15,
+      "timestamp": "2025-09-08T02:12:14.400736+00:00",
+      "verifier_fail": 0.375,
+      "psi_intents": 13.29565,
+      "ks_length": 0.25,
+      "ok": false,
+      "formatguard_enabled": true
+    }
+  },
+  "metrics_change": {
+    "verifier_fail_change": 0.0,
+    "verifier_fail_trend": "\ud83d\udcc8 STABLE"
+  },
+  "average_verifier_fail": 0.375,
+  "recommendations": [
+    "FORMATGUARD_ACTIVE: Pre-processing enabled and functional",
+    "HIGH_VF_PERSISTS: FormatGuard alone insufficient - consider intent regex tuning",
+    "HIGH_PSI_CRITICAL: Urgent intent classification review needed"
+  ],
+  "formatguard_functionality_confirmed": true,
+  "all_results": [
+    {
+      "iteration": 1,
+      "timestamp": "2025-09-08T01:44:12.652700+00:00",
+      "verifier_fail": 0.375,
+      "psi_intents": 13.29565,
+      "ks_length": 0.25,
+      "ok": false,
+      "formatguard_enabled": true
+    },
+    {
+      "iteration": 2,
+      "timestamp": "2025-09-08T01:46:12.740771+00:00",
+      "verifier_fail": 0.375,
+      "psi_intents": 13.29565,
+      "ks_length": 0.25,
+      "ok": false,
+      "formatguard_enabled": true
+    },
+    {
+      "iteration": 3,
+      "timestamp": "2025-09-08T01:48:12.841580+00:00",
+      "verifier_fail": 0.375,
+      "psi_intents": 13.29565,
+      "ks_length": 0.25,
+      "ok": false,
+      "formatguard_enabled": true
+    },
+    {
+      "iteration": 4,
+      "timestamp": "2025-09-08T01:50:12.965076+00:00",
+      "verifier_fail": 0.375,
+      "psi_intents": 13.29565,
+      "ks_length": 0.25,
+      "ok": false,
+      "formatguard_enabled": true
+    },
+    {
+      "iteration": 5,
+      "timestamp": "2025-09-08T01:52:13.068340+00:00",
+      "verifier_fail": 0.375,
+      "psi_intents": 13.29565,
+      "ks_length": 0.25,
+      "ok": false,
+      "formatguard_enabled": true
+    },
+    {
+      "iteration": 6,
+      "timestamp": "2025-09-08T01:54:13.272633+00:00",
+      "verifier_fail": 0.375,
+      "psi_intents": 13.29565,
+      "ks_length": 0.25,
+      "ok": false,
+      "formatguard_enabled": true
+    },
+    {
+      "iteration": 7,
+      "timestamp": "2025-09-08T01:56:13.398584+00:00",
+      "verifier_fail": 0.375,
+      "psi_intents": 13.29565,
+      "ks_length": 0.25,
+      "ok": false,
+      "formatguard_enabled": true
+    },
+    {
+      "iteration": 8,
+      "timestamp": "2025-09-08T01:58:13.501041+00:00",
+      "verifier_fail": 0.375,
+      "psi_intents": 13.29565,
+      "ks_length": 0.25,
+      "ok": false,
+      "formatguard_enabled": true
+    },
+    {
+      "iteration": 9,
+      "timestamp": "2025-09-08T02:00:13.623240+00:00",
+      "verifier_fail": 0.375,
+      "psi_intents": 13.29565,
+      "ks_length": 0.25,
+      "ok": false,
+      "formatguard_enabled": true
+    },
+    {
+      "iteration": 10,
+      "timestamp": "2025-09-08T02:02:13.727731+00:00",
+      "verifier_fail": 0.375,
+      "psi_intents": 13.29565,
+      "ks_length": 0.25,
+      "ok": false,
+      "formatguard_enabled": true
+    },
+    {
+      "iteration": 11,
+      "timestamp": "2025-09-08T02:04:13.940668+00:00",
+      "verifier_fail": 0.375,
+      "psi_intents": 13.29565,
+      "ks_length": 0.25,
+      "ok": false,
+      "formatguard_enabled": true
+    },
+    {
+      "iteration": 12,
+      "timestamp": "2025-09-08T02:06:14.050084+00:00",
+      "verifier_fail": 0.375,
+      "psi_intents": 13.29565,
+      "ks_length": 0.25,
+      "ok": false,
+      "formatguard_enabled": true
+    },
+    {
+      "iteration": 13,
+      "timestamp": "2025-09-08T02:08:14.166277+00:00",
+      "verifier_fail": 0.375,
+      "psi_intents": 13.29565,
+      "ks_length": 0.25,
+      "ok": false,
+      "formatguard_enabled": true
+    },
+    {
+      "iteration": 14,
+      "timestamp": "2025-09-08T02:10:14.287885+00:00",
+      "verifier_fail": 0.375,
+      "psi_intents": 13.29565,
+      "ks_length": 0.25,
+      "ok": false,
+      "formatguard_enabled": true
+    },
+    {
+      "iteration": 15,
+      "timestamp": "2025-09-08T02:12:14.400736+00:00",
+      "verifier_fail": 0.375,
+      "psi_intents": 13.29565,
+      "ks_length": 0.25,
+      "ok": false,
+      "formatguard_enabled": true
+    }
+  ],
+  "generated_utc": "2025-09-08T02:14:14.612386+00:00"
+}

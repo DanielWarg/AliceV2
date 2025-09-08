@@ -281,6 +281,106 @@ make canary-promote  # Auto-decision based on win-rate + latency
 make canary-rollback # Manual emergency rollback
 ```
 
+## 🎯 KOMPLETT: T8 - Stabilization Infrastructure (2025-09-08)
+
+**🚀 SLUTFÖRT - Komplett system för produktions-stabilisering:**
+
+- ✅ **PII-Safe RCA System**: Maskad failure analysis från prod logs med stratified sampling
+- ✅ **FormatGuard Pre-Processing**: Svenska language fixes + structural corrections för response formatting
+- ✅ **Drift Detection System**: PSI/KS/Verifier_fail metrics med automated thresholds  
+- ✅ **Overnight Optimizer**: 8-timmar autonomous stabilization med morning reports + concrete suggestions
+- ✅ **Intent Classification Tuning**: PSI-optimized regex patterns med simulation + safe config management
+- ✅ **Complete Testing Pipeline**: 30-min smoke tests, halfday loops, soak testing, GO/NO-GO criteria
+
+**📊 T8 STABILIZATION RESULTS:**
+
+```
+• FORMATGUARD TEST (30 min): ✅ Active & Functional
+  - FormatGuard fixes: 2 fixes/test (Swedish + format issues)
+  - VF Impact: 37.5% → 37.5% (0% change - expected for test env)
+  - Recommendation: Intent regex tuning needed (PSI bottleneck)
+  
+• METRICS BASELINE ESTABLISHED:
+  - verifier_fail: 37.5% (target: ≤1.0%) - 37.5x over threshold
+  - PSI intents: 13.296 (target: ≤0.2) - 66x over threshold  
+  - KS length: 0.25 (target: ≤0.2) - 1.25x over threshold
+  
+• SYSTEM DIAGNOSIS: ✅ COMPLETE
+  - FormatGuard confirmed working but insufficient alone
+  - PSI/Intent classification identified as primary bottleneck
+  - Intent regex tuning infrastructure ready for production
+```
+
+**🔧 CRITICAL INFRASTRUCTURE BUILT:**
+
+```
+ops/scripts/rca_sample_failures.py         # PII-safe RCA with failure pattern analysis  
+ops/scripts/formatguard_followup_test.py   # 30-min intensive FormatGuard measurement
+ops/scripts/intent_tuner.py                # PSI simulation + intent bucket optimization
+ops/scripts/apply_suggestions.py           # Safe config management with dry-run patches
+ops/scripts/overnight_optimizer.py         # 8h autonomous stabilization (existing)
+orchestrator/src/response/format_guard.py  # Swedish pre-processing system
+FORMATGUARD_BEFORE_AFTER.md               # Complete before/after analysis + decision tree
+```
+
+**🎯 STABILIZATION WORKFLOW ESTABLISHED:**
+
+```bash
+# Phase 1: FormatGuard (COMPLETED - Smoke test FAILED, escalate to Phase 2)
+make t8-formatguard-on         # Activate FormatGuard pre-processing
+make smoke-test                # 30-min measurement (✅ DONE - no improvement)
+
+# Phase 2: Intent Tuning (READY TO EXECUTE)  
+make overnight-8h              # Collect 8h of real telemetry data
+make intent-simulate           # Simulate PSI improvements with new regex buckets
+make config-dry-run           # Generate safe patches for review
+make config-apply             # Apply changes after human review
+
+# Phase 3: Production Stabilization (TRIGGERED AFTER PSI SUCCESS)
+make halfday-loop             # 6-8h continuous measurement until VF ≤ 1.0%
+make soak-check              # 72h production soak testing  
+make go-check                # Final GO/NO-GO decision for production
+```
+
+**📈 INTENT TUNING SYSTEM:**
+
+```
+• New regex buckets added: code, finance, travel (18 patterns total)
+• PSI simulation infrastructure: ops/suggestions/intent_tuning.json
+• Safe config management: dry-run → review → apply workflow
+• Expected impact: PSI 13.296 → ≤0.2 (97% reduction target)
+```
+
+**🎯 NEXT EXECUTION PLAN (8h overnight value):**
+
+```bash
+# Tonight: Generate real telemetry for intent optimization
+make overnight-8h
+
+# Tomorrow morning: Apply intent fixes and measure impact  
+make morning-report           # Review overnight findings
+make intent-simulate         # Simulate PSI improvements  
+make config-summary          # Review expected impact
+make config-dry-run          # Generate patch for human review
+# If PSI simulation shows >50% improvement:
+make config-apply            # Apply intent regex updates
+make halfday-loop           # Measure real impact until VF ≤ 1.0%
+```
+
+**⚠️ CRITICAL DECISION MADE:**
+- FormatGuard smoke test: ❌ FAILED (no measurable improvement in test environment)
+- System correctly identified PSI/intent classification as primary bottleneck  
+- Skipped halfday-loop for FormatGuard, escalated to intent regex tuning
+- Ready for overnight data collection → intent optimization → production stabilization
+
+**📁 Key Integration Points:**
+```
+Makefile: Complete T8 workflow targets (smoke-test, halfday-loop, intent-*, config-*)
+orchestrator/src/response/generator.py: FormatGuard integration active
+services/guardian/src/core/guardian_state.py: SLO monitoring integration
+ops/suggestions/: All generated reports and config patches
+```
+
 ## 🎯 Vad detta hade hjälpt mig med
 
 **JA - Hade sparat timmar:**

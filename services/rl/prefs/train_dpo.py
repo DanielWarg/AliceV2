@@ -1,25 +1,35 @@
-import os, json, argparse, hashlib, time
+import argparse
+import hashlib
+import json
+import os
+import time
 from dataclasses import dataclass
-from typing import Dict, Any
+
 
 def load_pairs(path: str):
     rows = []
     with open(path, "r", encoding="utf-8") as f:
         for line in f:
-            if not line.strip(): continue
+            if not line.strip():
+                continue
             ex = json.loads(line)
             win = ex.get("win_label")
-            if win not in ("A","B"): continue
-            chosen  = ex["A"] if win == "A" else ex["B"]
+            if win not in ("A", "B"):
+                continue
+            chosen = ex["A"] if win == "A" else ex["B"]
             rejected = ex["B"] if win == "A" else ex["A"]
-            rows.append({"prompt": ex["prompt"], "chosen": chosen, "rejected": rejected})
+            rows.append(
+                {"prompt": ex["prompt"], "chosen": chosen, "rejected": rejected}
+            )
     return rows
+
 
 def compute_hash(*blobs: str) -> str:
     h = hashlib.sha256()
     for b in blobs:
         h.update(b.encode("utf-8"))
     return h.hexdigest()
+
 
 @dataclass
 class TrainCfg:
@@ -32,11 +42,17 @@ class TrainCfg:
     warmup_steps: int = 50
     seed: int = 42
 
+
 def real_train(data_path: str, out_dir: str, cfg: TrainCfg):
     from datasets import Dataset
-    from transformers import AutoTokenizer, AutoModelForCausalLM, Trainer, TrainingArguments
-    from peft import LoraConfig, get_peft_model, TaskType
-    
+    from peft import LoraConfig, TaskType, get_peft_model
+    from transformers import (
+        AutoModelForCausalLM,
+        AutoTokenizer,
+        Trainer,
+        TrainingArguments,
+    )
+
     rows = load_pairs(data_path)
     if not rows:
         raise RuntimeError("Inga giltiga preferenspar hittades.")
@@ -49,7 +65,7 @@ def real_train(data_path: str, out_dir: str, cfg: TrainCfg):
     for row in rows:
         # Use chosen response as target for language modeling
         simple_data.append({"text": f"Q: {row['prompt']}\nA: {row['chosen']}"})
-    
+
     ds = Dataset.from_list(simple_data)
     n = len(ds)
     n_eval = max(1, int(0.05 * n))
@@ -66,23 +82,35 @@ def real_train(data_path: str, out_dir: str, cfg: TrainCfg):
     if "gpt2" in cfg.base_model.lower():
         target_modules = ["c_attn", "c_proj"]  # GPT-2 style
     else:
-        target_modules = ["q_proj","v_proj","k_proj","o_proj"]  # Transformer style
-    
+        target_modules = ["q_proj", "v_proj", "k_proj", "o_proj"]  # Transformer style
+
     lora_config = LoraConfig(
-        r=cfg.r, lora_alpha=cfg.alpha, lora_dropout=cfg.dropout,
+        r=cfg.r,
+        lora_alpha=cfg.alpha,
+        lora_dropout=cfg.dropout,
         target_modules=target_modules,
-        task_type=TaskType.CAUSAL_LM
+        task_type=TaskType.CAUSAL_LM,
     )
     model = get_peft_model(model, lora_config)
-    
+
     def tokenize_function(examples):
-        result = tokenizer(examples["text"], truncation=True, padding="max_length", max_length=512, return_tensors=None)
+        result = tokenizer(
+            examples["text"],
+            truncation=True,
+            padding="max_length",
+            max_length=512,
+            return_tensors=None,
+        )
         # For language modeling, labels = input_ids
         result["labels"] = result["input_ids"].copy()
         return result
-    
-    tokenized_train = ds_train.map(tokenize_function, batched=True, remove_columns=["text"])
-    tokenized_eval = ds_eval.map(tokenize_function, batched=True, remove_columns=["text"])
+
+    tokenized_train = ds_train.map(
+        tokenize_function, batched=True, remove_columns=["text"]
+    )
+    tokenized_eval = ds_eval.map(
+        tokenize_function, batched=True, remove_columns=["text"]
+    )
 
     training_args = TrainingArguments(
         output_dir="./tmp_dpo_output",
@@ -98,15 +126,15 @@ def real_train(data_path: str, out_dir: str, cfg: TrainCfg):
         save_strategy="no",
         seed=cfg.seed,
         report_to="none",  # Disable wandb
-        remove_unused_columns=False
+        remove_unused_columns=False,
     )
-    
+
     trainer = Trainer(
         model=model,
         args=training_args,
         train_dataset=tokenized_train,
         eval_dataset=tokenized_eval,
-        tokenizer=tokenizer
+        tokenizer=tokenizer,
     )
 
     print("[train_dpo] Starting training...")
@@ -124,18 +152,24 @@ def real_train(data_path: str, out_dir: str, cfg: TrainCfg):
         "created_unix": int(time.time()),
         "base_model": cfg.base_model,
         "lora": {"r": cfg.r, "alpha": cfg.alpha, "dropout": cfg.dropout},
-        "train": {"max_steps": min(cfg.max_steps, 50), "warmup_steps": cfg.warmup_steps, "lr": cfg.lr, "seed": cfg.seed},
+        "train": {
+            "max_steps": min(cfg.max_steps, 50),
+            "warmup_steps": cfg.warmup_steps,
+            "lr": cfg.lr,
+            "seed": cfg.seed,
+        },
         "data": {
             "path": data_path,
             "n_pairs": len(rows),
-            "hash": compute_hash(open(data_path,"r",encoding="utf-8").read())
+            "hash": compute_hash(open(data_path, "r", encoding="utf-8").read()),
         },
         "val_win_rate": val_win_rate,
-        "method": "simplified_preference_training"
+        "method": "simplified_preference_training",
     }
     with open(os.path.join(out_dir, "manifest.json"), "w", encoding="utf-8") as f:
         json.dump(manifest, f, ensure_ascii=False, indent=2)
     print(f"[train_dpo] saved adapter → {out_dir} (val_win_rate≈{val_win_rate})")
+
 
 def main():
     ap = argparse.ArgumentParser()
@@ -150,6 +184,7 @@ def main():
         base = "gpt2"
     cfg = TrainCfg(base_model=base)
     real_train(args.data, args.out, cfg)
+
 
 if __name__ == "__main__":
     main()
