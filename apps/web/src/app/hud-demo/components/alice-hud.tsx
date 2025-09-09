@@ -31,37 +31,75 @@ interface ChatResponse {
   session_id: string;
 }
 
-// Mock API for now
+// Real Alice API
 const aliceAPI = {
   async getSystemStatus(): Promise<SystemStatus> {
-    return {
-      score: 75 + Math.random() * 20,
-      status: 'operational',
-      services: {
-        orchestrator: true,
-        guardian: true,
-        nlu: true,
-        voice: true
-      }
-    };
+    try {
+      const [orchestrator, guardian, voice] = await Promise.allSettled([
+        fetch('/api/orchestrator/health').then(r => r.json()),
+        fetch('/api/guardian/health').then(r => r.json()), 
+        fetch('/api/voice/health').then(r => r.json())
+      ]);
+      
+      const services = {
+        orchestrator: orchestrator.status === 'fulfilled' && orchestrator.value?.alive,
+        guardian: guardian.status === 'fulfilled' && guardian.value?.state === 'NORMAL',
+        voice: voice.status === 'fulfilled' && voice.value?.ok,
+        nlu: true // Assuming NLU is working if others are
+      };
+      
+      const healthyCount = Object.values(services).filter(Boolean).length;
+      const score = (healthyCount / Object.keys(services).length) * 100;
+      
+      return {
+        score,
+        status: score >= 75 ? 'operational' : score >= 50 ? 'degraded' : 'error',
+        services
+      };
+    } catch (error) {
+      console.error('Failed to get system status:', error);
+      return {
+        score: 0,
+        status: 'error',
+        services: {
+          orchestrator: false,
+          guardian: false,
+          nlu: false,
+          voice: false
+        }
+      };
+    }
   },
 
   async sendChatMessage(request: ChatRequest): Promise<ChatResponse> {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
-    
-    const responses = [
-      "Hej! Hur kan jag hjälpa dig idag?",
-      "Det låter intressant. Berätta mer!",
-      "Jag förstår. Låt mig hjälpa dig med det.",
-      "Tack för frågan! Här är min respons...",
-      "Absolut, jag kan hjälpa dig med det."
-    ];
-    
-    return {
-      response: responses[Math.floor(Math.random() * responses.length)],
-      session_id: request.session_id
-    };
+    try {
+      const response = await fetch('/api/orchestrator/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: request.message,
+          session_id: request.session_id
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      return {
+        response: data.response || data.message || "Jag kunde inte bearbeta din begäran just nu.",
+        session_id: data.session_id || request.session_id
+      };
+    } catch (error) {
+      console.error('Failed to send chat message:', error);
+      return {
+        response: "Jag har för närvarande problem med att ansluta till Alice-systemet. Försök igen senare.",
+        session_id: request.session_id
+      };
+    }
   }
 };
 
@@ -172,15 +210,26 @@ const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
 useEffect(() => {
 const fetchMetrics = async () => {
 try {
-const status = await aliceAPI.getSystemStatus();
-setSystemStatus(status);
+const [status, guardian] = await Promise.allSettled([
+aliceAPI.getSystemStatus(),
+fetch('/api/guardian/health').then(r => r.json())
+]);
 
-// Convert system score to CPU-like metric
-setCpu(status.score);
+if (status.status === 'fulfilled') {
+setSystemStatus(status.value);
+}
 
-// Simulate memory and network based on system health
-setMem(Math.max(20, status.score - 10));
-setNet(Math.max(5, status.score - 15));
+// Use real Guardian metrics if available
+if (guardian.status === 'fulfilled' && guardian.value) {
+setCpu(guardian.value.cpu_pct || 0);
+setMem(guardian.value.ram_pct || 0); 
+setNet(Math.random() * 50 + 10); // Network still simulated
+} else if (status.status === 'fulfilled') {
+// Fallback to system score-based metrics
+setCpu(status.value.score);
+setMem(Math.max(20, status.value.score - 10));
+setNet(Math.max(5, status.value.score - 15));
+}
 } catch (error) {
 console.error('Failed to fetch system metrics:', error);
 // Fallback to simulated data
@@ -356,7 +405,7 @@ v.{Math.ceil((new Date().getTime() - new Date(new Date().getFullYear(), 0, 1).ge
 </Pane>
 
 <Pane title="Diagnostics">
-<div className="h-48 overflow-hidden rounded-xl border border-cyan-500/20 bg-black/20 font-mono text-xs">
+<div className="h-32 overflow-hidden rounded-xl border border-cyan-500/20 bg-black/20 font-mono text-xs">
 <div className="h-full overflow-y-auto p-3 space-y-1 scrollbar-thin scrollbar-thumb-cyan-500/30 scrollbar-track-transparent">
 <div className="text-green-400">[OK] System boot sequence initiated...</div>
 <div className="text-green-400">[OK] Guardian module loaded successfully</div>
@@ -444,7 +493,7 @@ animationDelay: `${i * 0.05}s`
 
 {/* Chat Interface */}
 <Pane title="Alice Core">
-<div className="h-80 overflow-hidden rounded-xl border border-cyan-500/20 bg-cyan-900/10">
+<div className="h-64 overflow-hidden rounded-xl border border-cyan-500/20 bg-cyan-900/10">
 <div className="h-full flex flex-col">
 {/* Chat Messages */}
 <div className="flex-1 overflow-y-auto p-4 space-y-4">
