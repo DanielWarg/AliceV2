@@ -181,3 +181,15 @@ data/monitoring/canary_checkpoint_*.json
 # Training result files - now stored in logs/ directory
 fibonacci_training_results_*.json
 fibonacci_training_progress_*.json
+
+# DPO training and temporary outputs
+tmp_dpo*/
+voice_stress_test_report_*.json
+.tts_cache/
+
+# DPO model outputs (keep training log for monitoring)
+outputs/alice_dpo_*/
+
+# Old virtual environments
+alice*/
+data_venv/
